@@ -60,7 +60,9 @@ export function BookingForm({ draft, onChange, mode, error, leadData }: BookingF
   const computedMargin = (draft.totalRevenue || 0) - (draft.totalCost || 0);
 
   const inputClass = (extra = '') =>
-    `w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:bg-gray-50 dark:disabled:bg-gray-800 disabled:text-gray-500 ${extra}`;
+    `w-full px-1.5 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:bg-gray-50 dark:disabled:bg-gray-800 disabled:text-gray-500 ${extra}`;
+  const labelClass = 'text-xs text-gray-500 dark:text-gray-400 block mb-0.5';
+  const sectionTitleClass = 'text-xs uppercase tracking-wide text-gray-700 dark:text-gray-300 mb-2 pb-1.5 border-b border-gray-200 dark:border-gray-700';
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
@@ -75,26 +77,26 @@ export function BookingForm({ draft, onChange, mode, error, leadData }: BookingF
       )}
 
       {!isViewMode && (
-        <div className="px-6 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-          <h3 className="text-gray-900 dark:text-gray-100">
+        <div className="px-6 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <h3 className="text-sm text-gray-900 dark:text-gray-100">
             {mode === 'new' ? 'Create New Booking' : 'Edit Booking'}
           </h3>
-          {error && <span className="text-sm text-red-600 dark:text-red-400">{error}</span>}
+          {error && <span className="text-xs text-red-600 dark:text-red-400">{error}</span>}
         </div>
       )}
 
-      <div className="p-6">
-        <div className="grid grid-cols-2 gap-6">
-          <div className="space-y-6">
+      <div className="px-6 py-3">
+        <div className="grid grid-cols-12 gap-4">
+          <div className="col-span-12 xl:col-span-3 space-y-3">
             <div>
-              <h4 className="text-sm text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">Basic Information</h4>
-              <div className="space-y-4">
+              <h4 className={sectionTitleClass}>Basic Information</h4>
+              <div className="space-y-2">
                 <div>
-                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Booking Number</label>
+                  <label className={labelClass}>Booking Number</label>
                   <input type="text" value={draft.bookingNumber} disabled className={inputClass()} placeholder="Auto-generated" />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Client <span className="text-red-500">*</span></label>
+                  <label className={labelClass}>Client <span className="text-red-500">*</span></label>
                   <select
                     autoFocus={mode === 'new'}
                     value={draft.clientId}
@@ -106,31 +108,35 @@ export function BookingForm({ draft, onChange, mode, error, leadData }: BookingF
                     {clients.map(c => <option key={c.id} value={c.id}>{c.tradingName || c.companyLegalName}</option>)}
                   </select>
                 </div>
-                <div>
-                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Carrier</label>
-                  <select value={draft.carrierId} onChange={(e) => onChange({ carrierId: e.target.value })} disabled={isViewMode} className={inputClass()}>
-                    <option value="">—</option>
-                    {carriers.map(c => <option key={c.id} value={c.id}>{c.tradingName || c.companyLegalName}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Service Type</label>
-                  <select value={draft.serviceType} onChange={(e) => onChange({ serviceType: e.target.value as BookingServiceType })} disabled={isViewMode} className={inputClass()}>
-                    <option value="FCL">FCL – Full Container Load</option>
-                    <option value="LCL">LCL – Less than Container Load</option>
-                    <option value="Air">Air Freight</option>
-                    <option value="Road">Road Transport</option>
-                  </select>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className={labelClass}>Carrier</label>
+                    <select value={draft.carrierId} onChange={(e) => onChange({ carrierId: e.target.value })} disabled={isViewMode} className={inputClass()}>
+                      <option value="">—</option>
+                      {carriers.map(c => <option key={c.id} value={c.id}>{c.tradingName || c.companyLegalName}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Service Type</label>
+                    <select value={draft.serviceType} onChange={(e) => onChange({ serviceType: e.target.value as BookingServiceType })} disabled={isViewMode} className={inputClass()}>
+                      <option value="FCL">FCL</option>
+                      <option value="LCL">LCL</option>
+                      <option value="Air">Air</option>
+                      <option value="Road">Road</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
+          </div>
 
+          <div className="col-span-12 xl:col-span-3 space-y-3">
             <div>
-              <h4 className="text-sm text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">Routing Information</h4>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
+              <h4 className={sectionTitleClass}>Routing Information</h4>
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Origin Country</label>
+                    <label className={labelClass}>Origin Country</label>
                     {isViewMode
                       ? <input type="text" value={getCountryName(draft.originCountry)} disabled className={inputClass()} />
                       : <select value={draft.originCountry} onChange={(e) => onChange({ originCountry: e.target.value })} className={inputClass()}>
@@ -140,7 +146,7 @@ export function BookingForm({ draft, onChange, mode, error, leadData }: BookingF
                     }
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Destination Country</label>
+                    <label className={labelClass}>Destination Country</label>
                     {isViewMode
                       ? <input type="text" value={getCountryName(draft.destinationCountry)} disabled className={inputClass()} />
                       : <select value={draft.destinationCountry} onChange={(e) => onChange({ destinationCountry: e.target.value })} className={inputClass()}>
@@ -150,13 +156,13 @@ export function BookingForm({ draft, onChange, mode, error, leadData }: BookingF
                     }
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">ETD</label>
+                    <label className={labelClass}>ETD</label>
                     <input type="date" value={draft.estimatedDeparture} onChange={(e) => onChange({ estimatedDeparture: e.target.value })} disabled={isViewMode} className={inputClass()} />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">ETA</label>
+                    <label className={labelClass}>ETA</label>
                     <input type="date" value={draft.estimatedArrival} onChange={(e) => onChange({ estimatedArrival: e.target.value })} disabled={isViewMode} className={inputClass()} />
                   </div>
                 </div>
@@ -164,44 +170,46 @@ export function BookingForm({ draft, onChange, mode, error, leadData }: BookingF
             </div>
           </div>
 
-          <div className="space-y-6">
+          <div className="col-span-12 xl:col-span-3 space-y-3">
             <div>
-              <h4 className="text-sm text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">Cargo Information</h4>
-              <div className="space-y-4">
+              <h4 className={sectionTitleClass}>Cargo Information</h4>
+              <div className="space-y-2">
                 {/* Commodity lives in the header Cargo Details panel — shown here read-only for reference */}
                 <div>
-                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Commodity</label>
+                  <label className={labelClass}>Commodity</label>
                   <input type="text" value={draft.commodity} disabled className={inputClass()} placeholder="Set in Cargo Details above" />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Notes / Special Instructions</label>
-                  <textarea rows={5} value={draft.notes} onChange={(e) => onChange({ notes: e.target.value })} disabled={isViewMode} className={inputClass()} placeholder="Any special handling instructions..." />
+                  <label className={labelClass}>Notes / Special Instructions</label>
+                  <textarea rows={3} value={draft.notes} onChange={(e) => onChange({ notes: e.target.value })} disabled={isViewMode} className={`${inputClass()} resize-y`} placeholder="Any special handling instructions..." />
                 </div>
               </div>
             </div>
+          </div>
 
+          <div className="col-span-12 xl:col-span-3 space-y-3">
             <div>
-              <h4 className="text-sm text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">Financials</h4>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Currency</label>
-                  <input
-                    type="text"
-                    list="booking-currency-options"
-                    maxLength={3}
-                    value={draft.currency}
-                    onChange={(e) => onChange({ currency: e.target.value.toUpperCase().replace(/[^A-Z]/g, '') })}
-                    disabled={isViewMode}
-                    placeholder={baseCurrency || 'EUR'}
-                    className={inputClass()}
-                  />
-                  <datalist id="booking-currency-options">
-                    {currencyOptions.map((c) => <option key={c} value={c} />)}
-                  </datalist>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
+              <h4 className={sectionTitleClass}>Financials</h4>
+              <div className="space-y-2">
+                <div className="grid grid-cols-3 gap-2">
                   <div>
-                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Total Revenue</label>
+                    <label className={labelClass}>Currency</label>
+                    <input
+                      type="text"
+                      list="booking-currency-options"
+                      maxLength={3}
+                      value={draft.currency}
+                      onChange={(e) => onChange({ currency: e.target.value.toUpperCase().replace(/[^A-Z]/g, '') })}
+                      disabled={isViewMode}
+                      placeholder={baseCurrency || 'EUR'}
+                      className={inputClass()}
+                    />
+                    <datalist id="booking-currency-options">
+                      {currencyOptions.map((c) => <option key={c} value={c} />)}
+                    </datalist>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Revenue</label>
                     <input
                       type="text"
                       value={(draft.totalRevenue || 0).toFixed(2)}
@@ -210,7 +218,7 @@ export function BookingForm({ draft, onChange, mode, error, leadData }: BookingF
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Total Cost</label>
+                    <label className={labelClass}>Cost</label>
                     <input
                       type="text"
                       value={(draft.totalCost || 0).toFixed(2)}
@@ -219,11 +227,11 @@ export function BookingForm({ draft, onChange, mode, error, leadData }: BookingF
                     />
                   </div>
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-[10px] leading-tight text-gray-500 dark:text-gray-400">
                   Totals are derived from the agreed rates / costs entered on the Equipment tab.
                 </p>
                 {(draft.totalRevenue > 0 || draft.totalCost > 0) && (
-                  <div className="px-3 py-2 bg-gray-50 dark:bg-gray-700 rounded-md text-sm text-gray-700 dark:text-gray-300">
+                  <div className="px-2 py-1 bg-gray-50 dark:bg-gray-700 rounded text-xs text-gray-700 dark:text-gray-300">
                     Margin: <strong className={computedMargin >= 0 ? 'text-green-600' : 'text-red-600'}>
                       {draft.currency} {computedMargin.toFixed(2)}
                     </strong>
@@ -233,7 +241,7 @@ export function BookingForm({ draft, onChange, mode, error, leadData }: BookingF
             </div>
 
             <div>
-              <h4 className="text-sm text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">Created By</h4>
+              <h4 className={sectionTitleClass}>Created By</h4>
               <input type="text" value={draft.createdBy || user?.username || ''} disabled className={inputClass()} />
             </div>
           </div>
