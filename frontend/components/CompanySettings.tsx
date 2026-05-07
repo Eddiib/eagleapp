@@ -36,9 +36,9 @@ function toFormState(s: CompanySettingsModel | null): FormState {
 }
 
 export function CompanySettings() {
-  const { user } = useAuth();
+  const { can } = useAuth();
   const confirmDialog = useConfirm();
-  const isAdmin = user?.role === 'admin';
+  const canEditSettings = can('edit:company-settings');
 
   const [settings, setSettings] = useState<CompanySettingsModel | null>(null);
   const [form, setForm] = useState<FormState>(toFormState(null));
@@ -88,7 +88,7 @@ export function CompanySettings() {
   };
 
   const handleSave = async () => {
-    if (!isAdmin) return;
+    if (!canEditSettings) return;
     setSaving(true); setSaveError(null); setSaveOk(false);
     try {
       const patch: CompanySettingsUpdate = {};
@@ -108,7 +108,7 @@ export function CompanySettings() {
 
   const handleLogoPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !isAdmin) return;
+    if (!file || !canEditSettings) return;
     setUploading(true); setUploadError(null);
     try {
       const updated = await companySettingsApi.uploadLogo(file);
@@ -123,7 +123,7 @@ export function CompanySettings() {
   };
 
   const handleLogoDelete = async () => {
-    if (!isAdmin || !settings?.has_logo) return;
+    if (!canEditSettings || !settings?.has_logo) return;
     const ok = await confirmDialog({
       title: 'Remove logo?',
       message: 'The current company logo will be deleted. You can upload a new one anytime.',
@@ -146,7 +146,7 @@ export function CompanySettings() {
     const commonProps = {
       value: form[f.key as string] ?? '',
       onChange: (e: any) => handleFieldChange(f.key as string, e.target.value),
-      disabled: !isAdmin || saving,
+      disabled: !canEditSettings || saving,
       placeholder: f.placeholder,
       maxLength: f.maxLength,
       className: inputClass + ' w-full',
@@ -186,7 +186,7 @@ export function CompanySettings() {
       <div>
         <h1 className="text-2xl text-gray-900 dark:text-gray-100">Company Settings</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Branding, contact details and invoice defaults used across the app. {!isAdmin && <span className="italic">Read-only — ask an admin to make changes.</span>}
+          Branding, contact details and invoice defaults used across the app. {!canEditSettings && <span className="italic">Read-only.</span>}
         </p>
       </div>
 
@@ -214,16 +214,16 @@ export function CompanySettings() {
             )}
             <div className="mt-3 flex gap-2">
               <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp"
-                className="hidden" onChange={handleLogoPick} disabled={!isAdmin || uploading} />
+                className="hidden" onChange={handleLogoPick} disabled={!canEditSettings || uploading} />
               <button type="button" onClick={() => fileInputRef.current?.click()}
-                disabled={!isAdmin || uploading}
+                disabled={!canEditSettings || uploading}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 text-sm">
                 {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                 {settings?.has_logo ? 'Replace logo' : 'Upload logo'}
               </button>
               {settings?.has_logo && (
                 <button type="button" onClick={handleLogoDelete}
-                  disabled={!isAdmin || uploading}
+                  disabled={!canEditSettings || uploading}
                   className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 text-red-600 border border-red-200 dark:border-red-800 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-sm">
                   <Trash2 className="w-4 h-4" />
                   Remove
@@ -272,7 +272,7 @@ export function CompanySettings() {
       {/* Save footer */}
       <div className="sticky bottom-4 flex items-center gap-3">
         <button type="button" onClick={handleSave}
-          disabled={!isAdmin || saving}
+          disabled={!canEditSettings || saving}
           className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 text-sm shadow-sm">
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           Save changes

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { usePartners, getClients, getSuppliers } from '../hooks/usePartners';
+import { tableClasses } from './ui/table';
 
 interface ServiceRow {
   id: string;
@@ -82,6 +83,10 @@ interface ServicesIntegratedProps {
 }
 
 export function ServicesIntegrated({ equipmentId, containerId }: ServicesIntegratedProps) {
+  const denseHeadBase = `${tableClasses.denseHead} text-gray-600 border-r border-gray-200`;
+  const denseHead = `${denseHeadBase} text-left`;
+  const denseHeadRight = `${denseHeadBase} text-right`;
+  const denseCell = `${tableClasses.denseCell} border-r border-gray-200`;
   const [serviceRows, setServiceRows] = useState<ServiceRow[]>(() => {
     // Initialize with mock data for this specific equipment/container
     if (equipmentId === '1' && containerId === 'MSCU1234567') {
@@ -163,34 +168,34 @@ export function ServicesIntegrated({ equipmentId, containerId }: ServicesIntegra
       <table className="min-w-full">
         <thead>
           <tr className="bg-gray-100">
-            <th className="px-3 py-1.5 text-left text-xs text-gray-600 uppercase tracking-wider border-r border-gray-200">
+            <th className={denseHead}>
               Equipment ID
             </th>
-            <th className="px-3 py-1.5 text-left text-xs text-gray-600 uppercase tracking-wider border-r border-gray-200">
+            <th className={denseHead}>
               Service Type
             </th>
-            <th className="px-3 py-1.5 text-left text-xs text-gray-600 uppercase tracking-wider border-r border-gray-200">
+            <th className={denseHead}>
               Equipment
             </th>
-            <th className="px-3 py-1.5 text-left text-xs text-gray-600 uppercase tracking-wider border-r border-gray-200">
+            <th className={denseHead}>
               Invoice Party
             </th>
-            <th className="px-3 py-1.5 text-right text-xs text-gray-600 uppercase tracking-wider border-r border-gray-200">
+            <th className={denseHeadRight}>
               Agreed Rate
             </th>
-            <th className="px-3 py-1.5 text-left text-xs text-gray-600 uppercase tracking-wider border-r border-gray-200">
+            <th className={denseHead}>
               Supplier
             </th>
-            <th className="px-3 py-1.5 text-right text-xs text-gray-600 uppercase tracking-wider border-r border-gray-200">
+            <th className={denseHeadRight}>
               Agreed Cost
             </th>
-            <th className="px-3 py-1.5 w-10"></th>
+            <th className={`${tableClasses.denseHead} w-10`}></th>
           </tr>
         </thead>
         <tbody>
           {serviceRows.map((serviceRow, idx) => (
             <tr key={serviceRow.id} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'} hover:bg-gray-50`}>
-              <td className="px-3 py-1.5 border-r border-gray-200">
+              <td className={denseCell}>
                 <input
                   type="text"
                   value={serviceRow.equipmentId}
@@ -199,7 +204,7 @@ export function ServicesIntegrated({ equipmentId, containerId }: ServicesIntegra
                   placeholder="Enter equipment ID"
                 />
               </td>
-              <td className="px-3 py-1.5 border-r border-gray-200">
+              <td className={denseCell}>
                 <select
                   value={serviceRow.serviceType}
                   onChange={(e) => handleUpdateRow(serviceRow.id, 'serviceType', e.target.value)}
@@ -211,7 +216,7 @@ export function ServicesIntegrated({ equipmentId, containerId }: ServicesIntegra
                   ))}
                 </select>
               </td>
-              <td className="px-3 py-1.5 border-r border-gray-200">
+              <td className={denseCell}>
                 <select
                   value={serviceRow.equipment}
                   onChange={(e) => handleUpdateRow(serviceRow.id, 'equipment', e.target.value)}
@@ -223,7 +228,7 @@ export function ServicesIntegrated({ equipmentId, containerId }: ServicesIntegra
                   ))}
                 </select>
               </td>
-              <td className="px-3 py-1.5 border-r border-gray-200">
+              <td className={denseCell}>
                 <select
                   value={serviceRow.invoiceParty}
                   onChange={(e) => handleUpdateRow(serviceRow.id, 'invoiceParty', e.target.value)}
@@ -235,7 +240,7 @@ export function ServicesIntegrated({ equipmentId, containerId }: ServicesIntegra
                   ))}
                 </select>
               </td>
-              <td className="px-3 py-1.5 border-r border-gray-200">
+              <td className={denseCell}>
                 <input
                   type="number"
                   value={serviceRow.agreedRate}
@@ -245,7 +250,7 @@ export function ServicesIntegrated({ equipmentId, containerId }: ServicesIntegra
                   step="0.01"
                 />
               </td>
-              <td className="px-3 py-1.5 border-r border-gray-200">
+              <td className={denseCell}>
                 <select
                   value={serviceRow.serviceProvider}
                   onChange={(e) => handleUpdateRow(serviceRow.id, 'serviceProvider', e.target.value)}
@@ -257,7 +262,7 @@ export function ServicesIntegrated({ equipmentId, containerId }: ServicesIntegra
                   ))}
                 </select>
               </td>
-              <td className="px-3 py-1.5 border-r border-gray-200">
+              <td className={denseCell}>
                 <input
                   type="number"
                   value={serviceRow.agreedCost}
@@ -267,7 +272,7 @@ export function ServicesIntegrated({ equipmentId, containerId }: ServicesIntegra
                   step="0.01"
                 />
               </td>
-              <td className="px-3 py-1.5 text-center">
+              <td className={`${tableClasses.denseCell} text-center`}>
                 <button
                   onClick={() => handleDeleteRow(serviceRow.id)}
                   disabled={serviceRows.length === 1}

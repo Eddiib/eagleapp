@@ -324,31 +324,31 @@ export function SalesLeadsList({
         <table className="w-full">
           <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 z-10">
             <tr>
-              <th className="px-6 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Lead ID
               </th>
-              <th className="px-6 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Client Name
               </th>
-              <th className="px-6 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Sales Agent
               </th>
-              <th className="px-6 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Preferred Trades
               </th>
-              <th className="px-6 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 City
               </th>
-              <th className="px-6 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Last Contacted
               </th>
-              <th className="px-6 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Ranking
               </th>
-              <th className="px-6 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Status
               </th>
-              <th className="px-6 py-3 text-center text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -359,15 +359,15 @@ export function SalesLeadsList({
                 key={lead.id}
                 className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-4 py-3 whitespace-nowrap">
                   <div className="text-sm text-gray-900 dark:text-white">{lead.leadId}</div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">{lead.partnerCode}</div>
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-4 py-3">
                   <div className="text-sm text-gray-900 dark:text-white">{lead.clientName}</div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">{getCountryName(lead.country)}</div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-4 py-3 whitespace-nowrap">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 flex items-center justify-center text-xs">
                       {getAgentInitials(lead.assignedSalesAgent)}
@@ -375,7 +375,7 @@ export function SalesLeadsList({
                     <span className="text-sm text-gray-900 dark:text-white">{lead.assignedSalesAgent}</span>
                   </div>
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-4 py-3">
                   <div className="flex flex-wrap gap-1">
                     {lead.preferredTrades.slice(0, 3).map(trade => (
                       <Badge key={trade} className="bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 text-xs">
@@ -389,10 +389,10 @@ export function SalesLeadsList({
                     )}
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-4 py-3 whitespace-nowrap">
                   <div className="text-sm text-gray-900 dark:text-white">{lead.city}</div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-4 py-3 whitespace-nowrap">
                   <div className="text-sm text-gray-900 dark:text-white">
                     {lead.lastContactDate || '-'}
                   </div>
@@ -402,18 +402,18 @@ export function SalesLeadsList({
                     </div>
                   )}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-4 py-3 whitespace-nowrap">
                   <Badge className={`${getRankingColor(lead.leadRanking)} flex items-center gap-1 w-fit`}>
                     {getRankingIcon(lead.leadRanking)}
                     {lead.leadRanking}
                   </Badge>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-4 py-3 whitespace-nowrap">
                   <Badge className={getStatusColor(lead.partnerStatus)}>
                     {lead.partnerStatus}
                   </Badge>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-4 py-3 whitespace-nowrap">
                   <div className="flex items-center justify-center gap-1">
                     {/* Contact Button - Opens Meeting Minutes */}
                     <Button

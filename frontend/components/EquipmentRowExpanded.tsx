@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { ServicesIntegrated } from './ServicesIntegrated';
+import { tableClasses } from './ui/table';
 
 interface EquipmentRowExpandedProps {
   row: {
@@ -87,6 +88,9 @@ export function EquipmentRowExpanded({ row }: EquipmentRowExpandedProps) {
   const [length, setLength] = useState('');
   const [width, setWidth] = useState('');
   const [height, setHeight] = useState('');
+  const denseHeadBase = `${tableClasses.denseHead} text-left text-gray-400`;
+  const denseHead = `${denseHeadBase} border-r border-gray-700`;
+  const denseCell = `${tableClasses.denseCell} border-r border-gray-700`;
 
   // Auto-calculated values
   const totalVolume = length && width && height 
@@ -161,25 +165,25 @@ export function EquipmentRowExpanded({ row }: EquipmentRowExpandedProps) {
           <table className="min-w-full">
             <thead>
               <tr className="bg-gray-800">
-                <th className="px-3 py-1.5 text-left text-xs text-gray-400 uppercase tracking-wider border-r border-gray-700">
+                <th className={denseHead}>
                   Net Weight
                 </th>
-                <th className="px-3 py-1.5 text-left text-xs text-gray-400 uppercase tracking-wider border-r border-gray-700">
+                <th className={denseHead}>
                   Gross Weight
                 </th>
-                <th className="px-3 py-1.5 text-left text-xs text-gray-400 uppercase tracking-wider border-r border-gray-700">
+                <th className={denseHead}>
                   Length
                 </th>
-                <th className="px-3 py-1.5 text-left text-xs text-gray-400 uppercase tracking-wider border-r border-gray-700">
+                <th className={denseHead}>
                   Width
                 </th>
-                <th className="px-3 py-1.5 text-left text-xs text-gray-400 uppercase tracking-wider border-r border-gray-700">
+                <th className={denseHead}>
                   Height
                 </th>
-                <th className="px-3 py-1.5 text-left text-xs text-gray-400 uppercase tracking-wider border-r border-gray-700">
+                <th className={denseHead}>
                   Total Volume
                 </th>
-                <th className="px-3 py-1.5 text-left text-xs text-gray-400 uppercase tracking-wider">
+                <th className={denseHeadBase}>
                   Total Density
                 </th>
               </tr>
@@ -187,7 +191,7 @@ export function EquipmentRowExpanded({ row }: EquipmentRowExpandedProps) {
             <tbody>
               <tr className="bg-[#1E1E1E] hover:bg-gray-800">
                 {/* Net Weight */}
-                <td className="px-3 py-1.5 border-r border-gray-700">
+                <td className={denseCell}>
                   <div className="flex gap-1">
                     <input
                       type="number"
@@ -206,7 +210,7 @@ export function EquipmentRowExpanded({ row }: EquipmentRowExpandedProps) {
                 </td>
 
                 {/* Gross Weight */}
-                <td className="px-3 py-1.5 border-r border-gray-700">
+                <td className={denseCell}>
                   <div className="flex gap-1">
                     <input
                       type="number"
@@ -225,7 +229,7 @@ export function EquipmentRowExpanded({ row }: EquipmentRowExpandedProps) {
                 </td>
 
                 {/* Length */}
-                <td className="px-3 py-1.5 border-r border-gray-700">
+                <td className={denseCell}>
                   <div className="flex gap-1">
                     <input
                       type="number"
@@ -245,7 +249,7 @@ export function EquipmentRowExpanded({ row }: EquipmentRowExpandedProps) {
                 </td>
 
                 {/* Width */}
-                <td className="px-3 py-1.5 border-r border-gray-700">
+                <td className={denseCell}>
                   <div className="flex gap-1">
                     <input
                       type="number"
@@ -265,7 +269,7 @@ export function EquipmentRowExpanded({ row }: EquipmentRowExpandedProps) {
                 </td>
 
                 {/* Height */}
-                <td className="px-3 py-1.5 border-r border-gray-700">
+                <td className={denseCell}>
                   <div className="flex gap-1">
                     <input
                       type="number"
@@ -285,7 +289,7 @@ export function EquipmentRowExpanded({ row }: EquipmentRowExpandedProps) {
                 </td>
 
                 {/* Total Volume - Auto Calculated */}
-                <td className="px-3 py-1.5 border-r border-gray-700">
+                <td className={denseCell}>
                   <input
                     type="text"
                     value={totalVolume}
@@ -296,7 +300,7 @@ export function EquipmentRowExpanded({ row }: EquipmentRowExpandedProps) {
                 </td>
 
                 {/* Total Density - Auto Calculated */}
-                <td className="px-3 py-1.5">
+                <td className={tableClasses.denseCell}>
                   <input
                     type="text"
                     value={totalDensity}

@@ -394,7 +394,7 @@ test('MVP API smoke flow covers auth, master data, bookings, CRM, services, and 
     const bookingPayload = {
       booking_number: `PH7B${short}`,
       status: 'Draft',
-      mode_of_transport: 'Sea',
+      mode_of_transport: 'FCL',
       client_id: clientCreate.body.id,
       carrier_id: carrierCreate.body.id,
       origin_country: 'Serbia',
@@ -448,13 +448,13 @@ test('MVP API smoke flow covers auth, master data, bookings, CRM, services, and 
       body: {
         booking_number: `PH7X${short}`,
         client_id: clientCreate.body.id,
-        status: 'Bad Status',
+        mode_of_transport: 'Bad Mode',
         services: [],
         equipment: [],
       },
     });
     assert.equal(invalidBooking.status, 400);
-    assert.equal(invalidBooking.body.code, 'INVALID_STATUS');
+    assert.equal(invalidBooking.body.code, 'INVALID_ENUM');
 
     const bookingUpdate = await jsonRequest(`/api/bookings/${bookingCreate.body.id}`, {
       method: 'PUT',

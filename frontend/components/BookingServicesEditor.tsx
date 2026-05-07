@@ -4,6 +4,7 @@ import { servicesApi } from '../services/services';
 import { usePartners } from '../hooks/usePartners';
 import { Service } from '../types/service';
 import { BookingServiceLine } from '../services/bookings';
+import { tableClasses } from './ui/table';
 
 interface Props {
   value: BookingServiceLine[];
@@ -63,8 +64,10 @@ export function BookingServicesEditor({ value, onChange, defaultCurrency = 'USD'
     onChange(value.filter((_, i) => i !== idx));
   };
 
-  const th = 'px-3 py-2 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider';
-  const td = 'px-3 py-2 text-sm text-gray-900 dark:text-gray-100';
+  const thBase = `${tableClasses.compactHead} text-gray-500 dark:text-gray-400`;
+  const th = `${thBase} text-left`;
+  const thRight = `${thBase} text-right`;
+  const td = `${tableClasses.compactCell} text-gray-900 dark:text-gray-100`;
   const input = 'w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:bg-gray-50 dark:disabled:bg-gray-800';
 
   const total = value.reduce((n, l) => n + (l.totalPrice || 0), 0);
@@ -80,9 +83,9 @@ export function BookingServicesEditor({ value, onChange, defaultCurrency = 'USD'
             <tr>
               <th className={th}>Service</th>
               <th className={th}>Supplier</th>
-              <th className={`${th} text-right`}>Qty</th>
-              <th className={`${th} text-right`}>Unit Price</th>
-              <th className={`${th} text-right`}>Total</th>
+              <th className={thRight}>Qty</th>
+              <th className={thRight}>Unit Price</th>
+              <th className={thRight}>Total</th>
               <th className={th}>Currency</th>
               <th className={th}>Notes</th>
               <th className={`${th} w-10`}></th>

@@ -1,17 +1,82 @@
 -- Extend booking_equipment with per-row dimensions panel fields.
 -- Also creates booking_equipment_services for the per-row Services sub-tab.
+-- The column additions are intentionally idempotent because some local
+-- databases were bootstrapped from schema snapshots before this migration
+-- was recorded in schema_migrations.
 
-ALTER TABLE booking_equipment
-  ADD COLUMN net_weight       DECIMAL(12,2)  NULL,
-  ADD COLUMN net_weight_unit  VARCHAR(10)    NULL DEFAULT 'kg',
-  ADD COLUMN length_val       DECIMAL(10,3)  NULL,
-  ADD COLUMN width_val        DECIMAL(10,3)  NULL,
-  ADD COLUMN height_val       DECIMAL(10,3)  NULL,
-  ADD COLUMN dimension_unit   VARCHAR(10)    NULL DEFAULT 'cm',
-  ADD COLUMN total_volume     DECIMAL(12,3)  NULL,
-  ADD COLUMN total_density    DECIMAL(12,4)  NULL;
+SET @has_column = (
+  SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'booking_equipment' AND COLUMN_NAME = 'net_weight'
+);
+SET @ddl = IF(@has_column = 0, 'ALTER TABLE booking_equipment ADD COLUMN net_weight DECIMAL(12,2) NULL', 'SELECT 1');
+PREPARE stmt FROM @ddl;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
-CREATE TABLE booking_equipment_services (
+SET @has_column = (
+  SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'booking_equipment' AND COLUMN_NAME = 'net_weight_unit'
+);
+SET @ddl = IF(@has_column = 0, 'ALTER TABLE booking_equipment ADD COLUMN net_weight_unit VARCHAR(10) NULL DEFAULT ''kg''', 'SELECT 1');
+PREPARE stmt FROM @ddl;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @has_column = (
+  SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'booking_equipment' AND COLUMN_NAME = 'length_val'
+);
+SET @ddl = IF(@has_column = 0, 'ALTER TABLE booking_equipment ADD COLUMN length_val DECIMAL(10,3) NULL', 'SELECT 1');
+PREPARE stmt FROM @ddl;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @has_column = (
+  SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'booking_equipment' AND COLUMN_NAME = 'width_val'
+);
+SET @ddl = IF(@has_column = 0, 'ALTER TABLE booking_equipment ADD COLUMN width_val DECIMAL(10,3) NULL', 'SELECT 1');
+PREPARE stmt FROM @ddl;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @has_column = (
+  SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'booking_equipment' AND COLUMN_NAME = 'height_val'
+);
+SET @ddl = IF(@has_column = 0, 'ALTER TABLE booking_equipment ADD COLUMN height_val DECIMAL(10,3) NULL', 'SELECT 1');
+PREPARE stmt FROM @ddl;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @has_column = (
+  SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'booking_equipment' AND COLUMN_NAME = 'dimension_unit'
+);
+SET @ddl = IF(@has_column = 0, 'ALTER TABLE booking_equipment ADD COLUMN dimension_unit VARCHAR(10) NULL DEFAULT ''cm''', 'SELECT 1');
+PREPARE stmt FROM @ddl;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @has_column = (
+  SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'booking_equipment' AND COLUMN_NAME = 'total_volume'
+);
+SET @ddl = IF(@has_column = 0, 'ALTER TABLE booking_equipment ADD COLUMN total_volume DECIMAL(12,3) NULL', 'SELECT 1');
+PREPARE stmt FROM @ddl;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @has_column = (
+  SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'booking_equipment' AND COLUMN_NAME = 'total_density'
+);
+SET @ddl = IF(@has_column = 0, 'ALTER TABLE booking_equipment ADD COLUMN total_density DECIMAL(12,4) NULL', 'SELECT 1');
+PREPARE stmt FROM @ddl;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+CREATE TABLE IF NOT EXISTS booking_equipment_services (
   id               VARCHAR(36)    NOT NULL PRIMARY KEY,
   equipment_row_id VARCHAR(36)    NOT NULL,
   booking_id       VARCHAR(36)    NOT NULL,

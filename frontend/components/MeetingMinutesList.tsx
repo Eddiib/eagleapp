@@ -131,22 +131,22 @@ export function MeetingMinutesList({ onCreateNew, onView, onEdit, onDelete, meet
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="px-6 py-3 text-left text-xs text-gray-700 uppercase tracking-wider">Date</th>
-              <th className="px-6 py-3 text-left text-xs text-gray-700 uppercase tracking-wider">Week</th>
-              <th className="px-6 py-3 text-left text-xs text-gray-700 uppercase tracking-wider">Client</th>
-              <th className="px-6 py-3 text-left text-xs text-gray-700 uppercase tracking-wider">Contact Person</th>
-              <th className="px-6 py-3 text-left text-xs text-gray-700 uppercase tracking-wider">Type</th>
-              <th className="px-6 py-3 text-left text-xs text-gray-700 uppercase tracking-wider">Sales Person</th>
-              <th className="px-6 py-3 text-left text-xs text-gray-700 uppercase tracking-wider">Duration</th>
-              <th className="px-6 py-3 text-left text-xs text-gray-700 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs text-gray-700 uppercase tracking-wider">Next Action</th>
-              <th className="px-6 py-3 text-right text-xs text-gray-700 uppercase tracking-wider">Actions</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Week</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Client</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact Person</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Sales Person</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Duration</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Next Action</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={10} className="px-6 py-12 text-center text-gray-500">
+                <td colSpan={10} className="px-4 py-10 text-center text-gray-500">
                   No meeting minutes found. Click "New Meeting Minute" to create one.
                 </td>
               </tr>
@@ -157,28 +157,28 @@ export function MeetingMinutesList({ onCreateNew, onView, onEdit, onDelete, meet
                   : '—';
                 return (
                   <tr key={m.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                       {m.meetingDate ? new Date(m.meetingDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">W{weekNum}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{m.partnerName ?? '—'}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{m.contactPerson ?? '—'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">W{weekNum}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{m.partnerName ?? '—'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{m.contactPerson ?? '—'}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm">
                       <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs border border-blue-200">
                         {m.meetingType ?? m.contactType}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{m.salesAgent}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    <td className="px-4 py-3 text-sm text-gray-600">{m.salesAgent}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
                       {m.durationMinutes != null ? `${m.durationMinutes} min` : '—'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">{getStatusBadge(m.status)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm">{getStatusBadge(m.status)}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
                       {m.nextActionDate
                         ? new Date(m.nextActionDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                         : '—'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                    <td className="px-4 py-3 whitespace-nowrap text-right text-sm">
                       <div className="flex items-center justify-end gap-2">
                         <button onClick={() => onView(m.id)} className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="View">
                           <Eye className="w-4 h-4" />

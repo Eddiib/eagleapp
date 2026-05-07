@@ -4,6 +4,32 @@ import * as React from "react";
 
 import { cn } from "./utils";
 
+type TableDensity = "default" | "compact" | "dense";
+
+const tableDensityClasses: Record<TableDensity, { head: string; cell: string }> = {
+  default: {
+    head: "h-10 px-4 py-3 align-middle text-xs font-semibold uppercase tracking-wider whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+    cell: "px-4 py-3 align-middle text-sm whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+  },
+  compact: {
+    head: "px-3 py-2 align-middle text-xs font-semibold uppercase tracking-wider whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+    cell: "px-3 py-2 align-middle text-sm whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+  },
+  dense: {
+    head: "px-3 py-1.5 align-middle text-xs font-semibold uppercase tracking-wider whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+    cell: "px-2 py-1.5 align-middle text-sm whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+  },
+};
+
+const tableClasses = {
+  head: tableDensityClasses.default.head,
+  cell: tableDensityClasses.default.cell,
+  compactHead: tableDensityClasses.compact.head,
+  compactCell: tableDensityClasses.compact.cell,
+  denseHead: tableDensityClasses.dense.head,
+  denseCell: tableDensityClasses.dense.cell,
+};
+
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
     <div
@@ -65,12 +91,17 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
   );
 }
 
-function TableHead({ className, ...props }: React.ComponentProps<"th">) {
+type TableHeadProps = React.ComponentProps<"th"> & {
+  density?: TableDensity;
+};
+
+function TableHead({ className, density = "default", ...props }: TableHeadProps) {
   return (
     <th
       data-slot="table-head"
       className={cn(
-        "text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        tableDensityClasses[density].head,
+        "text-left text-muted-foreground",
         className,
       )}
       {...props}
@@ -78,12 +109,16 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
   );
 }
 
-function TableCell({ className, ...props }: React.ComponentProps<"td">) {
+type TableCellProps = React.ComponentProps<"td"> & {
+  density?: TableDensity;
+};
+
+function TableCell({ className, density = "default", ...props }: TableCellProps) {
   return (
     <td
       data-slot="table-cell"
       className={cn(
-        "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        tableDensityClasses[density].cell,
         className,
       )}
       {...props}
@@ -113,4 +148,5 @@ export {
   TableRow,
   TableCell,
   TableCaption,
+  tableClasses,
 };

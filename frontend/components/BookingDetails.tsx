@@ -3,6 +3,7 @@ import { Download, Filter, Search, X, RefreshCw } from 'lucide-react';
 import { bookingsApi, Booking } from '../services/bookings';
 
 interface BookingDetailRow {
+  bookingId: string;
   bookingNumber: string;
   clientName: string;
   carrierName: string;
@@ -30,7 +31,7 @@ type ColumnKey =
   | 'quantity' | 'unitPrice' | 'totalPrice' | 'currency' | 'notes';
 
 interface BookingDetailsProps {
-  onNavigateToBooking?: (bookingNumber: string) => void;
+  onNavigateToBooking?: (bookingId: string) => void;
 }
 
 function summarizeEquipment(b: Booking): string {
@@ -44,6 +45,7 @@ function buildRows(bookings: Booking[]): BookingDetailRow[] {
   const rows: BookingDetailRow[] = [];
   for (const b of bookings) {
     const base = {
+      bookingId: b.id,
       bookingNumber: b.bookingNumber,
       clientName: b.clientName || '',
       carrierName: b.carrierName || '',
@@ -184,8 +186,8 @@ export function BookingDetails({ onNavigateToBooking }: BookingDetailsProps) {
     setColumnFilters(prev => { const n = { ...prev }; delete n[columnKey]; return n; });
   const clearAllFilters = () => setColumnFilters({});
 
-  const handleBookingClick = (bookingNumber: string) => {
-    if (onNavigateToBooking) onNavigateToBooking(bookingNumber);
+  const handleBookingClick = (bookingId: string) => {
+    if (onNavigateToBooking) onNavigateToBooking(bookingId);
   };
 
   const FilterDropdown = ({ columnKey, label }: { columnKey: ColumnKey; label: string }) => {
@@ -380,7 +382,7 @@ export function BookingDetails({ onNavigateToBooking }: BookingDetailsProps) {
                     className="px-3 py-2 text-sm border-r border-gray-200 dark:border-gray-700"
                   >
                     <button
-                      onClick={() => handleBookingClick(row.bookingNumber)}
+                      onClick={() => handleBookingClick(row.bookingId)}
                       className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
                     >
                       {row.bookingNumber}

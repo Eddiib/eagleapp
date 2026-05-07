@@ -10,7 +10,7 @@ const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
 const { asyncHandler, AppError } = require('../middleware/errorHandler');
-const { requireRole } = require('../middleware/auth');
+const { requirePermission } = require('../middleware/auth');
 const { requireString, requireNumber } = require('../middleware/validate');
 
 const LOGO_DIR = path.join(__dirname, '..', '..', 'uploads', 'company');
@@ -75,7 +75,7 @@ router.get('/logo', asyncHandler(async (_req, res) => {
   fs.createReadStream(abs).pipe(res);
 }));
 
-router.put('/', requireRole('admin'), asyncHandler(async (req, res) => {
+router.put('/', requirePermission('edit:company-settings'), asyncHandler(async (req, res) => {
   const body = req.body || {};
 
   if (body.email !== undefined && body.email !== null && String(body.email).trim()) {
@@ -116,7 +116,7 @@ router.put('/', requireRole('admin'), asyncHandler(async (req, res) => {
 }));
 
 // POST /logo — multipart upload (field name "logo"). Replaces existing logo.
-router.post('/logo', requireRole('admin'), upload.single('logo'), asyncHandler(async (req, res) => {
+router.post('/logo', requirePermission('edit:company-settings'), upload.single('logo'), asyncHandler(async (req, res) => {
   if (!req.file) throw new AppError(400, 'No file uploaded (expected field "logo")', 'NO_FILE');
 
   const existing = await loadSettings();
@@ -137,7 +137,7 @@ router.post('/logo', requireRole('admin'), upload.single('logo'), asyncHandler(a
   res.status(201).json(publicShape(await loadSettings()));
 }));
 
-router.delete('/logo', requireRole('admin'), asyncHandler(async (_req, res) => {
+router.delete('/logo', requirePermission('edit:company-settings'), asyncHandler(async (_req, res) => {
   const existing = await loadSettings();
   if (!existing?.logo_storage_path) throw new AppError(404, 'No logo to delete', 'NO_LOGO');
 

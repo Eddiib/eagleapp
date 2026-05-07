@@ -6,6 +6,7 @@ import { EquipmentType } from '../types/equipment';
 import { Service } from '../types/service';
 import { BookingEquipmentLine, EquipmentServiceLine } from '../services/bookings';
 import { usePartners } from '../hooks/usePartners';
+import { tableClasses } from './ui/table';
 
 interface Props {
   value: BookingEquipmentLine[];
@@ -264,8 +265,10 @@ function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servic
   const addService = () => onChange([...services, emptyServiceLine()]);
   const removeService = (idx: number) => onChange(services.filter((_, i) => i !== idx));
 
-  const th = 'px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider';
-  const td = 'px-2 py-1.5';
+  const thBase = `${tableClasses.denseHead} text-gray-500 dark:text-gray-400`;
+  const th = `${thBase} text-left`;
+  const thRight = `${thBase} text-right`;
+  const td = tableClasses.denseCell;
 
   return (
     <div className="p-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
@@ -276,9 +279,9 @@ function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servic
             <th className={th}>Service Type</th>
             <th className={th}>Equipment</th>
             <th className={th}>Invoice Party</th>
-            <th className={th} style={{ width: 120 }}>Agreed Rate</th>
+            <th className={thRight} style={{ width: 120 }}>Agreed Rate</th>
             <th className={th}>Supplier</th>
-            <th className={th} style={{ width: 120 }}>Agreed Cost</th>
+            <th className={thRight} style={{ width: 120 }}>Agreed Cost</th>
             <th className={`${th} w-8`}></th>
           </tr>
         </thead>
@@ -515,8 +518,10 @@ export function BookingEquipmentEditor({ value, onChange, disabled }: Props) {
   const totalVol = value.reduce((s, l) => s + (l.volumeM3 ?? 0), 0);
   const totalPkgs = value.reduce((s, l) => s + (l.packages ?? 0), 0);
 
-  const th = 'px-2 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap';
-  const td = 'px-2 py-1.5';
+  const thBase = `${tableClasses.denseHead} text-gray-500 dark:text-gray-400`;
+  const th = `${thBase} text-left`;
+  const thRight = `${thBase} text-right`;
+  const td = tableClasses.denseCell;
   const inp = (extra = '') =>
     `w-full px-1.5 py-1 text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 disabled:bg-gray-50 dark:disabled:bg-gray-700 disabled:text-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 ${extra}`;
 
@@ -548,9 +553,9 @@ export function BookingEquipmentEditor({ value, onChange, disabled }: Props) {
               <th className={th}>Final Destination</th>
               <th className={th}>ETD</th>
               <th className={th}>ETA</th>
-              <th className={`${th} text-right`}>Gross Weight (KG)</th>
-              <th className={`${th} text-right`}>Volume (M³)</th>
-              <th className={`${th} text-right`}>Packages</th>
+              <th className={thRight}>Gross Weight (KG)</th>
+              <th className={thRight}>Volume (M³)</th>
+              <th className={thRight}>Packages</th>
               <th className={th}>Commodity</th>
             </tr>
           </thead>

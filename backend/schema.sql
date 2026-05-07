@@ -392,3 +392,51 @@ CREATE TABLE IF NOT EXISTS cost_control (
   FOREIGN KEY (service_id)  REFERENCES services(id)  ON DELETE SET NULL,
   FOREIGN KEY (supplier_id) REFERENCES partners(id)  ON DELETE SET NULL
 );
+
+-- ─────────────────────────────────────────────
+-- USERS, ROLES, MODULE PERMISSIONS
+-- ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS roles (
+  role_key    VARCHAR(50)  PRIMARY KEY,
+  role_name   VARCHAR(100) NOT NULL,
+  description TEXT,
+  is_system   TINYINT(1)   NOT NULL DEFAULT 0,
+  is_active   TINYINT(1)   NOT NULL DEFAULT 1,
+  created_at  DATETIME     DEFAULT CURRENT_TIMESTAMP,
+  updated_at  DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS modules (
+  module_key  VARCHAR(80)  PRIMARY KEY,
+  module_name VARCHAR(120) NOT NULL,
+  category    VARCHAR(80)  NOT NULL,
+  sort_order  INT          NOT NULL DEFAULT 0,
+  is_active   TINYINT(1)   NOT NULL DEFAULT 1,
+  created_at  DATETIME     DEFAULT CURRENT_TIMESTAMP,
+  updated_at  DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS role_module_permissions (
+  role_key   VARCHAR(50) NOT NULL,
+  module_key VARCHAR(80) NOT NULL,
+  can_view   TINYINT(1)  NOT NULL DEFAULT 0,
+  can_edit   TINYINT(1)  NOT NULL DEFAULT 0,
+  updated_at DATETIME    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (role_key, module_key),
+  FOREIGN KEY (role_key) REFERENCES roles(role_key) ON DELETE CASCADE,
+  FOREIGN KEY (module_key) REFERENCES modules(module_key) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS users (
+  id            VARCHAR(36)  PRIMARY KEY,
+  username      VARCHAR(50)  NOT NULL UNIQUE,
+  email         VARCHAR(150) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  role          VARCHAR(50)  NOT NULL DEFAULT 'viewer',
+  employee_id   VARCHAR(36)  NULL,
+  is_active     TINYINT(1)   DEFAULT 1,
+  last_login    DATETIME     NULL,
+  created_at    DATETIME     DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE SET NULL
+);

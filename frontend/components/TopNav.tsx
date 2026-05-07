@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 
 const ROLE_LABELS: Record<string, string> = {
   admin:      'Administrator',
-  management: 'Management',
+  manager:    'Manager',
   sales:      'Sales',
   operations: 'Operations',
   accounting: 'Accounting',
@@ -75,7 +75,7 @@ export function TopNav({ onToggleDarkMode, darkMode = false }: TopNavProps) {
                     {user?.display_name ?? user?.username}
                   </div>
                   <div className="text-xs text-gray-400 leading-tight">
-                    {ROLE_LABELS[user?.role ?? ''] ?? user?.role}
+                    {user?.role_name ?? ROLE_LABELS[user?.role ?? ''] ?? user?.role}
                   </div>
                 </div>
                 <ChevronDown className="w-4 h-4 text-gray-400" />
@@ -93,7 +93,7 @@ export function TopNav({ onToggleDarkMode, darkMode = false }: TopNavProps) {
                       <div className="flex items-center gap-1 mt-1">
                         <Shield className="w-3 h-3 text-blue-500" />
                         <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
-                          {ROLE_LABELS[user?.role ?? ''] ?? user?.role}
+                          {user?.role_name ?? ROLE_LABELS[user?.role ?? ''] ?? user?.role}
                         </span>
                       </div>
                     </div>

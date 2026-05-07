@@ -77,22 +77,29 @@ test('booking service keeps sequential number preview and full edit hydration su
   assert.match(bookingsApiSource, /cargoNature: b\.cargoNature/);
 });
 
-test('staged modules are explicit and no longer rely on placeholder navigation alerts', () => {
+test('released modules stay live and remaining staged handoffs are explicit', () => {
   const pricingDepartment = read('components/pricing/PricingDepartment.tsx');
+  const meetingMinutes = read('components/MeetingMinutes.tsx');
   const salesLeadsList = read('components/SalesLeadsList.tsx');
   const salesLeadDetail = read('components/SalesLeadDetail.tsx');
   const appSource = read('App.tsx');
 
-  assert.match(pricingDepartment, /Phase 6 staged/);
+  assert.match(pricingDepartment, /<AvailableLoads \/>/);
+  assert.match(pricingDepartment, /<BuyRatesContracts \/>/);
+  assert.match(pricingDepartment, /<PricingModels \/>/);
+  assert.match(pricingDepartment, /<SupplierDirectory \/>/);
   assert.doesNotMatch(pricingDepartment, /alert\(/);
   assert.doesNotMatch(pricingDepartment, /confirm\(/);
+
+  assert.match(meetingMinutes, /salesLeadsApi\.getAllMinutes/);
+  assert.match(meetingMinutes, /<MeetingMinutesForm/);
 
   assert.match(salesLeadsList, /Lead-to-quotation conversion/);
   assert.match(salesLeadDetail, /Lead-to-quotation conversion/);
   assert.doesNotMatch(salesLeadsList, /This would navigate/);
   assert.doesNotMatch(salesLeadDetail, /This would navigate/);
 
-  assert.match(appSource, /The standalone Meeting Minutes page is staged for release readiness/);
+  assert.match(appSource, /<MeetingMinutes \/>/);
 });
 
 test('employee overlay uses live persistence instead of placeholder callbacks', () => {

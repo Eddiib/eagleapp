@@ -9,9 +9,9 @@ export type { Booking };
 
 interface BookingListProps {
   onViewBooking: (booking: Booking) => void;
-  onEditBooking: (booking: Booking) => void;
-  onDeleteBooking: (bookingId: string) => void;
-  onNewBooking: () => void;
+  onEditBooking?: (booking: Booking) => void;
+  onDeleteBooking?: (bookingId: string) => void;
+  onNewBooking?: () => void;
 }
 
 export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onNewBooking }: BookingListProps) {
@@ -58,7 +58,7 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
     try {
       await bookingsApi.delete(bookingId);
       setBookings(prev => prev.filter(b => b.id !== bookingId));
-      onDeleteBooking(bookingId);
+      onDeleteBooking?.(bookingId);
     } catch (err: any) {
       alert(`Delete failed: ${err.message}`);
     } finally {
@@ -124,13 +124,15 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
             >
               <RefreshCw className="w-4 h-4" />
             </button>
-            <button
-              onClick={onNewBooking}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              New Booking
-            </button>
+            {onNewBooking && (
+              <button
+                onClick={onNewBooking}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                New Booking
+              </button>
+            )}
           </div>
         </div>
 
@@ -191,17 +193,17 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                 </th>
-                <th className="px-4 py-3 text-left text-sm text-gray-600 dark:text-gray-300">Booking #</th>
-                <th className="px-4 py-3 text-left text-sm text-gray-600 dark:text-gray-300">Client</th>
-                <th className="px-4 py-3 text-left text-sm text-gray-600 dark:text-gray-300">Route</th>
-                <th className="px-4 py-3 text-left text-sm text-gray-600 dark:text-gray-300">Service</th>
-                <th className="px-4 py-3 text-left text-sm text-gray-600 dark:text-gray-300">Status</th>
-                <th className="px-4 py-3 text-left text-sm text-gray-600 dark:text-gray-300">Booking Date</th>
-                <th className="px-4 py-3 text-left text-sm text-gray-600 dark:text-gray-300">ETD</th>
-                <th className="px-4 py-3 text-left text-sm text-gray-600 dark:text-gray-300">ETA</th>
-                <th className="px-4 py-3 text-left text-sm text-gray-600 dark:text-gray-300">Containers</th>
-                <th className="px-4 py-3 text-left text-sm text-gray-600 dark:text-gray-300">Created By</th>
-                <th className="px-4 py-3 text-right text-sm text-gray-600 dark:text-gray-300">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Booking #</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Client</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Route</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Service</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Booking Date</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ETD</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ETA</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Containers</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Created By</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -281,26 +283,30 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
                           >
                             <Eye className="w-4 h-4" />
                           </button>
-                          <button
-                            onClick={() => onEditBooking(booking)}
-                            className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 rounded transition-colors"
-                            title="Edit"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(booking.id)}
-                            disabled={deletingId === booking.id}
-                            className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 rounded transition-colors disabled:opacity-50"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {onEditBooking && (
+                            <button
+                              onClick={() => onEditBooking(booking)}
+                              className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 rounded transition-colors"
+                              title="Edit"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                          )}
+                          {onDeleteBooking && (
+                            <button
+                              onClick={() => handleDelete(booking.id)}
+                              disabled={deletingId === booking.id}
+                              className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 rounded transition-colors disabled:opacity-50"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
                     {expandedBookingId === booking.id && (
-                      <BookingQuickView booking={booking} onEdit={onEditBooking} />
+                      <BookingQuickView booking={booking} onEdit={onEditBooking || onViewBooking} />
                     )}
                   </>
                 ))

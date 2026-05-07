@@ -430,14 +430,16 @@ export function Dashboard({ onNewBooking, onViewAllBookings, onViewBooking }: Da
             </p>
           </div>
           <div className="flex gap-3">
-            <Button 
-              variant="outline" 
-              onClick={onViewAllBookings}
-              className="dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700"
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              View All Bookings
-            </Button>
+            {onViewAllBookings && (
+              <Button
+                variant="outline"
+                onClick={onViewAllBookings}
+                className="dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                View All Bookings
+              </Button>
+            )}
             <Button 
               variant="outline"
               className="dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700"
@@ -445,13 +447,15 @@ export function Dashboard({ onNewBooking, onViewAllBookings, onViewBooking }: Da
               <Download className="w-4 h-4 mr-2" />
               Export Dashboard
             </Button>
-            <Button 
-              onClick={onNewBooking}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              New Booking
-            </Button>
+            {onNewBooking && (
+              <Button
+                onClick={onNewBooking}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                New Booking
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -754,15 +758,15 @@ export function Dashboard({ onNewBooking, onViewAllBookings, onViewBooking }: Da
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="text-left py-3 px-4 text-sm text-gray-700 dark:text-gray-300">Booking Ref</th>
-                  <th className="text-left py-3 px-4 text-sm text-gray-700 dark:text-gray-300">Client</th>
-                  <th className="text-left py-3 px-4 text-sm text-gray-700 dark:text-gray-300">Mode</th>
-                  <th className="text-left py-3 px-4 text-sm text-gray-700 dark:text-gray-300">Service ID</th>
-                  <th className="text-left py-3 px-4 text-sm text-gray-700 dark:text-gray-300">ETD / ETA</th>
-                  <th className="text-left py-3 px-4 text-sm text-gray-700 dark:text-gray-300">Status</th>
-                  <th className="text-left py-3 px-4 text-sm text-gray-700 dark:text-gray-300">Sales Agent</th>
-                  <th className="text-right py-3 px-4 text-sm text-gray-700 dark:text-gray-300">Profit (EUR)</th>
-                  <th className="text-center py-3 px-4 text-sm text-gray-700 dark:text-gray-300">Action</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Booking Ref</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Client</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Mode</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Service ID</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ETD / ETA</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sales Agent</th>
+                  <th className="text-right py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Profit (EUR)</th>
+                  <th className="text-center py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -812,12 +816,12 @@ export function Dashboard({ onNewBooking, onViewAllBookings, onViewBooking }: Da
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200 dark:border-gray-700">
-                    <th className="text-left py-3 px-4 text-sm text-gray-700 dark:text-gray-300">Booking Ref</th>
-                    <th className="text-left py-3 px-4 text-sm text-gray-700 dark:text-gray-300">Client</th>
-                    <th className="text-left py-3 px-4 text-sm text-gray-700 dark:text-gray-300">Issues</th>
-                    <th className="text-left py-3 px-4 text-sm text-gray-700 dark:text-gray-300">Status</th>
-                    <th className="text-left py-3 px-4 text-sm text-gray-700 dark:text-gray-300">Sales Agent</th>
-                    <th className="text-center py-3 px-4 text-sm text-gray-700 dark:text-gray-300">Action</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Booking Ref</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Client</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Issues</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sales Agent</th>
+                    <th className="text-center py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -868,13 +872,13 @@ export function Dashboard({ onNewBooking, onViewAllBookings, onViewBooking }: Da
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="text-left py-3 px-4 text-sm text-gray-700 dark:text-gray-300">Booking Ref</th>
-                  <th className="text-left py-3 px-4 text-sm text-gray-700 dark:text-gray-300">Origin</th>
-                  <th className="text-left py-3 px-4 text-sm text-gray-700 dark:text-gray-300">Destination</th>
-                  <th className="text-left py-3 px-4 text-sm text-gray-700 dark:text-gray-300">Vessel/Flight</th>
-                  <th className="text-left py-3 px-4 text-sm text-gray-700 dark:text-gray-300">ETA</th>
-                  <th className="text-left py-3 px-4 text-sm text-gray-700 dark:text-gray-300">Status</th>
-                  <th className="text-center py-3 px-4 text-sm text-gray-700 dark:text-gray-300">Action</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Booking Ref</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Origin</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Destination</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Vessel/Flight</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ETA</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                  <th className="text-center py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
               <tbody>

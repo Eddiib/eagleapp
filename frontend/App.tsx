@@ -14,7 +14,7 @@ import { CostControlForm } from './components/CostControlForm';
 import { CostEntry } from './services/costControl';
 import { InvoiceList } from './components/InvoiceList';
 import { InvoiceForm } from './components/InvoiceForm';
-import { Invoice } from './services/invoices';
+import { Invoice, invoicesApi } from './services/invoices';
 import { Receivables } from './components/Receivables';
 import { Payables } from './components/Payables';
 import { UserManagement } from './components/UserManagement';
@@ -49,6 +49,7 @@ import { useAuth } from './context/AuthContext';
 import { useConfirm } from './context/ConfirmDialog';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { moduleIdToPath, pathToModuleId } from './router';
+import { modulePermission } from './lib/modulePermissions';
 import { toast } from 'sonner';
 import { useCallback, useState, useEffect } from 'react';
 
@@ -92,8 +93,19 @@ function applyLeadDataToDraft(draft: Booking, leadData: any): Booking {
   };
 }
 
+function AccessDenied() {
+  return (
+    <div className="p-6">
+      <div className="rounded-lg border border-red-200 bg-red-50 p-8 text-center text-red-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200">
+        <h2 className="mb-2">Access denied</h2>
+        <p className="text-sm">Your role does not include permission for this module.</p>
+      </div>
+    </div>
+  );
+}
+
 function AppShell() {
-  const { user } = useAuth();
+  const { user, can } = useAuth();
   const confirmDialog = useConfirm();
   const navigate = useNavigate();
   const location = useLocation();
@@ -146,13 +158,34 @@ function AppShell() {
     return saved ? JSON.parse(saved) : false;
   });
 
-  const incompleteInvoicesCount = 2;
+  const [incompleteInvoicesCount, setIncompleteInvoicesCount] = useState(0);
 
   useEffect(() => {
     if (darkMode) document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
     localStorage.setItem('eagleLogisticsDarkMode', JSON.stringify(darkMode));
   }, [darkMode]);
+
+  const canViewInvoicing = can(modulePermission('invoicing'));
+
+  useEffect(() => {
+    if (!canViewInvoicing) {
+      setIncompleteInvoicesCount(0);
+      return;
+    }
+    let cancelled = false;
+    invoicesApi.getAll()
+      .then((invoices) => {
+        if (cancelled) return;
+        setIncompleteInvoicesCount(
+          invoices.filter((invoice) => !['Paid', 'Cancelled', 'Void'].includes(invoice.status)).length,
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setIncompleteInvoicesCount(0);
+      });
+    return () => { cancelled = true; };
+  }, [canViewInvoicing, invoiceListKey]);
 
   const toggleDarkMode = () => setDarkMode(!darkMode);
 
@@ -184,6 +217,9 @@ function AppShell() {
   const isPricingModule = ['available-loads', 'buy-rates-contracts', 'pricing-models', 'supplier-directory'].includes(activeModule);
   const isExchangeRatesModule = activeModule === 'forex-management';
   const isPnLModule = activeModule === 'profit-loss';
+  const hasActiveModuleAccess = can(modulePermission(activeModule));
+  const canViewBookings = can(modulePermission('booking-sheet'));
+  const canEditBookings = can(modulePermission('booking-sheet', 'edit'));
 
   const stagedModuleTitles: Record<string, string> = {
     'receivables': 'Receivables',
@@ -590,11 +626,14 @@ function AppShell() {
       <div className="ml-60">
         <TopNav onToggleDarkMode={toggleDarkMode} darkMode={darkMode} />
 
-        {isDashboardModule ? (
+        {!hasActiveModuleAccess ? (
+          <AccessDenied />
+        ) : isDashboardModule ? (
           <Dashboard
-            onNewBooking={handleNewBooking}
-            onViewAllBookings={() => { navigate(moduleIdToPath('booking-sheet')); setBookingView('list'); }}
+            onNewBooking={canEditBookings ? handleNewBooking : undefined}
+            onViewAllBookings={canViewBookings ? () => { navigate(moduleIdToPath('booking-sheet')); setBookingView('list'); } : undefined}
             onViewBooking={async (booking: any) => {
+              if (!canViewBookings) return;
               if (!booking?.id) return;
               try {
                 const full = await bookingsApi.getById(booking.id);
@@ -615,7 +654,7 @@ function AppShell() {
           </div>
         ) : isSalesLeadsModule ? (
           <div className="p-6">
-            <SalesLeads onCreateBookingFromLead={handleCreateBookingFromLead} />
+            <SalesLeads onCreateBookingFromLead={canEditBookings ? handleCreateBookingFromLead : undefined} />
           </div>
         ) : isPartnersModule ? (
           <div className="p-6">
@@ -639,7 +678,7 @@ function AppShell() {
           </div>
         ) : isQuotationDeskModule ? (
           <div className="p-6">
-            <QuotationDeskManager onConvertToBooking={handleConvertQuotationToBooking} />
+            <QuotationDeskManager onConvertToBooking={canEditBookings ? handleConvertQuotationToBooking : undefined} />
           </div>
         ) : isPricingModule ? (
           <div className="p-6">
@@ -684,11 +723,19 @@ function AppShell() {
         ) : isBookingDetailsModule ? (
           <div className="p-6">
             <BookingDetails
-              onNavigateToBooking={(bookingNumber) => {
-                navigate(moduleIdToPath('booking-sheet'));
-                setBookingView('detail');
-                setBookingMode('view');
-                console.log('Navigating to booking:', bookingNumber);
+              onNavigateToBooking={async (bookingId) => {
+                try {
+                  const full = await bookingsApi.getById(bookingId);
+                  navigate(moduleIdToPath('booking-sheet'));
+                  setBookingDraft(full);
+                  setEditServices(full.services);
+                  setEditEquipment(full.equipment);
+                  setBookingDirty(false);
+                  setBookingMode('view');
+                  setBookingView('detail');
+                } catch (err: any) {
+                  toast.error(err?.message || 'Failed to load booking');
+                }
               }}
             />
           </div>
@@ -697,9 +744,9 @@ function AppShell() {
             <BookingList
               key={bookingListKey}
               onViewBooking={handleViewBooking}
-              onEditBooking={handleEditBooking}
-              onDeleteBooking={handleDeleteBooking}
-              onNewBooking={handleNewBooking}
+              onEditBooking={canEditBookings ? handleEditBooking : undefined}
+              onDeleteBooking={canEditBookings ? handleDeleteBooking : undefined}
+              onNewBooking={canEditBookings ? handleNewBooking : undefined}
             />
           ) : (
             renderBookingEditorShell(bookingMode)

@@ -1,4 +1,5 @@
 import { BookingEquipmentLine } from '../services/bookings';
+import { tableClasses } from './ui/table';
 
 interface Props {
   equipment: BookingEquipmentLine[];
@@ -10,8 +11,10 @@ export function EquipmentServicesView({ equipment }: Props) {
     (eq.equipmentServices || []).map(svc => ({ eq, eqIdx, svc }))
   );
 
-  const th = 'px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider';
-  const td = 'px-4 py-3 text-sm text-gray-900 dark:text-gray-100';
+  const thBase = `${tableClasses.head} text-gray-500 dark:text-gray-400`;
+  const th = `${thBase} text-left`;
+  const thRight = `${thBase} text-right`;
+  const td = `${tableClasses.cell} text-gray-900 dark:text-gray-100`;
 
   if (rows.length === 0) {
     return (
@@ -32,9 +35,9 @@ export function EquipmentServicesView({ equipment }: Props) {
             <th className={th}>Container</th>
             <th className={th}>Service</th>
             <th className={th}>Invoice Party</th>
-            <th className={`${th} text-right`}>Agreed Rate</th>
+            <th className={thRight}>Agreed Rate</th>
             <th className={th}>Supplier</th>
-            <th className={`${th} text-right`}>Agreed Cost</th>
+            <th className={thRight}>Agreed Cost</th>
           </tr>
         </thead>
         <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-100 dark:divide-gray-800">

@@ -33,6 +33,8 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useCompanySettings } from '../context/CompanySettingsContext';
+import { useAuth } from '../context/AuthContext';
+import { modulePermission } from '../lib/modulePermissions';
 
 interface SubMenuItem {
   id: string;
@@ -146,10 +148,23 @@ interface LeftSidebarProps {
 
 export function LeftSidebar({ activeModule = 'main-dashboard', onModuleChange, incompleteInvoicesCount = 0 }: LeftSidebarProps) {
   const { settings, logoUrl } = useCompanySettings();
+  const { can } = useAuth();
+
+  const visibleMenuItems = useMemo(() => {
+    return menuItems
+      .map((item) => {
+        if (!item.subItems?.length) {
+          return can(modulePermission(item.id)) ? item : null;
+        }
+        const subItems = item.subItems.filter((subItem) => can(modulePermission(subItem.id)));
+        return subItems.length ? { ...item, subItems } : null;
+      })
+      .filter((item): item is MenuItem => Boolean(item));
+  }, [can]);
 
   const initialExpanded = useMemo(() => {
     const result: Record<string, boolean> = {};
-    for (const item of menuItems) {
+    for (const item of visibleMenuItems) {
       if (item.subItems?.some((s) => s.id === activeModule)) {
         result[item.id] = true;
       }
@@ -196,7 +211,7 @@ export function LeftSidebar({ activeModule = 'main-dashboard', onModuleChange, i
       {/* Navigation Menu */}
       <nav className="flex-1 px-3 py-4 overflow-y-auto">
         <ul className="space-y-1">
-          {menuItems.map((item) => {
+          {visibleMenuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeModule === item.id;
             const hasSubItems = item.subItems && item.subItems.length > 0;

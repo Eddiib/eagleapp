@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { verifyToken, requireRole } = require('./middleware/auth');
+const { verifyToken, requireModuleAccess } = require('./middleware/auth');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 
 const authRouter       = require('./routes/auth');
@@ -23,13 +23,14 @@ const brandingRouter          = require('./routes/branding');
 
 const PORT = Number(process.env.PORT) || 3001;
 
-// Any authenticated user can read (GET). Writes are restricted to the listed roles.
-// admin and manager always have write access implicitly via inclusion in each list.
-function requireWriteRole(...roles) {
-  return (req, res, next) => {
-    if (req.method === 'GET') return next();
-    return requireRole(...roles)(req, res, next);
-  };
+function salesLeadsModule(req) {
+  return req.path.includes('/minutes') ? 'meeting-minutes' : 'sales-leads';
+}
+
+function pricingModule(req) {
+  if (req.path.startsWith('/contracts')) return 'buy-rates-contracts';
+  if (req.path.startsWith('/models')) return 'pricing-models';
+  return 'available-loads';
 }
 
 function createApp() {
@@ -43,21 +44,21 @@ function createApp() {
   app.use('/api/auth', authRouter);
   app.use('/api/branding', brandingRouter);
 
-  // Protected routes — require valid JWT. Writes additionally require matching role.
-  app.use('/api/partners',     verifyToken, requireWriteRole('admin','manager','sales'),            partnersRouter);
-  app.use('/api/services',     verifyToken, requireWriteRole('admin','manager'),                    servicesRouter);
-  app.use('/api/bookings/:bookingId/attachments', verifyToken, requireWriteRole('admin','manager','sales','operations'), bookingAttachmentsRouter);
-  app.use('/api/bookings',     verifyToken, requireWriteRole('admin','manager','sales','operations'), bookingsRouter);
-  app.use('/api/quotations',   verifyToken, requireWriteRole('admin','manager','sales'),            quotationsRouter);
-  app.use('/api/sales-leads',  verifyToken, requireWriteRole('admin','manager','sales'),            salesLeadsRouter);
-  app.use('/api/employees',    verifyToken, requireWriteRole('admin','manager'),                    employeesRouter);
-  app.use('/api/equipment',    verifyToken, requireWriteRole('admin','manager','operations'),       equipmentRouter);
-  app.use('/api/cost-control', verifyToken, requireWriteRole('admin','manager','operations','accounting'), costControlRouter);
-  app.use('/api/invoices',     verifyToken, requireWriteRole('admin','manager','accounting'),       invoicesRouter);
-  app.use('/api/pricing',      verifyToken, requireWriteRole('admin','manager','sales','operations'), pricingRouter);
-  app.use('/api/exchange-rates', verifyToken, requireWriteRole('admin','manager','accounting'),       exchangeRatesRouter);
-  app.use('/api/audit-log',      verifyToken, requireRole('admin'),                                    auditLogRouter);
-  app.use('/api/company-settings', verifyToken,                                                          companySettingsRouter);
+  // Protected routes — require valid JWT plus module permissions.
+  app.use('/api/partners',     verifyToken, requireModuleAccess('partners-management'), partnersRouter);
+  app.use('/api/services',     verifyToken, requireModuleAccess('service-management'),  servicesRouter);
+  app.use('/api/bookings/:bookingId/attachments', verifyToken, requireModuleAccess('booking-sheet'), bookingAttachmentsRouter);
+  app.use('/api/bookings',     verifyToken, requireModuleAccess('booking-sheet'),       bookingsRouter);
+  app.use('/api/quotations',   verifyToken, requireModuleAccess('quotation-desk'),      quotationsRouter);
+  app.use('/api/sales-leads',  verifyToken, requireModuleAccess(salesLeadsModule),      salesLeadsRouter);
+  app.use('/api/employees',    verifyToken, requireModuleAccess('employees'),           employeesRouter);
+  app.use('/api/equipment',    verifyToken, requireModuleAccess('equipment'),           equipmentRouter);
+  app.use('/api/cost-control', verifyToken, requireModuleAccess('cost-control'),        costControlRouter);
+  app.use('/api/invoices',     verifyToken, requireModuleAccess('invoicing'),           invoicesRouter);
+  app.use('/api/pricing',      verifyToken, requireModuleAccess(pricingModule),         pricingRouter);
+  app.use('/api/exchange-rates', verifyToken, requireModuleAccess('forex-management'),  exchangeRatesRouter);
+  app.use('/api/audit-log',      verifyToken, requireModuleAccess('audit-log'),         auditLogRouter);
+  app.use('/api/company-settings', verifyToken, companySettingsRouter);
 
   // 404 + central error handler (must be last)
   app.use('/api', notFoundHandler);
@@ -74,8 +75,9 @@ function startServer(port = PORT) {
   return { app, server };
 }
 
+let runningServer;
 if (require.main === module) {
-  startServer();
+  runningServer = startServer();
 }
 
 module.exports = { createApp, startServer };

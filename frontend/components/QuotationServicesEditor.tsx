@@ -4,6 +4,7 @@ import { servicesApi } from '../services/services';
 import { usePartners } from '../hooks/usePartners';
 import { Service } from '../types/service';
 import { QuotationServiceLine } from '../services/quotations';
+import { tableClasses } from './ui/table';
 
 interface Props {
   value: QuotationServiceLine[];
@@ -64,8 +65,10 @@ export function QuotationServicesEditor({ value, onChange, defaultCurrency = 'US
   const totalCost = value.reduce((sum, line) => sum + ((line.quantity || 0) * (line.costPrice || 0)), 0);
   const totalSell = value.reduce((sum, line) => sum + ((line.quantity || 0) * (line.sellPrice || 0)), 0);
 
-  const th = 'px-3 py-2 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider';
-  const td = 'px-3 py-2 text-sm text-gray-900 dark:text-gray-100';
+  const thBase = `${tableClasses.compactHead} text-gray-500 dark:text-gray-400`;
+  const th = `${thBase} text-left`;
+  const thRight = `${thBase} text-right`;
+  const td = `${tableClasses.compactCell} text-gray-900 dark:text-gray-100`;
   const input = 'w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:bg-gray-50 dark:disabled:bg-gray-800';
 
   return (
@@ -80,9 +83,9 @@ export function QuotationServicesEditor({ value, onChange, defaultCurrency = 'US
             <tr>
               <th className={th}>Service</th>
               <th className={th}>Supplier</th>
-              <th className={`${th} text-right`}>Qty</th>
-              <th className={`${th} text-right`}>Cost</th>
-              <th className={`${th} text-right`}>Sell</th>
+              <th className={thRight}>Qty</th>
+              <th className={thRight}>Cost</th>
+              <th className={thRight}>Sell</th>
               <th className={th}>Currency</th>
               <th className={th}>Notes</th>
               <th className={`${th} w-10`}></th>
