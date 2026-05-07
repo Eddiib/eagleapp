@@ -4,6 +4,7 @@ import { pricingApi, PricingContract } from '../../services/pricing';
 import { usePartners } from '../../hooks/usePartners';
 import { TransportMode } from './types';
 import { useConfirm } from '../../context/ConfirmDialog';
+import { useCompanySettings } from '../../context/CompanySettingsContext';
 
 const MODES: TransportMode[] = ['FCL','LCL','FTL','LTL','AIR','PARCEL','RAIL','BULK','SPECIAL'];
 
@@ -17,6 +18,8 @@ interface ContractFormProps {
 
 function ContractForm({ initial, onSaved, onCancel }: ContractFormProps) {
   const { partners } = usePartners();
+  const { baseCurrency } = useCompanySettings();
+  const currencyOptions = Array.from(new Set([baseCurrency, 'EUR', 'USD', 'GBP', 'AED'].filter(Boolean)));
   const suppliers = partners.filter(p => p.status === 'Active' &&
     !['Client','Buyer'].includes(p.partnerType));
 
@@ -32,7 +35,7 @@ function ContractForm({ initial, onSaved, onCancel }: ContractFormProps) {
   const [serviceLevel, setServiceLevel] = useState(initial?.serviceLevel ?? '');
   const [baseRate, setBaseRate] = useState(initial?.baseRate ?? '');
   const [totalRate, setTotalRate] = useState(initial?.totalRate ?? '');
-  const [currency, setCurrency] = useState(initial?.currency ?? 'USD');
+  const [currency, setCurrency] = useState(initial?.currency ?? baseCurrency);
   const [validFrom, setValidFrom] = useState(initial?.validFrom ?? '');
   const [validTo, setValidTo] = useState(initial?.validTo ?? '');
   const [transitDays, setTransitDays] = useState(initial?.transitDays ?? '');
@@ -178,7 +181,7 @@ function ContractForm({ initial, onSaved, onCancel }: ContractFormProps) {
             <label className="block text-sm text-gray-700 mb-1">Currency</label>
             <select value={currency} onChange={e => setCurrency(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-              {['USD','EUR','GBP','AED'].map(c => <option key={c} value={c}>{c}</option>)}
+              {currencyOptions.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
           <div>

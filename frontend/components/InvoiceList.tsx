@@ -6,6 +6,7 @@ import {
 import { Invoice, InvoiceStatus, invoicesApi } from '../services/invoices';
 import { useConfirm } from '../context/ConfirmDialog';
 import { PaginationBar } from './ui/PaginationBar';
+import { useCompanySettings } from '../context/CompanySettingsContext';
 
 interface InvoiceListProps {
   onNew: () => void;
@@ -34,6 +35,7 @@ function StatusIcon({ status }: { status: InvoiceStatus }) {
 
 export function InvoiceList({ onNew, onEdit, listKey }: InvoiceListProps) {
   const confirmDialog = useConfirm();
+  const { baseCurrency } = useCompanySettings();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -89,10 +91,10 @@ export function InvoiceList({ onNew, onEdit, listKey }: InvoiceListProps) {
 
   const totalOutstanding = invoices
     .filter((i) => i.status === 'Sent' || i.status === 'Overdue')
-    .reduce((s, i) => s + i.balanceDue, 0);
+    .reduce((s, i) => s + (i.balanceDue * (i.exchangeRate || 1)), 0);
   const totalPaid = invoices
     .filter((i) => i.status === 'Paid')
-    .reduce((s, i) => s + i.totalAmount, 0);
+    .reduce((s, i) => s + (i.totalAmount * (i.exchangeRate || 1)), 0);
 
   if (loading) {
     return (
@@ -147,13 +149,13 @@ export function InvoiceList({ onNew, onEdit, listKey }: InvoiceListProps) {
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Outstanding</div>
           <div className="text-2xl text-orange-600 dark:text-orange-400">
-            {totalOutstanding.toLocaleString(undefined, { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}
+            {totalOutstanding.toLocaleString(undefined, { style: 'currency', currency: baseCurrency, minimumFractionDigits: 2 })}
           </div>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Total Paid</div>
           <div className="text-2xl text-green-600 dark:text-green-400">
-            {totalPaid.toLocaleString(undefined, { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}
+            {totalPaid.toLocaleString(undefined, { style: 'currency', currency: baseCurrency, minimumFractionDigits: 2 })}
           </div>
         </div>
       </div>

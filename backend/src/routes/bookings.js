@@ -5,6 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 const { asyncHandler, AppError } = require('../middleware/errorHandler');
 const { requireFields, requireUUID, requireDate, requireArray } = require('../middleware/validate');
 const { logAudit, snapshotRow } = require('../lib/audit');
+const { getDefaultCurrency } = require('../lib/companySettings');
 
 const VALID_STATUSES = ['Draft', 'Confirmed', 'In Transit', 'Delivered', 'Cancelled'];
 const VALID_MODES = ['FCL', 'LCL', 'Air', 'Road'];
@@ -333,7 +334,7 @@ async function writeShippers(conn, bookingId, shippers) {
 // from the payload are deleted. This preserves child IDs across edits so other
 // tables (e.g. cost_control rows that join booking_equipment_id) stay intact.
 
-async function reconcileBookingServices(conn, bookingId, incoming) {
+async function reconcileBookingServices(conn, bookingId, incoming, defaultCurrency) {
   const [existing] = await conn.query('SELECT id FROM booking_services WHERE booking_id = ?', [bookingId]);
   const existingIds = new Set(existing.map((r) => r.id));
   const keptIds = new Set();
@@ -345,7 +346,7 @@ async function reconcileBookingServices(conn, bookingId, incoming) {
             SET service_id=?, supplier_id=?, quantity=?, unit_price=?, total_price=?, currency=?, notes=?
           WHERE id=?`,
         [s.service_id, s.supplier_id || null, s.quantity || 1, s.unit_price || 0,
-          s.total_price || 0, s.currency || 'USD', s.notes ?? null, s.id]
+          s.total_price || 0, s.currency || defaultCurrency, s.notes ?? null, s.id]
       );
       keptIds.add(s.id);
     } else {
@@ -354,7 +355,7 @@ async function reconcileBookingServices(conn, bookingId, incoming) {
             (id, booking_id, service_id, supplier_id, quantity, unit_price, total_price, currency, notes)
           VALUES (?,?,?,?,?,?,?,?,?)`,
         [uuidv4(), bookingId, s.service_id, s.supplier_id || null, s.quantity || 1,
-          s.unit_price || 0, s.total_price || 0, s.currency || 'USD', s.notes ?? null]
+          s.unit_price || 0, s.total_price || 0, s.currency || defaultCurrency, s.notes ?? null]
       );
     }
   }
@@ -551,6 +552,8 @@ router.post('/', asyncHandler(async (req, res) => {
   const conn = await db.getConnection();
   try {
     await conn.beginTransaction();
+    const defaultCurrency = await getDefaultCurrency(conn);
+    header.currency = header.currency || defaultCurrency;
     const id = uuidv4();
 
     // Booking number race: if two POSTs collide on the unique index, fetch the
@@ -583,7 +586,7 @@ router.post('/', asyncHandler(async (req, res) => {
     }
 
     await writeShippers(conn, id, shippers);
-    await reconcileBookingServices(conn, id, services);
+    await reconcileBookingServices(conn, id, services, defaultCurrency);
     await insertBookingEquipmentForCreate(conn, id, equipment);
 
     // P1.6: if the booking was originated from a sales lead, advance that lead to Booked.
@@ -647,6 +650,8 @@ router.put('/:id', asyncHandler(async (req, res) => {
   const conn = await db.getConnection();
   try {
     await conn.beginTransaction();
+    const defaultCurrency = await getDefaultCurrency(conn);
+    header.currency = header.currency || defaultCurrency;
 
     const beforeRow = await snapshotRow(conn, 'bookings', req.params.id);
 
@@ -663,7 +668,7 @@ router.put('/:id', asyncHandler(async (req, res) => {
     }
 
     await writeShippers(conn, req.params.id, shippers);
-    await reconcileBookingServices(conn, req.params.id, services);
+    await reconcileBookingServices(conn, req.params.id, services, defaultCurrency);
     await reconcileBookingEquipment(conn, req.params.id, equipment);
 
     const afterRow = await snapshotRow(conn, 'bookings', req.params.id);

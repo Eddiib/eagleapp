@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Loader2, Save, UserPlus, X } from 'lucide-react';
 import { Employee } from './EmployeesModule';
 import { countries } from '../data/countries';
+import { useCompanySettings } from '../context/CompanySettingsContext';
 
 interface EmployeeFormProps {
   employee?: Employee;
@@ -10,7 +11,7 @@ interface EmployeeFormProps {
   mode: 'create' | 'edit';
 }
 
-function createEmptyEmployeeFormData(): Partial<Employee> {
+function createEmptyEmployeeFormData(defaultCurrency = 'EUR'): Partial<Employee> {
   return {
     firstName: '',
     surname: '',
@@ -24,13 +25,15 @@ function createEmptyEmployeeFormData(): Partial<Employee> {
     employmentType: 'Full-time',
     isManager: false,
     hasSystemAccess: false,
-    currency: 'EUR',
+    currency: defaultCurrency,
   };
 }
 
 export function EmployeeForm({ employee, onSave, onCancel, mode }: EmployeeFormProps) {
+  const { baseCurrency } = useCompanySettings();
+  const currencyOptions = Array.from(new Set([baseCurrency, 'EUR', 'USD', 'GBP', 'CHF'].filter(Boolean)));
   const [formData, setFormData] = useState<Partial<Employee>>(
-    employee || createEmptyEmployeeFormData()
+    employee || createEmptyEmployeeFormData(baseCurrency)
   );
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -38,11 +41,11 @@ export function EmployeeForm({ employee, onSave, onCancel, mode }: EmployeeFormP
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
-    setFormData(employee || createEmptyEmployeeFormData());
+    setFormData(employee || createEmptyEmployeeFormData(baseCurrency));
     setErrors({});
     setSubmitError(null);
     setSaving(false);
-  }, [employee, mode]);
+  }, [employee, mode, baseCurrency]);
 
   const handleChange = (field: keyof Employee, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -491,14 +494,13 @@ export function EmployeeForm({ employee, onSave, onCancel, mode }: EmployeeFormP
                 <div>
                   <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">Currency</label>
                   <select
-                    value={formData.currency || 'EUR'}
+                    value={formData.currency || baseCurrency}
                     onChange={(e) => handleChange('currency', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                   >
-                    <option value="EUR">EUR</option>
-                    <option value="USD">USD</option>
-                    <option value="GBP">GBP</option>
-                    <option value="CHF">CHF</option>
+                    {currencyOptions.map((currency) => (
+                      <option key={currency} value={currency}>{currency}</option>
+                    ))}
                   </select>
                 </div>
 

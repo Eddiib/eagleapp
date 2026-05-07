@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { X, Save, Calculator, Loader2 } from 'lucide-react';
 import { usePartners } from '../hooks/usePartners';
 import { bookingsApi, Booking } from '../services/bookings';
@@ -6,6 +6,7 @@ import { servicesApi } from '../services/services';
 import { Service } from '../types/service';
 import { CostEntry, CostEntryPayload, CostEntryStatus, costControlApi } from '../services/costControl';
 import { useAuth } from '../context/AuthContext';
+import { useCompanySettings } from '../context/CompanySettingsContext';
 
 interface CostControlFormProps {
   entry?: CostEntry | null;
@@ -24,6 +25,7 @@ const inputClass = (hasError?: boolean) =>
 
 export function CostControlForm({ entry, mode, onSaved, onCancel }: CostControlFormProps) {
   const { user } = useAuth();
+  const { baseCurrency } = useCompanySettings();
   const { partners } = usePartners();
 
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -38,6 +40,10 @@ export function CostControlForm({ entry, mode, onSaved, onCancel }: CostControlF
   const suppliers = partners.filter((p) => p.status === 'Active');
 
   const today = new Date().toISOString().split('T')[0];
+  const currencyOptions = useMemo(() => {
+    const set = new Set<string>([baseCurrency, ...CURRENCIES].filter(Boolean));
+    return Array.from(set);
+  }, [baseCurrency]);
 
   const [form, setForm] = useState({
     bookingId: entry?.bookingId || '',
@@ -47,7 +53,7 @@ export function CostControlForm({ entry, mode, onSaved, onCancel }: CostControlF
     description: entry?.description || '',
     // Buying side
     amount: entry?.amount ?? 0,
-    currency: entry?.currency || 'USD',
+    currency: entry?.currency || baseCurrency,
     buyingExchangeRate: entry?.buyingExchangeRate ?? 1,
     invoiceNumber: entry?.invoiceNumber || '',
     invoiceDate: entry?.invoiceDate || today,
@@ -55,7 +61,7 @@ export function CostControlForm({ entry, mode, onSaved, onCancel }: CostControlF
     status: (entry?.status || 'Pending') as CostEntryStatus,
     // Selling side
     sellingPrice: entry?.sellingPrice ?? 0,
-    sellingCurrency: entry?.sellingCurrency || 'USD',
+    sellingCurrency: entry?.sellingCurrency || baseCurrency,
     sellingExchangeRate: entry?.sellingExchangeRate ?? 1,
     sellingInvoiceNumber: entry?.sellingInvoiceNumber || '',
     sellingInvoiceDate: entry?.sellingInvoiceDate || '',
@@ -82,10 +88,10 @@ export function CostControlForm({ entry, mode, onSaved, onCancel }: CostControlF
   };
 
   // Derived calculated values
-  const buyingEUR = form.amount * form.buyingExchangeRate;
-  const sellingEUR = form.sellingPrice * form.sellingExchangeRate;
-  const profitLoss = sellingEUR - buyingEUR;
-  const profitMargin = buyingEUR !== 0 ? (profitLoss / buyingEUR) * 100 : 0;
+  const buyingBase = form.amount * form.buyingExchangeRate;
+  const sellingBase = form.sellingPrice * form.sellingExchangeRate;
+  const profitLoss = sellingBase - buyingBase;
+  const profitMargin = buyingBase !== 0 ? (profitLoss / buyingBase) * 100 : 0;
 
   const validate = () => {
     const next: Record<string, string> = {};
@@ -304,11 +310,11 @@ export function CostControlForm({ entry, mode, onSaved, onCancel }: CostControlF
                     onChange={(e) => set('currency', e.target.value)}
                     className={inputClass()}
                   >
-                    {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                    {currencyOptions.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Exchange Rate → EUR</label>
+                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Exchange Rate → {baseCurrency}</label>
                   <input
                     type="number"
                     min="0"
@@ -320,9 +326,9 @@ export function CostControlForm({ entry, mode, onSaved, onCancel }: CostControlF
                 </div>
                 <div className="flex items-end gap-2">
                   <div className="flex-1">
-                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Cost in EUR</label>
+                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Cost in {baseCurrency}</label>
                     <input
-                      value={`€${buyingEUR.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      value={`${baseCurrency} ${buyingBase.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                       disabled
                       className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
                     />
@@ -390,11 +396,11 @@ export function CostControlForm({ entry, mode, onSaved, onCancel }: CostControlF
                     onChange={(e) => set('sellingCurrency', e.target.value)}
                     className={inputClass()}
                   >
-                    {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                    {currencyOptions.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Exchange Rate → EUR</label>
+                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Exchange Rate → {baseCurrency}</label>
                   <input
                     type="number"
                     min="0"
@@ -406,9 +412,9 @@ export function CostControlForm({ entry, mode, onSaved, onCancel }: CostControlF
                 </div>
                 <div className="flex items-end gap-2">
                   <div className="flex-1">
-                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Revenue in EUR</label>
+                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Revenue in {baseCurrency}</label>
                     <input
-                      value={`€${sellingEUR.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      value={`${baseCurrency} ${sellingBase.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                       disabled
                       className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
                     />
@@ -421,9 +427,9 @@ export function CostControlForm({ entry, mode, onSaved, onCancel }: CostControlF
             {/* P&L summary */}
             <div className="grid grid-cols-2 gap-4">
               <div className={`rounded-lg p-4 border ${profitLoss >= 0 ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'}`}>
-                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Profit / Loss (EUR)</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Profit / Loss ({baseCurrency})</div>
                 <div className={`text-2xl ${profitLoss >= 0 ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
-                  €{profitLoss.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {baseCurrency} {profitLoss.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
               </div>
               <div className={`rounded-lg p-4 border ${profitMargin >= 0 ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'}`}>

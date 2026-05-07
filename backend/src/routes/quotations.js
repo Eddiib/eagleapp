@@ -4,6 +4,7 @@ const db = require('../db');
 const { v4: uuidv4 } = require('uuid');
 const { asyncHandler, AppError } = require('../middleware/errorHandler');
 const { requireFields, requireUUID, requireDate, requireNumber, requireArray } = require('../middleware/validate');
+const { getDefaultCurrency } = require('../lib/companySettings');
 
 const VALID_STATUSES = ['Draft', 'Sent', 'Accepted', 'Rejected', 'Expired'];
 
@@ -91,6 +92,8 @@ router.post('/', asyncHandler(async (req, res) => {
   const conn = await db.getConnection();
   try {
     await conn.beginTransaction();
+    const defaultCurrency = await getDefaultCurrency(conn);
+    const resolvedCurrency = currency || defaultCurrency;
     const id = uuidv4();
 
     await conn.query(
@@ -101,7 +104,7 @@ router.post('/', asyncHandler(async (req, res) => {
       [id, quote_number, status || 'Draft', client_id, mode_of_transport ?? null,
         origin_country ?? null, origin_port ?? null, destination_country ?? null,
         destination_port ?? null, valid_until ?? null,
-        total_sell ?? 0, total_cost ?? 0, currency || 'USD', notes ?? null,
+        total_sell ?? 0, total_cost ?? 0, resolvedCurrency, notes ?? null,
         rejection_reason ?? null, created_by ?? null]
     );
 
@@ -112,7 +115,7 @@ router.post('/', asyncHandler(async (req, res) => {
          VALUES (?,?,?,?,?,?,?,?,?)`,
         [uuidv4(), id, svc.service_id, svc.supplier_id ?? null,
           svc.quantity ?? 1, svc.cost_price ?? 0, svc.sell_price ?? 0,
-          svc.currency || 'USD', svc.notes ?? null]
+          svc.currency || resolvedCurrency, svc.notes ?? null]
       );
     }
 
@@ -150,6 +153,8 @@ router.put('/:id', asyncHandler(async (req, res) => {
   const conn = await db.getConnection();
   try {
     await conn.beginTransaction();
+    const defaultCurrency = await getDefaultCurrency(conn);
+    const resolvedCurrency = currency || defaultCurrency;
 
     const [result] = await conn.query(
       `UPDATE quotations SET
@@ -159,7 +164,7 @@ router.put('/:id', asyncHandler(async (req, res) => {
        WHERE id=?`,
       [status, client_id, mode_of_transport ?? null, origin_country ?? null, origin_port ?? null,
         destination_country ?? null, destination_port ?? null, valid_until ?? null,
-        total_sell ?? 0, total_cost ?? 0, currency || 'USD', notes ?? null,
+        total_sell ?? 0, total_cost ?? 0, resolvedCurrency, notes ?? null,
         rejection_reason ?? null, req.params.id]
     );
 
@@ -176,7 +181,7 @@ router.put('/:id', asyncHandler(async (req, res) => {
          VALUES (?,?,?,?,?,?,?,?,?)`,
         [uuidv4(), req.params.id, svc.service_id, svc.supplier_id ?? null,
           svc.quantity ?? 1, svc.cost_price ?? 0, svc.sell_price ?? 0,
-          svc.currency || 'USD', svc.notes ?? null]
+          svc.currency || resolvedCurrency, svc.notes ?? null]
       );
     }
 

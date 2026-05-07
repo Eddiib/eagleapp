@@ -102,7 +102,7 @@ function toService(row: ServiceRow): Service {
     transportModes: parseJsonArray<TransportMode>(row.transport_modes),
     appliesTo: parseJsonArray<AppliesTo>(row.applies_to_list),
     chargeUnit: (row.charge_unit ?? 'Per Shipment') as ChargeUnit,
-    defaultCurrency: row.default_currency ?? 'USD',
+    defaultCurrency: row.default_currency ?? 'EUR',
     buySellType: (row.buy_sell_type ?? 'Both') as BuySellType,
     defaultVatRate: toNum(row.default_vat_rate),
     defaultGlCode: row.default_gl_code ?? undefined,

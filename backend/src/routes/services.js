@@ -4,6 +4,7 @@ const db = require('../db');
 const { v4: uuidv4 } = require('uuid');
 const { asyncHandler, AppError } = require('../middleware/errorHandler');
 const { requireFields, requireEnum } = require('../middleware/validate');
+const { getDefaultCurrency } = require('../lib/companySettings');
 
 const VALID_CATEGORIES = [
   'Main Freight',
@@ -142,6 +143,7 @@ router.post('/', asyncHandler(async (req, res) => {
   requireEnum(price_behavior, VALID_PRICE_BEHAVIOR, 'price_behavior');
 
   const id = uuidv4();
+  const resolvedDefaultCurrency = default_currency || (await getDefaultCurrency());
   await db.query(
     `INSERT INTO services
        (id, service_code, service_name, service_group_id, category, transport_modes, applies_to_list,
@@ -154,7 +156,7 @@ router.post('/', asyncHandler(async (req, res) => {
       id, service_code, service_name, service_group_id || null, category ?? null,
       JSON.stringify(transport_modes || []),
       JSON.stringify(applies_to || []),
-      charge_unit ?? null, default_currency ?? null, buy_sell_type ?? null,
+      charge_unit ?? null, resolvedDefaultCurrency, buy_sell_type ?? null,
       default_vat_rate ?? 0, default_gl_code ?? null,
       price_behavior ?? null, pricing_model_id ?? null,
       JSON.stringify(related_partner_types || []),
@@ -184,6 +186,7 @@ router.put('/:id', asyncHandler(async (req, res) => {
   requireEnum(buy_sell_type, VALID_BUY_SELL, 'buy_sell_type');
   requireEnum(price_behavior, VALID_PRICE_BEHAVIOR, 'price_behavior');
 
+  const resolvedDefaultCurrency = default_currency || (await getDefaultCurrency());
   const [result] = await db.query(
     `UPDATE services SET
         service_code=?, service_name=?, service_group_id=?, category=?, transport_modes=?, applies_to_list=?,
@@ -196,7 +199,7 @@ router.put('/:id', asyncHandler(async (req, res) => {
       service_code, service_name, service_group_id || null, category ?? null,
       JSON.stringify(transport_modes || []),
       JSON.stringify(applies_to || []),
-      charge_unit ?? null, default_currency ?? null, buy_sell_type ?? null,
+      charge_unit ?? null, resolvedDefaultCurrency, buy_sell_type ?? null,
       default_vat_rate ?? 0, default_gl_code ?? null,
       price_behavior ?? null, pricing_model_id ?? null,
       JSON.stringify(related_partner_types || []),

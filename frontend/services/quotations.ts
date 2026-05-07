@@ -121,7 +121,7 @@ function toServiceLine(row: QuotationServiceRow): QuotationServiceLine {
     quantity: toNum(row.quantity) || 1,
     costPrice: toNum(row.cost_price),
     sellPrice: toNum(row.sell_price),
-    currency: row.currency ?? 'USD',
+    currency: row.currency ?? 'EUR',
     notes: row.notes ?? undefined,
   };
 }
@@ -141,7 +141,7 @@ function toQuotation(row: QuotationRow): Quotation {
     validUntil: toDateOnly(row.valid_until),
     totalSell: toNum(row.total_sell),
     totalCost: toNum(row.total_cost),
-    currency: row.currency ?? 'USD',
+    currency: row.currency ?? 'EUR',
     notes: row.notes ?? undefined,
     rejectionReason: row.rejection_reason ?? undefined,
     createdDate: row.created_date ?? undefined,
@@ -165,7 +165,7 @@ function toApiPayload(data: Partial<QuotationPayload>, extra: Record<string, unk
     valid_until: data.validUntil ?? null,
     total_sell: data.totalSell ?? 0,
     total_cost: data.totalCost ?? 0,
-    currency: data.currency ?? 'USD',
+    currency: data.currency ?? 'EUR',
     notes: data.notes ?? null,
     rejection_reason: data.rejectionReason ?? null,
     services: (data.services ?? []).map((line) => ({
@@ -174,7 +174,7 @@ function toApiPayload(data: Partial<QuotationPayload>, extra: Record<string, unk
       quantity: line.quantity ?? 1,
       cost_price: line.costPrice ?? 0,
       sell_price: line.sellPrice ?? 0,
-      currency: line.currency ?? data.currency ?? 'USD',
+      currency: line.currency ?? data.currency ?? 'EUR',
       notes: line.notes ?? null,
     })),
     ...extra,

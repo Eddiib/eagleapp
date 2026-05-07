@@ -10,6 +10,7 @@ import {
   generateQuoteNumber,
 } from '../services/quotations';
 import { QuotationServicesEditor } from './QuotationServicesEditor';
+import { useCompanySettings } from '../context/CompanySettingsContext';
 
 interface QuotationFormProps {
   quotation?: Quotation | null;
@@ -19,9 +20,15 @@ interface QuotationFormProps {
 }
 
 const MODE_OPTIONS = ['Sea', 'Air', 'Road', 'Rail', 'Multimodal'];
+const COMMON_CURRENCIES = ['EUR', 'USD', 'GBP'];
 
 export function QuotationForm({ quotation, mode, onSave, onCancel }: QuotationFormProps) {
   const { partners } = usePartners();
+  const { baseCurrency } = useCompanySettings();
+  const currencyOptions = useMemo(() => {
+    const set = new Set<string>([baseCurrency, ...COMMON_CURRENCIES].filter(Boolean));
+    return Array.from(set);
+  }, [baseCurrency]);
   const CLIENT_TYPES = ['Client', 'Buyer'];
   const clients = partners.filter((partner) =>
     partner.status === 'Active' &&
@@ -37,7 +44,7 @@ export function QuotationForm({ quotation, mode, onSave, onCancel }: QuotationFo
     destinationCountry: quotation?.destinationCountry || '',
     destinationPort: quotation?.destinationPort || '',
     validUntil: quotation?.validUntil || '',
-    currency: quotation?.currency || 'USD',
+    currency: quotation?.currency || baseCurrency,
     notes: quotation?.notes || '',
   });
   const [status, setStatus] = useState<QuotationStatus>(quotation?.status || 'Draft');
@@ -285,9 +292,9 @@ export function QuotationForm({ quotation, mode, onSave, onCancel }: QuotationFo
                 onChange={(e) => set('currency', e.target.value)}
                 className={`${inputClass()} mt-2`}
               >
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-                <option value="GBP">GBP</option>
+                {currencyOptions.map((currency) => (
+                  <option key={currency} value={currency}>{currency}</option>
+                ))}
               </select>
             </div>
             <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4">

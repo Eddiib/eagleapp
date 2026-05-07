@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../db');
 const { v4: uuidv4 } = require('uuid');
 const { asyncHandler, AppError } = require('../middleware/errorHandler');
+const { getDefaultCurrency } = require('../lib/companySettings');
 
 const VALID_MODES    = ['FCL','LCL','FTL','LTL','AIR','PARCEL','RAIL','BULK','SPECIAL'];
 const VALID_STATUSES = ['Open','Quoting','Offers Received','Rate Selected','Closed'];
@@ -130,6 +131,7 @@ router.post('/loads/:id/quotes', asyncHandler(async (req, res) => {
   } = req.body;
 
   const id = uuidv4();
+  const defaultCurrency = await getDefaultCurrency();
   await db.query(
     `INSERT INTO pricing_quotes
        (id, load_id, supplier_id, supplier_name, carrier_name, transport_mode,
@@ -137,7 +139,7 @@ router.post('/loads/:id/quotes', asyncHandler(async (req, res) => {
         transit_days, validity_date, equipment_available_date, remarks, received_date)
      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [id, req.params.id, supplier_id ?? null, supplier_name ?? null, carrier_name ?? null,
-     transport_mode ?? null, offered_rate ?? null, currency || 'USD', base_rate ?? null, total_rate ?? null,
+     transport_mode ?? null, offered_rate ?? null, currency || defaultCurrency, base_rate ?? null, total_rate ?? null,
      transit_days ?? null, validity_date ?? null, equipment_available_date ?? null,
      remarks ?? null, received_date ?? new Date().toISOString().split('T')[0]]
   );
@@ -204,6 +206,7 @@ router.post('/contracts', asyncHandler(async (req, res) => {
 
   const id = uuidv4();
   const resolvedNumber = contract_number || (await nextContractNumber());
+  const defaultCurrency = await getDefaultCurrency();
 
   await db.query(
     `INSERT INTO pricing_contracts
@@ -213,7 +216,7 @@ router.post('/contracts', asyncHandler(async (req, res) => {
      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [id, resolvedNumber, supplier_id ?? null, supplier_name ?? null,
      transport_mode || 'FCL', origin ?? null, destination ?? null,
-     equipment_type ?? null, service_level ?? null, base_rate ?? null, currency || 'USD', total_rate ?? null,
+     equipment_type ?? null, service_level ?? null, base_rate ?? null, currency || defaultCurrency, total_rate ?? null,
      valid_from ?? null, valid_to ?? null, transit_days ?? null, frequency ?? null, notes ?? null,
      is_active !== undefined ? (is_active ? 1 : 0) : 1, created_by ?? null]
   );
@@ -227,6 +230,7 @@ router.put('/contracts/:id', asyncHandler(async (req, res) => {
     valid_from, valid_to, transit_days, frequency, notes, is_active
   } = req.body;
 
+  const defaultCurrency = await getDefaultCurrency();
   const [result] = await db.query(
     `UPDATE pricing_contracts SET
        supplier_id=?, supplier_name=?, transport_mode=?, origin=?, destination=?,
@@ -234,7 +238,7 @@ router.put('/contracts/:id', asyncHandler(async (req, res) => {
        valid_from=?, valid_to=?, transit_days=?, frequency=?, notes=?, is_active=?
      WHERE id=?`,
     [supplier_id ?? null, supplier_name ?? null, transport_mode || 'FCL', origin ?? null, destination ?? null,
-     equipment_type ?? null, service_level ?? null, base_rate ?? null, currency || 'USD', total_rate ?? null,
+     equipment_type ?? null, service_level ?? null, base_rate ?? null, currency || defaultCurrency, total_rate ?? null,
      valid_from ?? null, valid_to ?? null, transit_days ?? null, frequency ?? null, notes ?? null,
      is_active !== undefined ? (is_active ? 1 : 0) : 1, req.params.id]
   );

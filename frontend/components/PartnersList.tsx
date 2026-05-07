@@ -30,6 +30,7 @@ import { getCountryName, countries } from '../data/countries';
 import { usePartners } from '../hooks/usePartners';
 import { useConfirm } from '../context/ConfirmDialog';
 import { employeesApi } from '../services/employees';
+import { useCompanySettings } from '../context/CompanySettingsContext';
 
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -57,6 +58,7 @@ export function PartnersList({
   onNewPartner,
 }: PartnersListProps) {
   const confirmDialog = useConfirm();
+  const { baseCurrency } = useCompanySettings();
   const { partners, loading, error, refresh } = usePartners();
   const [employees, setEmployees] = useState<Employee[]>([]);
   useEffect(() => {
@@ -89,6 +91,14 @@ export function PartnersList({
 
     return matchesSearch && matchesType && matchesStatus && matchesCountry && matchesRating && matchesPreferredTrade;
   });
+  const openBalanceByCurrency = filteredPartners.reduce<Record<string, number>>((acc, partner) => {
+    const currency = (partner.currency || baseCurrency).toUpperCase();
+    acc[currency] = (acc[currency] || 0) + (partner.openBalance || 0);
+    return acc;
+  }, {});
+  const openBalanceSummary = Object.entries(openBalanceByCurrency)
+    .map(([currency, amount]) => `${currency} ${amount.toLocaleString()}`)
+    .join(' · ') || `${baseCurrency} 0`;
 
   const getStatusBadgeColor = (status: PartnerStatus) => {
     switch (status) {
@@ -415,7 +425,7 @@ export function PartnersList({
           Total Partners: {filteredPartners.length}
         </div>
         <div className="text-gray-600 dark:text-gray-400">
-          Total Open Balance: USD {filteredPartners.reduce((sum, p) => sum + p.openBalance, 0).toLocaleString()}
+          Total Open Balance: {openBalanceSummary}
         </div>
       </div>
     </div>

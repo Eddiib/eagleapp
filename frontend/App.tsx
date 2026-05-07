@@ -47,6 +47,7 @@ import {
 } from './services/bookings';
 import { useAuth } from './context/AuthContext';
 import { useConfirm } from './context/ConfirmDialog';
+import { useCompanySettings } from './context/CompanySettingsContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { moduleIdToPath, pathToModuleId } from './router';
 import { modulePermission } from './lib/modulePermissions';
@@ -106,6 +107,7 @@ function AccessDenied() {
 
 function AppShell() {
   const { user, can } = useAuth();
+  const { baseCurrency } = useCompanySettings();
   const confirmDialog = useConfirm();
   const navigate = useNavigate();
   const location = useLocation();
@@ -297,7 +299,7 @@ function AppShell() {
   const openCreateBookingWorkspace = async (prefillData: any = null) => {
     setLeadDataForBooking(prefillData);
     const nextBookingNumber = await bookingsApi.getNextNumber().catch(() => generateBookingNumber());
-    const base = emptyBooking(nextBookingNumber);
+    const base = emptyBooking(nextBookingNumber, baseCurrency);
     const seeded = applyLeadDataToDraft(base, prefillData);
     setBookingDraft(seeded);
     setEditServices([]);
@@ -468,7 +470,7 @@ function AppShell() {
       bookingId: booking.id,
       bookingNumber: booking.bookingNumber,
       invoiceDate: today,
-      currency: 'USD',
+      currency: booking.currency || baseCurrency,
       exchangeRate: 1,
       lines: [],
     } as unknown as Invoice;

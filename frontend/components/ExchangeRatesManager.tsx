@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { Plus, Trash2, Loader2, AlertCircle, Save } from 'lucide-react';
 import { exchangeRatesApi, ExchangeRateRow } from '../services/exchangeRates';
 import { useConfirm } from '../context/ConfirmDialog';
+import { useCompanySettings } from '../context/CompanySettingsContext';
 
-const COMMON_CURRENCIES = ['USD', 'EUR', 'GBP', 'CHF', 'JPY', 'CNY', 'AED', 'TRY', 'ALL'];
+const COMMON_CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF', 'JPY', 'CNY', 'AED', 'TRY', 'ALL'];
 
 function todayIso(): string {
   return new Date().toISOString().split('T')[0];
@@ -11,18 +12,28 @@ function todayIso(): string {
 
 export function ExchangeRatesManager() {
   const confirmDialog = useConfirm();
+  const { baseCurrency } = useCompanySettings();
+  const currencyOptions = Array.from(new Set([baseCurrency, ...COMMON_CURRENCIES].filter(Boolean)));
   const [rates, setRates] = useState<ExchangeRateRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
-    from_currency:  'USD',
-    to_currency:    'EUR',
+    from_currency:  baseCurrency === 'USD' ? 'EUR' : 'USD',
+    to_currency:    baseCurrency,
     rate:           '',
     effective_date: todayIso(),
   });
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setForm((prev) => ({
+      ...prev,
+      to_currency: baseCurrency,
+      from_currency: prev.from_currency === baseCurrency ? (baseCurrency === 'USD' ? 'EUR' : 'USD') : prev.from_currency,
+    }));
+  }, [baseCurrency]);
 
   const load = () => {
     setLoading(true);
@@ -88,7 +99,7 @@ export function ExchangeRatesManager() {
         <h1 className="text-2xl text-gray-900 dark:text-gray-100">Exchange Rates</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
           Used by dashboard aggregations and the upcoming P&amp;L view to normalize multi-currency totals.
-          Identity rates (USD→USD, EUR→EUR, …) are implicit and don't need rows.
+          Identity rates ({baseCurrency}→{baseCurrency}, EUR→EUR, …) are implicit and don't need rows.
         </p>
       </div>
 
@@ -104,7 +115,7 @@ export function ExchangeRatesManager() {
             <select className={selectClass + ' w-full'}
               value={form.from_currency}
               onChange={e => setForm({ ...form, from_currency: e.target.value })}>
-              {COMMON_CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+              {currencyOptions.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
           <div>
@@ -112,7 +123,7 @@ export function ExchangeRatesManager() {
             <select className={selectClass + ' w-full'}
               value={form.to_currency}
               onChange={e => setForm({ ...form, to_currency: e.target.value })}>
-              {COMMON_CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+              {currencyOptions.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
           <div>

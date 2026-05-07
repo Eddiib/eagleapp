@@ -320,7 +320,6 @@ test('MVP API smoke flow covers auth, master data, bookings, CRM, services, and 
       transport_modes: ['Sea'],
       applies_to: ['FCL'],
       charge_unit: 'Per Container',
-      default_currency: 'EUR',
       buy_sell_type: 'Both',
       default_vat_rate: 20,
       default_gl_code: '4100-PH7',
@@ -348,6 +347,7 @@ test('MVP API smoke flow covers auth, master data, bookings, CRM, services, and 
     const serviceDetail = await jsonRequest(`/api/services/${serviceCreate.body.id}`, { token });
     assert.equal(serviceDetail.status, 200);
     assert.equal(serviceDetail.body.service_code, servicePayload.service_code);
+    assert.equal(serviceDetail.body.default_currency, 'EUR');
 
     const serviceUpdate = await jsonRequest(`/api/services/${serviceCreate.body.id}`, {
       method: 'PUT',
@@ -407,7 +407,6 @@ test('MVP API smoke flow covers auth, master data, bookings, CRM, services, and 
       incoterm: 'FOB',
       total_revenue: 2000,
       total_cost: 1500,
-      currency: 'EUR',
       notes: 'Phase 7 booking',
       created_by: TEST_ADMIN.username,
       services: [
@@ -417,7 +416,6 @@ test('MVP API smoke flow covers auth, master data, bookings, CRM, services, and 
           quantity: 1,
           unit_price: 1500,
           total_price: 1500,
-          currency: 'EUR',
           notes: 'Booked ocean freight',
         },
       ],
@@ -439,7 +437,9 @@ test('MVP API smoke flow covers auth, master data, bookings, CRM, services, and 
 
     const bookingDetail = await jsonRequest(`/api/bookings/${bookingCreate.body.id}`, { token });
     assert.equal(bookingDetail.status, 200);
+    assert.equal(bookingDetail.body.currency, 'EUR');
     assert.equal(bookingDetail.body.services.length, 1);
+    assert.equal(bookingDetail.body.services[0].currency, 'EUR');
     assert.equal(bookingDetail.body.equipment.length, 1);
 
     const invalidBooking = await jsonRequest('/api/bookings', {
@@ -514,7 +514,6 @@ test('MVP API smoke flow covers auth, master data, bookings, CRM, services, and 
       valid_until: '2026-02-15',
       total_sell: 2500,
       total_cost: 1800,
-      currency: 'EUR',
       notes: 'Phase 7 quotation',
       created_by: TEST_ADMIN.username,
       services: [
@@ -524,7 +523,6 @@ test('MVP API smoke flow covers auth, master data, bookings, CRM, services, and 
           quantity: 1,
           cost_price: 1800,
           sell_price: 2500,
-          currency: 'EUR',
           notes: 'Quotation service',
         },
       ],
@@ -540,7 +538,9 @@ test('MVP API smoke flow covers auth, master data, bookings, CRM, services, and 
 
     const quotationDetail = await jsonRequest(`/api/quotations/${quotationCreate.body.id}`, { token });
     assert.equal(quotationDetail.status, 200);
+    assert.equal(quotationDetail.body.currency, 'EUR');
     assert.equal(quotationDetail.body.services.length, 1);
+    assert.equal(quotationDetail.body.services[0].currency, 'EUR');
 
     const quotationUpdate = await jsonRequest(`/api/quotations/${quotationCreate.body.id}`, {
       method: 'PUT',
@@ -614,7 +614,6 @@ test('MVP API smoke flow covers auth, master data, bookings, CRM, services, and 
       supplier_id: carrierCreate.body.id,
       description: `Phase 7 supplier invoice ${suffix}`,
       amount: 1800,
-      currency: 'EUR',
       invoice_number: `PH7I${short}`,
       invoice_date: '2026-02-04',
       due_date: '2026-02-20',
@@ -643,6 +642,8 @@ test('MVP API smoke flow covers auth, master data, bookings, CRM, services, and 
     const costControlDetail = await jsonRequest(`/api/cost-control/${costControlCreate.body.id}`, { token });
     assert.equal(costControlDetail.status, 200);
     assert.equal(costControlDetail.body.status, 'Approved');
+    assert.equal(costControlDetail.body.currency, 'EUR');
+    assert.equal(costControlDetail.body.selling_currency, 'EUR');
 
     const serviceGroupDelete = await jsonRequest(`/api/services/groups/${serviceGroupCreate.body.id}`, {
       method: 'DELETE',

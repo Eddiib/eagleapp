@@ -115,7 +115,7 @@ function toLine(l: any): InvoiceLine {
     quantity: toNum(l.quantity) || 1,
     unitPrice: toNum(l.unit_price),
     vatRate: toNum(l.vat_rate),
-    currency: l.currency ?? 'USD',
+    currency: l.currency ?? 'EUR',
     lineTotal: toNum(l.line_total),
     vatAmount: toNum(l.vat_amount),
   };
@@ -133,7 +133,7 @@ function toInvoice(row: InvoiceRow): Invoice {
     bookingNumber: row.booking_number ?? undefined,
     invoiceDate: dateOnly(row.invoice_date),
     dueDate: dateOnly(row.due_date) || undefined,
-    currency: row.currency ?? 'USD',
+    currency: row.currency ?? 'EUR',
     exchangeRate: toNum(row.exchange_rate) || 1,
     subtotal: toNum(row.subtotal),
     vatAmount: toNum(row.vat_amount),

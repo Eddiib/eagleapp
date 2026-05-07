@@ -224,7 +224,7 @@ function mapServiceLine(row: any): BookingServiceLine {
     quantity: Number(row.quantity ?? 1),
     unitPrice: Number(row.unit_price ?? 0),
     totalPrice: Number(row.total_price ?? 0),
-    currency: row.currency ?? 'USD',
+    currency: row.currency ?? 'EUR',
     notes: row.notes ?? undefined,
   };
 }
@@ -377,7 +377,7 @@ export function toBooking(row: BookingRow): Booking {
     notes: row.notes ?? '',
     internalNotes: row.internal_notes ?? '',
     freeTextComments: row.free_text_comments ?? '',
-    currency: row.currency ?? 'USD',
+    currency: row.currency ?? 'EUR',
     totalRevenue: toNum(row.total_revenue),
     totalCost: toNum(row.total_cost),
     totalContainers,
@@ -484,7 +484,7 @@ function toApiPayload(p: BookingPayload, extra: Record<string, any> = {}) {
     internal_notes: p.internalNotes || null,
     free_text_comments: p.freeTextComments || null,
 
-    currency: p.currency || 'USD',
+    currency: p.currency || 'EUR',
     total_revenue: p.totalRevenue ?? 0,
     total_cost: p.totalCost ?? 0,
 
@@ -601,7 +601,7 @@ export function generateBookingNumber(sequence = 1): string {
   return formatBookingNumber(sequence);
 }
 
-export function emptyBooking(initialBookingNumber?: string): Booking {
+export function emptyBooking(initialBookingNumber?: string, currency = 'EUR'): Booking {
   const today = new Date().toISOString().split('T')[0];
   return {
     id: '',
@@ -645,7 +645,7 @@ export function emptyBooking(initialBookingNumber?: string): Booking {
     notes: '',
     internalNotes: '',
     freeTextComments: '',
-    currency: 'USD',
+    currency: currency.toUpperCase(),
     totalRevenue: 0,
     totalCost: 0,
     totalContainers: 0,

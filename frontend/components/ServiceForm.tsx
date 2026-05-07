@@ -55,7 +55,7 @@ const EMPTY_FORM: Partial<Service> = {
   transportModes: [],
   appliesTo: [],
   chargeUnit: 'Per Container',
-  defaultCurrency: 'USD',
+  defaultCurrency: 'EUR',
   buySellType: 'Both',
   defaultVatRate: 0,
   defaultGlCode: '',
@@ -140,9 +140,10 @@ export function ServiceForm({
   isSaving = false,
   error,
 }: ServiceFormProps) {
+  const { baseCurrency } = useCompanySettings();
   const initialFormData = useMemo<Partial<Service>>(
-    () => ({ ...EMPTY_FORM, ...initialData }),
-    [initialData],
+    () => ({ ...EMPTY_FORM, defaultCurrency: baseCurrency || EMPTY_FORM.defaultCurrency, ...initialData }),
+    [initialData, baseCurrency],
   );
   const [formData, setFormData] = useState<Partial<Service>>(initialFormData);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -155,7 +156,6 @@ export function ServiceForm({
   });
 
   const confirmDialog = useConfirm();
-  const { baseCurrency } = useCompanySettings();
   const [knownCurrencies, setKnownCurrencies] = useState<string[]>([]);
 
   useEffect(() => {

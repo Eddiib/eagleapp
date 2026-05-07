@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Partner, PartnerType, PartnerCategory, PartnerStatus, PaymentTerms, DefaultServiceType, PartnerContact, DeliveryAddress, PartnerBankDetails, PartnerDocument, TradeMarketInfo } from '../types/partner';
 import { Employee } from './EmployeesModule';
@@ -16,6 +16,7 @@ import { MultiSelectCountry } from './MultiSelectCountry';
 import { ports, getPortName } from '../data/ports';
 
 import { employeesApi } from '../services/employees';
+import { useCompanySettings } from '../context/CompanySettingsContext';
 
 interface PartnerFormProps {
   partner?: Partner | null;
@@ -28,9 +29,18 @@ interface PartnerFormProps {
 }
 
 type FormSection = 'basic' | 'delivery' | 'bank' | 'trade' | 'attachments';
+const COMMON_CURRENCIES = ['EUR', 'USD', 'GBP', 'AED', 'CNY'];
+const CURRENCY_LABELS: Record<string, string> = {
+  EUR: 'EUR - Euro',
+  USD: 'USD - US Dollar',
+  GBP: 'GBP - British Pound',
+  AED: 'AED - UAE Dirham',
+  CNY: 'CNY - Chinese Yuan',
+};
 
 export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [], onDirtyChange }: PartnerFormProps) {
   const { user } = useAuth();
+  const { baseCurrency } = useCompanySettings();
   const isViewMode = mode === 'view';
   const isEditMode = mode === 'edit';
   const isNewMode = mode === 'new';
@@ -45,6 +55,16 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
   ];
 
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const currencyOptions = useMemo(() => {
+    const set = new Set<string>([baseCurrency, ...COMMON_CURRENCIES].filter(Boolean));
+    return Array.from(set);
+  }, [baseCurrency]);
+  const renderCurrencyOptions = () => currencyOptions.map((currency) => (
+    <SelectItem key={currency} value={currency}>
+      {CURRENCY_LABELS[currency] || currency}
+    </SelectItem>
+  ));
+
   useEffect(() => {
     employeesApi.getAll().then(setEmployees).catch(() => {});
   }, []);
@@ -62,7 +82,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
     swift: '',
     iban: '',
     accountNumber: '',
-    currency: 'USD',
+    currency: baseCurrency,
     intermediaryBankName: '',
     intermediarySwift: '',
     isDefault: false
@@ -118,7 +138,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
     paymentTermsAsSupplier: partner?.paymentTermsAsSupplier || '30 Days',
     paymentTermsAsClient: partner?.paymentTermsAsClient || '30 Days',
     creditTerms: partner?.creditTerms || '',
-    currency: partner?.currency || 'USD',
+    currency: partner?.currency || baseCurrency,
     defaultServiceType: partner?.defaultServiceType || 'Sea',
     notes: partner?.notes || '',
     status: partner?.status || 'Active',
@@ -422,7 +442,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
       iban: '',
       swift: '',
       accountNumber: '',
-      currency: 'USD',
+      currency: baseCurrency,
       intermediaryBankName: '',
       intermediarySwift: '',
       isDefault: (formData.bankDetails?.length || 0) === 0
@@ -452,7 +472,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
       swift: '',
       iban: '',
       accountNumber: '',
-      currency: 'USD',
+      currency: baseCurrency,
       intermediaryBankName: '',
       intermediarySwift: '',
       isDefault: false
@@ -1119,11 +1139,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="USD">USD - US Dollar</SelectItem>
-                      <SelectItem value="EUR">EUR - Euro</SelectItem>
-                      <SelectItem value="GBP">GBP - British Pound</SelectItem>
-                      <SelectItem value="AED">AED - UAE Dirham</SelectItem>
-                      <SelectItem value="CNY">CNY - Chinese Yuan</SelectItem>
+                      {renderCurrencyOptions()}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1845,11 +1861,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="USD">USD - US Dollar</SelectItem>
-                                    <SelectItem value="EUR">EUR - Euro</SelectItem>
-                                    <SelectItem value="GBP">GBP - British Pound</SelectItem>
-                                    <SelectItem value="AED">AED - UAE Dirham</SelectItem>
-                                    <SelectItem value="CNY">CNY - Chinese Yuan</SelectItem>
+                                    {renderCurrencyOptions()}
                                   </SelectContent>
                                 </Select>
                               </div>
@@ -1972,11 +1984,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="USD">USD - US Dollar</SelectItem>
-                        <SelectItem value="EUR">EUR - Euro</SelectItem>
-                        <SelectItem value="GBP">GBP - British Pound</SelectItem>
-                        <SelectItem value="AED">AED - UAE Dirham</SelectItem>
-                        <SelectItem value="CNY">CNY - Chinese Yuan</SelectItem>
+                        {renderCurrencyOptions()}
                       </SelectContent>
                     </Select>
                   </div>

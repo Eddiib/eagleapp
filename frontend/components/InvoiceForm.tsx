@@ -9,6 +9,7 @@ import {
   invoicesApi,
 } from '../services/invoices';
 import { useAuth } from '../context/AuthContext';
+import { useCompanySettings } from '../context/CompanySettingsContext';
 
 interface InvoiceFormProps {
   invoice?: Invoice | null;
@@ -17,7 +18,7 @@ interface InvoiceFormProps {
   onCancel: () => void;
 }
 
-const CURRENCIES = ['USD', 'EUR', 'GBP', 'AED'];
+const COMMON_CURRENCIES = ['EUR', 'USD', 'GBP', 'AED'];
 const STATUSES: InvoiceStatus[]  = ['Draft', 'Sent', 'Paid', 'Overdue', 'Cancelled', 'Void'];
 const TYPES: InvoiceType[]       = ['Sales', 'Purchase', 'Credit Note'];
 
@@ -32,6 +33,7 @@ function emptyLine(currency: string): InvoiceLine {
 
 export function InvoiceForm({ invoice, mode, onSaved, onCancel }: InvoiceFormProps) {
   const { user } = useAuth();
+  const { baseCurrency } = useCompanySettings();
   const { partners } = usePartners();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [services, setServices] = useState<Service[]>([]);
@@ -43,6 +45,10 @@ export function InvoiceForm({ invoice, mode, onSaved, onCancel }: InvoiceFormPro
     (p) => p.status === 'Active' &&
       (CLIENT_TYPES.includes(p.partnerType) || CLIENT_TYPES.includes(p.partnerCategory ?? ''))
   );
+  const currencyOptions = useMemo(() => {
+    const set = new Set<string>([baseCurrency, ...COMMON_CURRENCIES].filter(Boolean));
+    return Array.from(set);
+  }, [baseCurrency]);
 
   const [form, setForm] = useState({
     invoiceNumber: invoice?.invoiceNumber || '',
@@ -52,7 +58,7 @@ export function InvoiceForm({ invoice, mode, onSaved, onCancel }: InvoiceFormPro
     bookingId:     invoice?.bookingId || '',
     invoiceDate:   invoice?.invoiceDate || today,
     dueDate:       invoice?.dueDate   || '',
-    currency:      invoice?.currency  || 'USD',
+    currency:      invoice?.currency  || baseCurrency,
     exchangeRate:  invoice?.exchangeRate ?? 1,
     amountPaid:    invoice?.amountPaid ?? 0,
     notes:         invoice?.notes     || '',
@@ -60,7 +66,7 @@ export function InvoiceForm({ invoice, mode, onSaved, onCancel }: InvoiceFormPro
     bankDetails:   invoice?.bankDetails  || '',
   });
   const [lines, setLines] = useState<InvoiceLine[]>(
-    invoice?.lines?.length ? invoice.lines : [emptyLine('USD')]
+    invoice?.lines?.length ? invoice.lines : [emptyLine(invoice?.currency || baseCurrency)]
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -92,6 +98,16 @@ export function InvoiceForm({ invoice, mode, onSaved, onCancel }: InvoiceFormPro
 
   const addLine = () => setLines((prev) => [...prev, emptyLine(form.currency)]);
   const removeLine = (idx: number) => setLines((prev) => prev.filter((_, i) => i !== idx));
+
+  const handleBookingChange = (bookingId: string) => {
+    const booking = bookings.find((b) => b.id === bookingId);
+    setForm((prev) => ({
+      ...prev,
+      bookingId,
+      clientId: booking?.clientId || prev.clientId,
+      currency: booking?.currency || prev.currency || baseCurrency,
+    }));
+  };
 
   const totals = useMemo(() => {
     const subtotal  = lines.reduce((s, l) => s + l.quantity * l.unitPrice, 0);
@@ -196,7 +212,7 @@ export function InvoiceForm({ invoice, mode, onSaved, onCancel }: InvoiceFormPro
                 </div>
                 <div>
                   <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Booking</label>
-                  <select value={form.bookingId} onChange={(e) => set('bookingId', e.target.value)} className={inputClass()}>
+                  <select value={form.bookingId} onChange={(e) => handleBookingChange(e.target.value)} className={inputClass()}>
                     <option value="">No booking linked</option>
                     {bookings.map((b) => (
                       <option key={b.id} value={b.id}>{b.bookingNumber}{b.clientName ? ` — ${b.clientName}` : ''}</option>
@@ -226,7 +242,7 @@ export function InvoiceForm({ invoice, mode, onSaved, onCancel }: InvoiceFormPro
                   <div>
                     <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Currency</label>
                     <select value={form.currency} onChange={(e) => set('currency', e.target.value)} className={inputClass()}>
-                      {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                      {currencyOptions.map((c) => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
                   <div>

@@ -66,6 +66,8 @@ test('booking service keeps sequential number preview and full edit hydration su
 
   assert.match(appSource, /await bookingsApi\.getById\(booking\.id\)/);
   assert.match(appSource, /await bookingsApi\.getNextNumber\(\)\.catch/);
+  assert.match(appSource, /emptyBooking\(nextBookingNumber, baseCurrency\)/);
+  assert.match(bookingsApiSource, /emptyBooking\(initialBookingNumber\?: string, currency = 'EUR'\)/);
   assert.match(appSource, /const \{ bookingNumber: _bookingNumber, \.\.\.createPayload \} = payload;/);
   assert.match(bookingsApiSource, /consigneeId: b\.consigneeId \|\| undefined/);
   assert.match(bookingsApiSource, /notifyPartyId: b\.notifyPartyId \|\| undefined/);

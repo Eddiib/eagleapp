@@ -5,6 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 const { asyncHandler, AppError } = require('../middleware/errorHandler');
 const { requireFields, requireEnum, requireNumber, requireDate, requireUUID, requireArray } = require('../middleware/validate');
 const { logAudit, snapshotRow } = require('../lib/audit');
+const { getDefaultCurrency } = require('../lib/companySettings');
 
 const VALID_TYPES    = ['Sales', 'Purchase', 'Credit Note'];
 const VALID_STATUSES = ['Draft', 'Sent', 'Paid', 'Overdue', 'Cancelled', 'Void'];
@@ -94,6 +95,8 @@ router.post('/', asyncHandler(async (req, res) => {
   const conn = await db.getConnection();
   try {
     await conn.beginTransaction();
+    const defaultCurrency = await getDefaultCurrency(conn);
+    const resolvedCurrency = currency || defaultCurrency;
 
     await conn.query(
       `INSERT INTO invoices (id, invoice_number, invoice_type, status, client_id, booking_id,
@@ -104,7 +107,7 @@ router.post('/', asyncHandler(async (req, res) => {
       [
         id, invoice_number, invoice_type ?? 'Sales', status ?? 'Draft',
         client_id ?? null, booking_id ?? null,
-        invoice_date, due_date ?? null, currency ?? 'USD', exchange_rate ?? 1,
+        invoice_date, due_date ?? null, resolvedCurrency, exchange_rate ?? 1,
         subtotal ?? 0, vat_amount ?? 0, total_amount ?? 0, amount_paid ?? 0,
         notes ?? null, payment_terms ?? null, bank_details ?? null, created_by ?? null,
       ]
@@ -115,7 +118,7 @@ router.post('/', asyncHandler(async (req, res) => {
       await conn.query(
         `INSERT INTO invoice_lines (id, invoice_id, sort_order, service_id, description, quantity, unit_price, vat_rate, currency)
          VALUES (?,?,?,?,?,?,?,?,?)`,
-        [uuidv4(), id, i, l.service_id ?? null, l.description ?? '', l.quantity ?? 1, l.unit_price ?? 0, l.vat_rate ?? 0, l.currency ?? currency ?? 'USD']
+        [uuidv4(), id, i, l.service_id ?? null, l.description ?? '', l.quantity ?? 1, l.unit_price ?? 0, l.vat_rate ?? 0, l.currency ?? resolvedCurrency]
       );
     }
 
@@ -158,6 +161,8 @@ router.put('/:id', asyncHandler(async (req, res) => {
   const conn = await db.getConnection();
   try {
     await conn.beginTransaction();
+    const defaultCurrency = await getDefaultCurrency(conn);
+    const resolvedCurrency = currency || defaultCurrency;
 
     const beforeRow = await snapshotRow(conn, 'invoices', req.params.id);
 
@@ -171,7 +176,7 @@ router.put('/:id', asyncHandler(async (req, res) => {
       [
         invoice_number, invoice_type ?? 'Sales', status ?? 'Draft',
         client_id ?? null, booking_id ?? null,
-        invoice_date, due_date ?? null, currency ?? 'USD', exchange_rate ?? 1,
+        invoice_date, due_date ?? null, resolvedCurrency, exchange_rate ?? 1,
         subtotal ?? 0, vat_amount ?? 0, total_amount ?? 0, amount_paid ?? 0,
         notes ?? null, payment_terms ?? null, bank_details ?? null,
         last_modified_by ?? null, req.params.id,
@@ -185,7 +190,7 @@ router.put('/:id', asyncHandler(async (req, res) => {
       await conn.query(
         `INSERT INTO invoice_lines (id, invoice_id, sort_order, service_id, description, quantity, unit_price, vat_rate, currency)
          VALUES (?,?,?,?,?,?,?,?,?)`,
-        [uuidv4(), req.params.id, i, l.service_id ?? null, l.description ?? '', l.quantity ?? 1, l.unit_price ?? 0, l.vat_rate ?? 0, l.currency ?? currency ?? 'USD']
+        [uuidv4(), req.params.id, i, l.service_id ?? null, l.description ?? '', l.quantity ?? 1, l.unit_price ?? 0, l.vat_rate ?? 0, l.currency ?? resolvedCurrency]
       );
     }
 

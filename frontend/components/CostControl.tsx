@@ -22,6 +22,7 @@ import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { bookingsApi, Booking } from '../services/bookings';
 import { CostEntry, costControlApi } from '../services/costControl';
+import { useCompanySettings } from '../context/CompanySettingsContext';
 
 export interface CostServiceLine {
   id: string;
@@ -107,7 +108,7 @@ function compareDate(a?: string, b?: string, mode: 'min' | 'max' = 'min'): strin
     : (new Date(a) >= new Date(b) ? a : b);
 }
 
-function toLine(entry: CostEntry, booking?: Booking): CostServiceLine {
+function toLine(entry: CostEntry, booking: Booking | undefined, baseCurrency: string): CostServiceLine {
   const status = inferLineStatus(entry);
   const cost = entry.amount || 0;
   const buyingEUR = cost * (entry.buyingExchangeRate || 1);
@@ -128,7 +129,7 @@ function toLine(entry: CostEntry, booking?: Booking): CostServiceLine {
     sellingInvoiceNumber: entry.sellingInvoiceNumber || '',
     sellingInvoiceDate: entry.sellingInvoiceDate || '',
     sellingPrice: entry.sellingPrice || 0,
-    sellingCurrency: entry.sellingCurrency || 'USD',
+    sellingCurrency: entry.sellingCurrency || baseCurrency,
     sellingExchangeRate: entry.sellingExchangeRate || 1,
     sellingPriceEUR: sellingEUR,
     accruedDate: entry.invoiceDate || entry.dueDate || entry.createdAt,
@@ -147,6 +148,7 @@ function toLine(entry: CostEntry, booking?: Booking): CostServiceLine {
 }
 
 export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
+  const { baseCurrency } = useCompanySettings();
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedBookings, setExpandedBookings] = useState<Record<string, boolean>>({});
   const [invoiceFilter, setInvoiceFilter] = useState<string>('all');
@@ -183,7 +185,7 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
 
     entries.forEach((entry) => {
       const booking = entry.bookingId ? bookingMap.get(entry.bookingId) : undefined;
-      const line = toLine(entry, booking);
+      const line = toLine(entry, booking, baseCurrency);
       const groupId = entry.bookingId || entry.bookingNumber || `unassigned-${entry.id}`;
 
       const existing = grouped.get(groupId);
@@ -224,7 +226,7 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
     });
 
     return Array.from(grouped.values()).sort((a, b) => a.bookingReference.localeCompare(b.bookingReference));
-  }, [entries, bookings]);
+  }, [entries, bookings, baseCurrency]);
 
   const filteredBookings = useMemo(() => {
     return costBookings.filter((booking) => {
@@ -248,6 +250,8 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
   const totalSellingEUR = filteredBookings.reduce((sum, booking) => sum + booking.totalSellingEUR, 0);
   const totalProfit = filteredBookings.reduce((sum, booking) => sum + booking.totalProfitLoss, 0);
   const bookingsWithIssues = filteredBookings.filter((booking) => booking.hasIncompleteInvoices).length;
+  const formatBase = (amount: number, maximumFractionDigits = 2) =>
+    `${baseCurrency} ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits })}`;
 
   const toggleBookingExpansion = (bookingId: string) => {
     setExpandedBookings((prev) => ({
@@ -349,7 +353,7 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
             <div>
               <p className="text-sm text-gray-600">Total Cost</p>
               <p className="text-2xl text-gray-900 mt-1">
-                €{totalBuyingEUR.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {formatBase(totalBuyingEUR)}
               </p>
             </div>
             <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
@@ -363,7 +367,7 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
             <div>
               <p className="text-sm text-gray-600">Total Revenue</p>
               <p className="text-2xl text-gray-900 mt-1">
-                €{totalSellingEUR.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {formatBase(totalSellingEUR)}
               </p>
             </div>
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -377,7 +381,7 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
             <div>
               <p className="text-sm text-gray-600">Total Profit</p>
               <p className={`text-2xl mt-1 ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                €{totalProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {formatBase(totalProfit)}
               </p>
             </div>
             <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${totalProfit >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
@@ -435,9 +439,9 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
                 <th className="px-4 py-3 text-left text-xs text-gray-600 w-10"></th>
                 <th className="px-4 py-3 text-left text-xs text-gray-600">Booking Reference</th>
                 <th className="px-4 py-3 text-left text-xs text-gray-600">Client Name</th>
-                <th className="px-4 py-3 text-right text-xs text-gray-600">Total Buying (EUR)</th>
-                <th className="px-4 py-3 text-right text-xs text-gray-600">Total Selling (EUR)</th>
-                <th className="px-4 py-3 text-right text-xs text-gray-600">Profit/Loss (EUR)</th>
+                <th className="px-4 py-3 text-right text-xs text-gray-600">Total Buying ({baseCurrency})</th>
+                <th className="px-4 py-3 text-right text-xs text-gray-600">Total Selling ({baseCurrency})</th>
+                <th className="px-4 py-3 text-right text-xs text-gray-600">Profit/Loss ({baseCurrency})</th>
                 <th className="px-4 py-3 text-right text-xs text-gray-600">Margin %</th>
                 <th className="px-4 py-3 text-center text-xs text-gray-600">Services</th>
                 <th className="px-4 py-3 text-left text-xs text-gray-600">Owner</th>
@@ -462,13 +466,13 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
                       <td className="px-4 py-3 text-sm text-blue-600">{booking.bookingReference}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{booking.clientName}</td>
                       <td className="px-4 py-3 text-sm text-right text-gray-900">
-                        €{booking.totalBuyingEUR.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        {formatBase(booking.totalBuyingEUR)}
                       </td>
                       <td className="px-4 py-3 text-sm text-right text-gray-900">
-                        €{booking.totalSellingEUR.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        {formatBase(booking.totalSellingEUR)}
                       </td>
                       <td className={`px-4 py-3 text-sm text-right ${booking.totalProfitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        €{booking.totalProfitLoss.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        {formatBase(booking.totalProfitLoss)}
                       </td>
                       <td className={`px-4 py-3 text-sm text-right ${booking.profitMargin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {booking.profitMargin.toFixed(2)}%
@@ -501,11 +505,11 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
                                     <th className="px-3 py-2 text-left text-xs text-gray-600">Type</th>
                                     <th className="px-3 py-2 text-left text-xs text-gray-600">Buying Invoice</th>
                                     <th className="px-3 py-2 text-left text-xs text-gray-600">Supplier</th>
-                                    <th className="px-3 py-2 text-right text-xs text-gray-600">Buying (EUR)</th>
+                                    <th className="px-3 py-2 text-right text-xs text-gray-600">Buying ({baseCurrency})</th>
                                     <th className="px-3 py-2 text-left text-xs text-gray-600">Selling Invoice</th>
-                                    <th className="px-3 py-2 text-right text-xs text-gray-600">Selling (EUR)</th>
+                                    <th className="px-3 py-2 text-right text-xs text-gray-600">Selling ({baseCurrency})</th>
                                     <th className="px-3 py-2 text-left text-xs text-gray-600">Accrued Date</th>
-                                    <th className="px-3 py-2 text-right text-xs text-gray-600">Profit (EUR)</th>
+                                    <th className="px-3 py-2 text-right text-xs text-gray-600">Profit ({baseCurrency})</th>
                                     <th className="px-3 py-2 text-center text-xs text-gray-600">Actions</th>
                                   </tr>
                                 </thead>
@@ -523,7 +527,7 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
                                       <td className="px-3 py-2 text-sm text-gray-600">{service.buyingSupplier || '-'}</td>
                                       <td className="px-3 py-2 text-sm text-right">
                                         <div className="text-gray-900">
-                                          €{service.buyingPriceEUR.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                          {formatBase(service.buyingPriceEUR)}
                                         </div>
                                         {service.buyingPrice > 0 && (
                                           <div className="text-xs text-gray-500">
@@ -535,11 +539,11 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
                                         {service.sellingInvoiceNumber || <span className="text-yellow-600 text-xs">Pending schema</span>}
                                       </td>
                                       <td className="px-3 py-2 text-sm text-right text-gray-900">
-                                        €{service.sellingPriceEUR.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                        {formatBase(service.sellingPriceEUR)}
                                       </td>
                                       <td className="px-3 py-2 text-sm text-gray-600">{service.accruedDate || '—'}</td>
                                       <td className={`px-3 py-2 text-sm text-right ${service.profitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                        €{service.profitLoss.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                        {formatBase(service.profitLoss)}
                                       </td>
                                       <td className="px-3 py-2">
                                         <div className="flex items-center justify-center gap-1">
@@ -569,15 +573,15 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
                                       <strong>Booking Subtotal</strong>
                                     </td>
                                     <td className="px-3 py-2 text-sm text-right text-gray-900">
-                                      <strong>€{booking.totalBuyingEUR.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong>
+                                      <strong>{formatBase(booking.totalBuyingEUR)}</strong>
                                     </td>
                                     <td className="px-3 py-2"></td>
                                     <td className="px-3 py-2 text-sm text-right text-gray-900">
-                                      <strong>€{booking.totalSellingEUR.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong>
+                                      <strong>{formatBase(booking.totalSellingEUR)}</strong>
                                     </td>
                                     <td className="px-3 py-2"></td>
                                     <td className={`px-3 py-2 text-sm text-right ${booking.totalProfitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                      <strong>€{booking.totalProfitLoss.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong>
+                                      <strong>{formatBase(booking.totalProfitLoss)}</strong>
                                       <div className="text-xs">Margin: {booking.profitMargin.toFixed(2)}%</div>
                                     </td>
                                     <td className="px-3 py-2"></td>
@@ -615,10 +619,10 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
           Showing {filteredBookings.length} of {costBookings.length} bookings
         </div>
         <div className="flex items-center gap-6">
-          <div>Total Cost: <span className="text-gray-900">€{totalBuyingEUR.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span></div>
-          <div>Total Revenue: <span className="text-gray-900">€{totalSellingEUR.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span></div>
+          <div>Total Cost: <span className="text-gray-900">{formatBase(totalBuyingEUR)}</span></div>
+          <div>Total Revenue: <span className="text-gray-900">{formatBase(totalSellingEUR)}</span></div>
           <div>Total Profit: <span className={totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}>
-            €{totalProfit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            {formatBase(totalProfit)}
           </span></div>
         </div>
       </div>

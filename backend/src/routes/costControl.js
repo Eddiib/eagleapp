@@ -5,6 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 const { asyncHandler, AppError } = require('../middleware/errorHandler');
 const { requireFields, requireEnum } = require('../middleware/validate');
 const { logAudit, snapshotRow } = require('../lib/audit');
+const { getDefaultCurrency } = require('../lib/companySettings');
 
 const VALID_STATUSES = ['Pending', 'Approved', 'Paid', 'Disputed'];
 
@@ -62,6 +63,7 @@ router.post('/', asyncHandler(async (req, res) => {
   const conn = await db.getConnection();
   try {
     await conn.beginTransaction();
+    const defaultCurrency = await getDefaultCurrency(conn);
     await conn.query(
       `INSERT INTO cost_control (
          id, booking_id, service_id, supplier_id, client_id, description,
@@ -73,9 +75,9 @@ router.post('/', asyncHandler(async (req, res) => {
        ) VALUES (?,?,?,?,?,?, ?,?,?, ?,?,?,?, ?,?,?, ?,?, ?,?)`,
       [
         id, booking_id, service_id, supplier_id ?? null, client_id ?? null, description ?? null,
-        amount ?? 0, currency || 'USD', buying_exchange_rate ?? 1,
+        amount ?? 0, currency || defaultCurrency, buying_exchange_rate ?? 1,
         invoice_number ?? null, invoice_date ?? null, due_date ?? null, status || 'Pending',
-        selling_price ?? 0, selling_currency || 'USD', selling_exchange_rate ?? 1,
+        selling_price ?? 0, selling_currency || defaultCurrency, selling_exchange_rate ?? 1,
         selling_invoice_number ?? null, selling_invoice_date ?? null,
         quantity ?? 1, created_by ?? null,
       ]
@@ -107,6 +109,7 @@ router.put('/:id', asyncHandler(async (req, res) => {
   const conn = await db.getConnection();
   try {
     await conn.beginTransaction();
+    const defaultCurrency = await getDefaultCurrency(conn);
     const beforeRow = await snapshotRow(conn, 'cost_control', req.params.id);
     const [result] = await conn.query(
       `UPDATE cost_control SET
@@ -119,9 +122,9 @@ router.put('/:id', asyncHandler(async (req, res) => {
        WHERE id=?`,
       [
         booking_id, service_id, supplier_id ?? null, client_id ?? null, description ?? null,
-        amount ?? 0, currency || 'USD', buying_exchange_rate ?? 1,
+        amount ?? 0, currency || defaultCurrency, buying_exchange_rate ?? 1,
         invoice_number ?? null, invoice_date ?? null, due_date ?? null, status ?? 'Pending',
-        selling_price ?? 0, selling_currency || 'USD', selling_exchange_rate ?? 1,
+        selling_price ?? 0, selling_currency || defaultCurrency, selling_exchange_rate ?? 1,
         selling_invoice_number ?? null, selling_invoice_date ?? null,
         quantity ?? 1, is_locked ? 1 : 0, last_modified_by ?? null, req.params.id,
       ]

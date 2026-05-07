@@ -13,11 +13,12 @@ interface Props {
   disabled?: boolean;
 }
 
-export function BookingServicesEditor({ value, onChange, defaultCurrency = 'USD', disabled }: Props) {
+export function BookingServicesEditor({ value, onChange, defaultCurrency = 'EUR', disabled }: Props) {
   const [catalog, setCatalog] = useState<Service[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const { partners } = usePartners();
   const suppliers = partners.filter(p => p.status === 'Active');
+  const currencyOptions = Array.from(new Set([defaultCurrency, 'EUR', 'USD', 'GBP'].filter(Boolean)));
 
   useEffect(() => {
     servicesApi.getAll()
@@ -160,9 +161,9 @@ export function BookingServicesEditor({ value, onChange, defaultCurrency = 'USD'
                     disabled={disabled}
                     className={`${input} w-24`}
                   >
-                    <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
-                    <option value="GBP">GBP</option>
+                    {currencyOptions.map((currency) => (
+                      <option key={currency} value={currency}>{currency}</option>
+                    ))}
                   </select>
                 </td>
                 <td className={td}>

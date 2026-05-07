@@ -98,7 +98,7 @@ function mapBookingStatus(status: string): DashboardBooking['status'] {
   }
 }
 
-function bookingToDashboard(b: Booking, invoicedBookingIds: Set<string>): DashboardBooking {
+function bookingToDashboard(b: Booking, invoicedBookingIds: Set<string>, baseCurrency: string): DashboardBooking {
   const cost = b.totalCost || 0;
   const sell = b.totalRevenue || 0;
   const profit = sell - cost;
@@ -125,7 +125,7 @@ function bookingToDashboard(b: Booking, invoicedBookingIds: Set<string>): Dashbo
     profitEUR: profit,
     profitMargin: margin,
     bookingDate: b.bookingDate || '',
-    currency: b.currency || 'USD',
+    currency: b.currency || baseCurrency,
     hasDocuments: (b.attachments?.length ?? 0) > 0,
     hasInvoices: invoicedBookingIds.has(b.id),
     hasSupplier: !!b.carrierId,
@@ -153,12 +153,12 @@ export function Dashboard({ onNewBooking, onViewAllBookings, onViewBooking }: Da
             invoicedBookingIds.add(inv.bookingId);
           }
         }
-        setBookings(bookingRows.map(b => bookingToDashboard(b, invoicedBookingIds)));
+        setBookings(bookingRows.map(b => bookingToDashboard(b, invoicedBookingIds, BASE_CURRENCY)));
         setRates(rateRows);
       })
       .catch(() => setBookings([]))
       .finally(() => setLoadingData(false));
-  }, []);
+  }, [BASE_CURRENCY]);
   
   // Filter States
   const [dateRange, setDateRange] = useState<'all' | 'month' | 'quarter'>('month');
@@ -312,13 +312,17 @@ export function Dashboard({ onNewBooking, onViewAllBookings, onViewBooking }: Da
 
   const profitByBookingData = useMemo(() => {
     return filteredBookings
-      .sort((a, b) => b.profitEUR - a.profitEUR)
+      .map((booking) => ({
+        booking: booking.bookingReference,
+        profit: sumToBase(
+          [{ amount: booking.profitEUR, currency: booking.currency, asOfDate: booking.bookingDate }],
+          BASE_CURRENCY,
+          rates,
+        ).total,
+      }))
+      .sort((a, b) => b.profit - a.profit)
       .slice(0, 10)
-      .map(b => ({ 
-        booking: b.bookingReference, 
-        profit: b.profitEUR 
-      }));
-  }, [filteredBookings]);
+  }, [filteredBookings, BASE_CURRENCY, rates]);
 
   const agentBookingsData = useMemo(() => {
     const agentCounts = filteredBookings.reduce((acc, booking) => {
@@ -339,7 +343,11 @@ export function Dashboard({ onNewBooking, onViewAllBookings, onViewBooking }: Da
         acc[monthKey] = { bookings: 0, profit: 0 };
       }
       acc[monthKey].bookings++;
-      acc[monthKey].profit += booking.profitEUR;
+      acc[monthKey].profit += sumToBase(
+        [{ amount: booking.profitEUR, currency: booking.currency, asOfDate: booking.bookingDate }],
+        BASE_CURRENCY,
+        rates,
+      ).total;
       
       return acc;
     }, {} as Record<string, { bookings: number; profit: number }>);
@@ -352,7 +360,7 @@ export function Dashboard({ onNewBooking, onViewAllBookings, onViewBooking }: Da
         bookings: data.bookings,
         profit: Math.round(data.profit)
       }));
-  }, [bookings]);
+  }, [bookings, BASE_CURRENCY, rates]);
 
   // Tables Data
   const recentBookings = useMemo(() => {
@@ -711,7 +719,7 @@ export function Dashboard({ onNewBooking, onViewAllBookings, onViewBooking }: Da
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis type="number" />
               <YAxis dataKey="booking" type="category" width={80} />
-              <Tooltip formatter={(value) => `€${value}`} />
+              <Tooltip formatter={(value) => formatCurrency(Number(value), BASE_CURRENCY)} />
               <Bar dataKey="profit" fill="#10B981" />
             </BarChart>
           </ResponsiveContainer>
@@ -743,7 +751,7 @@ export function Dashboard({ onNewBooking, onViewAllBookings, onViewBooking }: Da
               <Tooltip />
               <Legend />
               <Line yAxisId="left" type="monotone" dataKey="bookings" stroke="#2563EB" strokeWidth={2} name="Bookings" />
-              <Line yAxisId="right" type="monotone" dataKey="profit" stroke="#10B981" strokeWidth={2} name="Profit (€)" />
+              <Line yAxisId="right" type="monotone" dataKey="profit" stroke="#10B981" strokeWidth={2} name={`Profit (${BASE_CURRENCY})`} />
             </LineChart>
           </ResponsiveContainer>
         </Card>
@@ -765,7 +773,7 @@ export function Dashboard({ onNewBooking, onViewAllBookings, onViewBooking }: Da
                   <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ETD / ETA</th>
                   <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                   <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sales Agent</th>
-                  <th className="text-right py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Profit (EUR)</th>
+                  <th className="text-right py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Profit ({BASE_CURRENCY})</th>
                   <th className="text-center py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
@@ -787,7 +795,14 @@ export function Dashboard({ onNewBooking, onViewAllBookings, onViewBooking }: Da
                     <td className="py-3 px-4">{getStatusBadge(booking.status)}</td>
                     <td className="py-3 px-4 text-sm text-gray-900 dark:text-gray-100">{booking.salesAgent}</td>
                     <td className={`py-3 px-4 text-sm text-right ${booking.profitEUR >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      €{booking.profitEUR.toLocaleString()}
+                      {formatCurrency(
+                        sumToBase(
+                          [{ amount: booking.profitEUR, currency: booking.currency, asOfDate: booking.bookingDate }],
+                          BASE_CURRENCY,
+                          rates,
+                        ).total,
+                        BASE_CURRENCY,
+                      )}
                     </td>
                     <td className="py-3 px-4 text-center">
                       <Button 

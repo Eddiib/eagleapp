@@ -10,6 +10,7 @@ import { quotationsApi, generateQuoteNumber } from '../../services/quotations';
 import { usePartners } from '../../hooks/usePartners';
 import { useAuth } from '../../context/AuthContext';
 import { useConfirm } from '../../context/ConfirmDialog';
+import { useCompanySettings } from '../../context/CompanySettingsContext';
 import { Load, TransportMode, LoadStatus } from './types';
 
 const MODES: TransportMode[] = ['FCL','LCL','FTL','LTL','AIR','PARCEL','RAIL','BULK','SPECIAL'];
@@ -250,6 +251,8 @@ interface AddQuoteFormProps {
 
 function AddQuoteForm({ load, onSaved, onCancel }: AddQuoteFormProps) {
   const { partners } = usePartners();
+  const { baseCurrency } = useCompanySettings();
+  const currencyOptions = Array.from(new Set([baseCurrency, 'EUR', 'USD', 'GBP', 'AED'].filter(Boolean)));
   const suppliers = partners.filter(p => p.status === 'Active' &&
     ['Shipping Line','Air Carrier','Trucking Company','Rail Operator','Overseas Agent'].includes(p.partnerType));
 
@@ -260,7 +263,7 @@ function AddQuoteForm({ load, onSaved, onCancel }: AddQuoteFormProps) {
   const [carrierName, setCarrierName] = useState('');
   const [offeredRate, setOfferedRate] = useState('');
   const [baseRate, setBaseRate] = useState('');
-  const [currency, setCurrency] = useState('USD');
+  const [currency, setCurrency] = useState(baseCurrency);
   const [transitDays, setTransitDays] = useState('');
   const [validityDate, setValidityDate] = useState('');
   const [equipmentAvailableDate, setEquipmentAvailableDate] = useState('');
@@ -333,7 +336,7 @@ function AddQuoteForm({ load, onSaved, onCancel }: AddQuoteFormProps) {
             <label className="block text-sm text-gray-700 mb-1">Currency</label>
             <select value={currency} onChange={e => setCurrency(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-              {['USD','EUR','GBP','AED'].map(c => <option key={c} value={c}>{c}</option>)}
+              {currencyOptions.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
           <div>
