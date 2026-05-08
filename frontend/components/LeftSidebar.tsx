@@ -1,11 +1,10 @@
 import { 
   Users, 
   Ship, 
-  Handshake, 
-  Briefcase, 
-  DollarSign, 
-  UserCircle, 
-  Settings,
+  Handshake,
+  Briefcase,
+  DollarSign,
+  UserCircle,
   ChevronDown,
   ChevronRight,
   FileText,
@@ -66,6 +65,7 @@ const menuItems: MenuItem[] = [
       { id: 'sales-leads', label: 'Sales Leads', icon: TrendingUp },
       { id: 'meeting-minutes', label: 'Meeting Minutes', icon: Calendar },
       { id: 'quotation-desk', label: 'Quotation Desk', icon: FileSpreadsheet },
+      { id: 'partners-management', label: 'Partners', icon: Handshake },
     ]
   },
   { 
@@ -86,14 +86,6 @@ const menuItems: MenuItem[] = [
     subItems: [
       { id: 'booking-sheet', label: 'Booking Sheet', icon: Package },
       { id: 'booking-details', label: 'Booking Details', icon: FileText },
-    ]
-  },
-  { 
-    id: 'partners', 
-    label: 'Partners', 
-    icon: Handshake,
-    subItems: [
-      { id: 'partners-management', label: 'Partners Management', icon: Building2 },
     ]
   },
   { 
