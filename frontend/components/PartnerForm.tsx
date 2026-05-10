@@ -631,10 +631,13 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
         {/* Basic Information Section */}
         {activeSection === 'basic' && (
           <div className="space-y-3">
+            {/* Business Legal Information + Partner Identification side by side */}
+            <div className="grid grid-cols-2 gap-6">
+
             {/* Business Legal Information */}
             <div>
               <h3 className="text-xs uppercase tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-2 pb-1.5 border-b border-gray-200 dark:border-gray-700">Business Legal Information</h3>
-              <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <Label htmlFor="partnerCode">Partner Code</Label>
                   <Input
@@ -752,7 +755,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
             {/* Partner Identification */}
             <div>
               <h3 className="text-xs uppercase tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-2 pb-1.5 border-b border-gray-200 dark:border-gray-700">Partner Identification</h3>
-              <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label htmlFor="partnerClass">
                     Partner Class <span className="text-red-500">*</span>
@@ -835,11 +838,15 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                 </div>
               </div>
             </div>
+            </div>{/* end two-column wrapper */}
+
+            {/* Business Address + Contact Information side by side */}
+            <div className="grid grid-cols-2 gap-6">
 
             {/* Business Address */}
             <div>
               <h3 className="text-xs uppercase tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-2 pb-1.5 border-b border-gray-200 dark:border-gray-700">Business Address</h3>
-              <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label htmlFor="address">
                     Full Address <span className="text-red-500">*</span>
@@ -910,8 +917,8 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
 
             {/* Contact Information - CRUD Format */}
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-gray-900">Contact Information</h3>
+              <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-xs uppercase tracking-wide font-semibold text-gray-500 dark:text-gray-400">Contact Information</h3>
                 {!isViewMode && (
                   <Button type="button" variant="outline" size="sm" onClick={addContact} className="gap-2">
                     <Plus className="w-4 h-4" />
@@ -926,19 +933,17 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                     const isEditing = editingContactId === contact.id || contact.name === '';
                     
                     return (
-                      <div key={contact.id} className="border border-gray-200 rounded-lg">
+                      <div key={contact.id} className="border border-gray-200 dark:border-gray-700 rounded-md">
                         {/* Contact Header - Read Mode */}
                         {!isEditing && (
-                          <div className="flex items-center justify-between p-4">
+                          <div className="flex items-center justify-between px-3 py-2">
                             <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="text-gray-900">{contact.name}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-medium text-gray-900">{contact.name}</span>
                                 {contact.isPrimary && (
-                                  <Badge className="bg-blue-100 text-blue-800 text-xs">Primary</Badge>
+                                  <Badge className="bg-blue-100 text-blue-800 text-xs px-1.5 py-0">Primary</Badge>
                                 )}
-                              </div>
-                              <div className="text-sm text-gray-600">
-                                {contact.position} • {contact.email} • {contact.phone}
+                                <span className="text-xs text-gray-500">{contact.position} • {contact.email} • {contact.phone}</span>
                               </div>
                             </div>
                             {!isViewMode && (
@@ -969,7 +974,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
 
                         {/* Contact Edit Mode */}
                         {isEditing && (
-                          <div className="p-4">
+                          <div className="px-3 py-2">
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex items-center gap-2">
                                 {contact.isPrimary && (
@@ -1001,10 +1006,10 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+                            <div className="grid grid-cols-2 gap-2">
                               <div>
                                 <Label htmlFor={`contact-name-${index}`}>
-                                  Contact Person {index === 0 && <span className="text-red-500">*</span>}
+                                  Name {index === 0 && <span className="text-red-500">*</span>}
                                 </Label>
                                 <Input
                                   id={`contact-name-${index}`}
@@ -1073,11 +1078,15 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                 </div>
               )}
             </div>
+            </div>{/* end address+contact wrapper */}
+
+            {/* Payment Terms + Trade & Market Information side by side */}
+            <div className="grid grid-cols-2 gap-6">
 
             {/* Payment Terms */}
             <div>
               <h3 className="text-xs uppercase tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-2 pb-1.5 border-b border-gray-200 dark:border-gray-700">Payment Terms</h3>
-              <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <Label htmlFor="paymentTermsAsSupplier">Payment Terms as Supplier</Label>
                   <Select
@@ -1160,7 +1169,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
             {/* Trade & Market Information */}
             <div>
               <h3 className="text-xs uppercase tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-2 pb-1.5 border-b border-gray-200 dark:border-gray-700">Trade & Market Information</h3>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div>
                   <Label htmlFor="defaultServiceType">Service Types Offered</Label>
                   <Select
@@ -1216,11 +1225,12 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                 </div>
               </div>
             </div>
+            </div>{/* end payment+trade wrapper */}
 
             {/* Rating & Notes */}
             <div>
               <h3 className="text-xs uppercase tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-2 pb-1.5 border-b border-gray-200 dark:border-gray-700">Rating & Notes</h3>
-              <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
                 <div>
                   <Label htmlFor="rating">Partner Rating (1–5)</Label>
                   <Select
@@ -1385,7 +1395,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+                            <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
                               <div className="col-span-2 md:col-span-4">
                                 <Label htmlFor={`address-name-${index}`}>
                                   Address Name <span className="text-red-500">*</span>
@@ -1532,7 +1542,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                   </DialogDescription>
                 </DialogHeader>
                 
-                <div className="grid grid-cols-3 md:grid-cols-4 gap-3 py-3">
+                <div className="grid grid-cols-4 md:grid-cols-6 gap-3 py-3">
                   <div className="col-span-2 md:col-span-4">
                     <Label htmlFor="modal-address-name">
                       Address Name <span className="text-red-500">*</span>
@@ -1795,7 +1805,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+                            <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
                               <div className="col-span-2 md:col-span-4">
                                 <Label htmlFor={`bank-name-${index}`}>
                                   Bank Name <span className="text-red-500">*</span>
@@ -1867,7 +1877,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
 
                               <div className="col-span-2 md:col-span-4 border-t pt-3 mt-1">
                                 <h4 className="text-gray-700 mb-3 text-sm">Intermediary Bank (Optional)</h4>
-                                <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+                                <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
                                   <div>
                                     <Label htmlFor={`intermediary-bank-${index}`}>Intermediary Bank Name</Label>
                                     <Input
@@ -1946,7 +1956,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                   </DialogDescription>
                 </DialogHeader>
                 
-                <div className="grid grid-cols-3 md:grid-cols-4 gap-3 py-3">
+                <div className="grid grid-cols-4 md:grid-cols-6 gap-3 py-3">
                   <div className="col-span-2 md:col-span-4">
                     <Label htmlFor="modal-bank-name">
                       Bank Name <span className="text-red-500">*</span>
@@ -2009,7 +2019,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
 
                   <div className="col-span-2 md:col-span-4 border-t pt-3 mt-1">
                     <h4 className="text-gray-700 mb-3">Intermediary Bank (Optional)</h4>
-                    <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
                       <div>
                         <Label htmlFor="modal-intermediary-bank">Intermediary Bank Name</Label>
                         <Input
@@ -2206,7 +2216,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                   </DialogDescription>
                 </DialogHeader>
                 
-                <div className="grid grid-cols-3 md:grid-cols-4 gap-3 py-3">
+                <div className="grid grid-cols-4 md:grid-cols-6 gap-3 py-3">
                   {/* Origin & Destination */}
                   <div>
                     <Label htmlFor="countryOfOrigin">Country of Origin</Label>

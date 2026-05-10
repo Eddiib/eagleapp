@@ -157,7 +157,7 @@ export function Partners() {
         >
           <div className="bg-white dark:bg-gray-900 rounded-lg shadow-2xl w-full max-w-[95vw] h-[95vh] flex flex-col" role="dialog" aria-modal="true">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700">
               <div>
                 <h2 className="text-gray-900 dark:text-white">
                   {formMode === 'new' ? 'New Partner' : 'Edit Partner'}
@@ -179,7 +179,7 @@ export function Partners() {
             </div>
 
             {/* Modal Body - Scrollable */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto px-6 py-4">
               <PartnerForm
                 partner={selectedPartner}
                 mode={formMode}

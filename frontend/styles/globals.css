@@ -187,10 +187,10 @@ html {
   font-size: var(--font-size);
 }
 
-/* Compact form — matches booking form density */
+/* Compact form — matches booking header field style */
 .form-compact label {
-  font-size: 0.7rem;
-  font-weight: 500;
+  font-size: 0.75rem;
+  font-weight: 400;
   color: #6b7280;
   display: block;
   margin-bottom: 0.125rem;
@@ -200,23 +200,54 @@ html {
   color: #9ca3af;
 }
 .form-compact input,
-.form-compact [data-slot="select-trigger"],
-.form-compact [role="combobox"],
-.form-compact textarea {
+.form-compact [data-slot="input"] {
   font-size: 0.75rem !important;
+  height: 1.75rem !important;
   min-height: unset !important;
-  height: 1.875rem !important;
+  padding: 0.25rem 0.375rem !important;
+  border-radius: 0.25rem !important;
+  background-color: #ffffff !important;
+  border-color: #d1d5db !important;
+}
+.dark .form-compact input,
+.dark .form-compact [data-slot="input"] {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #f3f4f6 !important;
+}
+.form-compact [data-slot="select-trigger"],
+.form-compact [role="combobox"] {
+  font-size: 0.75rem !important;
+  height: 1.75rem !important;
+  min-height: unset !important;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
+  padding-left: 0.375rem !important;
+  border-radius: 0.25rem !important;
+  background-color: #ffffff !important;
+  border-color: #d1d5db !important;
+}
+.dark .form-compact [data-slot="select-trigger"],
+.dark .form-compact [role="combobox"] {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
 }
 .form-compact textarea {
+  font-size: 0.75rem !important;
   height: auto !important;
   min-height: 3rem !important;
-  padding-top: 0.375rem !important;
-  padding-bottom: 0.375rem !important;
+  padding: 0.375rem !important;
+  border-radius: 0.25rem !important;
+  border-color: #d1d5db !important;
 }
 .form-compact [data-slot="select-trigger"] svg,
 .form-compact [role="combobox"] svg {
-  width: 0.85rem;
-  height: 0.85rem;
+  width: 0.8rem;
+  height: 0.8rem;
+  opacity: 0.6;
+}
+.form-compact input::placeholder,
+.form-compact textarea::placeholder {
+  color: #9ca3af;
+  font-size: 0.75rem;
 }
