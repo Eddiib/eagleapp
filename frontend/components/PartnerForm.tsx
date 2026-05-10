@@ -7,7 +7,6 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Card } from './ui/card';
 import { X, Plus, Trash2, FileText, Building2, MapPin, CreditCard, Paperclip, Edit2, Save, Ban, Globe } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
@@ -628,14 +627,14 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
       </div>
 
       {/* Form Content */}
-      <div className="flex-1 space-y-6 overflow-y-auto pr-2" style={{ maxHeight: 'calc(90vh - 200px)' }}>
+      <div className="form-compact flex-1 space-y-4 overflow-y-auto pr-2" style={{ maxHeight: 'calc(95vh - 160px)' }}>
         {/* Basic Information Section */}
         {activeSection === 'basic' && (
-          <div className="space-y-6">
-            {/* Partner Code & Type */}
-            <Card className="p-6">
-              <h3 className="text-gray-900 mb-4">Partner Identification</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-3">
+            {/* Business Legal Information */}
+            <div>
+              <h3 className="text-xs uppercase tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-2 pb-1.5 border-b border-gray-200 dark:border-gray-700">Business Legal Information</h3>
+              <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
                 <div>
                   <Label htmlFor="partnerCode">Partner Code</Label>
                   <Input
@@ -648,93 +647,6 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                 </div>
 
                 <div>
-                  <Label htmlFor="partnerClass">
-                    Partner Class <span className="text-red-500">*</span>
-                  </Label>
-                  <Select
-                    value={formData.partnerClass}
-                    onValueChange={(value) => handlePartnerClassChange(value as 'Carrier' | 'Non Carrier')}
-                    disabled={isViewMode}
-                  >
-                    <SelectTrigger id="partnerClass">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Carrier">Carrier</SelectItem>
-                      <SelectItem value="Non Carrier">Non Carrier</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="partnerType">
-                    Partner Type <span className="text-red-500">*</span>
-                  </Label>
-                  <Select
-                    value={formData.partnerType}
-                    onValueChange={(value) => setFormData({ ...formData, partnerType: value as PartnerType })}
-                    disabled={isViewMode}
-                  >
-                    <SelectTrigger id="partnerType">
-                      <SelectValue placeholder="Select type..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categoryOptions.map(cat => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="status">
-                    Status <span className="text-red-500">*</span>
-                  </Label>
-                  <Select
-                    value={formData.status}
-                    onValueChange={(value) => setFormData({ ...formData, status: value as PartnerStatus })}
-                    disabled={isViewMode}
-                  >
-                    <SelectTrigger id="status">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Active">Active</SelectItem>
-                      <SelectItem value="Suspended">Suspended</SelectItem>
-                      <SelectItem value="Blacklisted">Blacklisted</SelectItem>
-                      <SelectItem value="Archived">Archived</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="assignedAgent">Assigned Agent</Label>
-                  <Select
-                    value={formData.assignedAgentId || 'none'}
-                    onValueChange={(value) => setFormData({ ...formData, assignedAgentId: value === 'none' ? '' : value })}
-                    disabled={isViewMode}
-                  >
-                    <SelectTrigger id="assignedAgent" className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100">
-                      <SelectValue placeholder="Select an agent..." />
-                    </SelectTrigger>
-                    <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-                      <SelectItem value="none">None</SelectItem>
-                      {employees.filter(emp => emp.isActive).map((employee) => (
-                        <SelectItem key={employee.id} value={employee.id} className="dark:text-gray-100 dark:hover:bg-gray-700">
-                          {employee.firstName} {employee.surname} - {employee.position}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </Card>
-
-            {/* Business Legal Information */}
-            <Card className="p-6">
-              <h3 className="text-gray-900 mb-4">Business Legal Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
                   <Label htmlFor="companyLegalName">
                     Business Legal Name <span className="text-red-500">*</span>
                   </Label>
@@ -751,7 +663,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                   )}
                 </div>
 
-                <div className="md:col-span-2">
+                <div>
                   <Label htmlFor="tradingName">
                     Business Trade Name <span className="text-red-500">*</span>
                   </Label>
@@ -835,13 +747,100 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                   )}
                 </div>
               </div>
-            </Card>
+            </div>
+
+            {/* Partner Identification */}
+            <div>
+              <h3 className="text-xs uppercase tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-2 pb-1.5 border-b border-gray-200 dark:border-gray-700">Partner Identification</h3>
+              <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+                <div>
+                  <Label htmlFor="partnerClass">
+                    Partner Class <span className="text-red-500">*</span>
+                  </Label>
+                  <Select
+                    value={formData.partnerClass}
+                    onValueChange={(value) => handlePartnerClassChange(value as 'Carrier' | 'Non Carrier')}
+                    disabled={isViewMode}
+                  >
+                    <SelectTrigger id="partnerClass">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Carrier">Carrier</SelectItem>
+                      <SelectItem value="Non Carrier">Non Carrier</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="partnerType">
+                    Partner Type <span className="text-red-500">*</span>
+                  </Label>
+                  <Select
+                    value={formData.partnerType}
+                    onValueChange={(value) => setFormData({ ...formData, partnerType: value as PartnerType })}
+                    disabled={isViewMode}
+                  >
+                    <SelectTrigger id="partnerType">
+                      <SelectValue placeholder="Select type..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categoryOptions.map(cat => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="status">
+                    Status <span className="text-red-500">*</span>
+                  </Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value) => setFormData({ ...formData, status: value as PartnerStatus })}
+                    disabled={isViewMode}
+                  >
+                    <SelectTrigger id="status">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Active">Active</SelectItem>
+                      <SelectItem value="Suspended">Suspended</SelectItem>
+                      <SelectItem value="Blacklisted">Blacklisted</SelectItem>
+                      <SelectItem value="Archived">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="assignedAgent">Assigned Agent</Label>
+                  <Select
+                    value={formData.assignedAgentId || 'none'}
+                    onValueChange={(value) => setFormData({ ...formData, assignedAgentId: value === 'none' ? '' : value })}
+                    disabled={isViewMode}
+                  >
+                    <SelectTrigger id="assignedAgent" className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100">
+                      <SelectValue placeholder="Select an agent..." />
+                    </SelectTrigger>
+                    <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                      <SelectItem value="none">None</SelectItem>
+                      {employees.filter(emp => emp.isActive).map((employee) => (
+                        <SelectItem key={employee.id} value={employee.id} className="dark:text-gray-100 dark:hover:bg-gray-700">
+                          {employee.firstName} {employee.surname} - {employee.position}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
 
             {/* Business Address */}
-            <Card className="p-6">
-              <h3 className="text-gray-900 mb-4">Business Address</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
+            <div>
+              <h3 className="text-xs uppercase tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-2 pb-1.5 border-b border-gray-200 dark:border-gray-700">Business Address</h3>
+              <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+                <div>
                   <Label htmlFor="address">
                     Full Address <span className="text-red-500">*</span>
                   </Label>
@@ -907,11 +906,11 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                   />
                 </div>
               </div>
-            </Card>
+            </div>
 
             {/* Contact Information - CRUD Format */}
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
+            <div>
+              <div className="flex items-center justify-between mb-3">
                 <h3 className="text-gray-900">Contact Information</h3>
                 {!isViewMode && (
                   <Button type="button" variant="outline" size="sm" onClick={addContact} className="gap-2">
@@ -1002,7 +1001,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
                               <div>
                                 <Label htmlFor={`contact-name-${index}`}>
                                   Contact Person {index === 0 && <span className="text-red-500">*</span>}
@@ -1073,12 +1072,12 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                   <p>No contacts added</p>
                 </div>
               )}
-            </Card>
+            </div>
 
             {/* Payment Terms */}
-            <Card className="p-6">
-              <h3 className="text-gray-900 mb-4">Payment Terms</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h3 className="text-xs uppercase tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-2 pb-1.5 border-b border-gray-200 dark:border-gray-700">Payment Terms</h3>
+              <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
                 <div>
                   <Label htmlFor="paymentTermsAsSupplier">Payment Terms as Supplier</Label>
                   <Select
@@ -1144,7 +1143,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                   </Select>
                 </div>
 
-                <div className="md:col-span-2">
+                <div className="col-span-2 md:col-span-4">
                   <Label htmlFor="creditTerms">Credit Terms</Label>
                   <Textarea
                     id="creditTerms"
@@ -1156,11 +1155,11 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                   />
                 </div>
               </div>
-            </Card>
+            </div>
 
             {/* Trade & Market Information */}
-            <Card className="p-6">
-              <h3 className="text-gray-900 mb-4">Trade & Market Information</h3>
+            <div>
+              <h3 className="text-xs uppercase tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-2 pb-1.5 border-b border-gray-200 dark:border-gray-700">Trade & Market Information</h3>
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="defaultServiceType">Service Types Offered</Label>
@@ -1216,12 +1215,12 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                   </p>
                 </div>
               </div>
-            </Card>
+            </div>
 
             {/* Rating & Notes */}
-            <Card className="p-6">
-              <h3 className="text-gray-900 mb-4">Rating & Notes</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h3 className="text-xs uppercase tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-2 pb-1.5 border-b border-gray-200 dark:border-gray-700">Rating & Notes</h3>
+              <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
                 <div>
                   <Label htmlFor="rating">Partner Rating (1–5)</Label>
                   <Select
@@ -1242,7 +1241,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                   </Select>
                 </div>
 
-                <div className="md:col-span-2">
+                <div className="col-span-2 md:col-span-4">
                   <Label htmlFor="notes">Notes</Label>
                   <Textarea
                     id="notes"
@@ -1254,14 +1253,14 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                   />
                 </div>
               </div>
-            </Card>
+            </div>
           </div>
         )}
 
         {/* Delivery Addresses Section - CRUD Format */}
         {activeSection === 'delivery' && (
-          <div className="space-y-6">
-            <Card className="p-6">
+          <div className="space-y-3">
+            <div>
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-gray-900">Delivery Addresses</h3>
@@ -1386,8 +1385,8 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div className="md:col-span-2">
+                            <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+                              <div className="col-span-2 md:col-span-4">
                                 <Label htmlFor={`address-name-${index}`}>
                                   Address Name <span className="text-red-500">*</span>
                                 </Label>
@@ -1401,7 +1400,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                                 />
                               </div>
 
-                              <div className="md:col-span-2">
+                              <div className="col-span-2 md:col-span-4">
                                 <Label htmlFor={`full-address-${index}`}>
                                   Full Address <span className="text-red-500">*</span>
                                 </Label>
@@ -1521,7 +1520,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                   )}
                 </div>
               )}
-            </Card>
+            </div>
 
             {/* Delivery Address Modal */}
             <Dialog open={showAddressModal} onOpenChange={setShowAddressModal}>
@@ -1533,8 +1532,8 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                   </DialogDescription>
                 </DialogHeader>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-                  <div className="md:col-span-2">
+                <div className="grid grid-cols-3 md:grid-cols-4 gap-3 py-3">
+                  <div className="col-span-2 md:col-span-4">
                     <Label htmlFor="modal-address-name">
                       Address Name <span className="text-red-500">*</span>
                     </Label>
@@ -1546,7 +1545,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                     />
                   </div>
 
-                  <div className="md:col-span-2">
+                  <div className="col-span-2 md:col-span-4">
                     <Label htmlFor="modal-full-address">
                       Full Address <span className="text-red-500">*</span>
                     </Label>
@@ -1624,7 +1623,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                     />
                   </div>
 
-                  <div className="md:col-span-2 flex items-center gap-2">
+                  <div className="col-span-2 md:col-span-4 flex items-center gap-2">
                     <input
                       type="checkbox"
                       id="modal-address-default"
@@ -1656,8 +1655,8 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
 
         {/* Bank Details Section - CRUD Format */}
         {activeSection === 'bank' && (
-          <div className="space-y-6">
-            <Card className="p-6">
+          <div className="space-y-3">
+            <div>
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-gray-900">Bank Details</h3>
@@ -1796,8 +1795,8 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div className="md:col-span-2">
+                            <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+                              <div className="col-span-2 md:col-span-4">
                                 <Label htmlFor={`bank-name-${index}`}>
                                   Bank Name <span className="text-red-500">*</span>
                                 </Label>
@@ -1866,9 +1865,9 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                                 </Select>
                               </div>
 
-                              <div className="md:col-span-2 border-t pt-4 mt-2">
+                              <div className="col-span-2 md:col-span-4 border-t pt-3 mt-1">
                                 <h4 className="text-gray-700 mb-3 text-sm">Intermediary Bank (Optional)</h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
                                   <div>
                                     <Label htmlFor={`intermediary-bank-${index}`}>Intermediary Bank Name</Label>
                                     <Input
@@ -1935,7 +1934,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                   )}
                 </div>
               )}
-            </Card>
+            </div>
 
             {/* Bank Details Modal */}
             <Dialog open={showBankModal} onOpenChange={setShowBankModal}>
@@ -1947,8 +1946,8 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                   </DialogDescription>
                 </DialogHeader>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-                  <div className="md:col-span-2">
+                <div className="grid grid-cols-3 md:grid-cols-4 gap-3 py-3">
+                  <div className="col-span-2 md:col-span-4">
                     <Label htmlFor="modal-bank-name">
                       Bank Name <span className="text-red-500">*</span>
                     </Label>
@@ -2008,9 +2007,9 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                     />
                   </div>
 
-                  <div className="md:col-span-2 border-t pt-4 mt-2">
+                  <div className="col-span-2 md:col-span-4 border-t pt-3 mt-1">
                     <h4 className="text-gray-700 mb-3">Intermediary Bank (Optional)</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
                       <div>
                         <Label htmlFor="modal-intermediary-bank">Intermediary Bank Name</Label>
                         <Input
@@ -2031,7 +2030,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                     </div>
                   </div>
 
-                  <div className="md:col-span-2 flex items-center gap-2">
+                  <div className="col-span-2 md:col-span-4 flex items-center gap-2">
                     <input
                       type="checkbox"
                       id="modal-bank-default"
@@ -2063,8 +2062,8 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
 
         {/* Trade & Market Information Section - List CRUD Format */}
         {activeSection === 'trade' && (
-          <div className="space-y-6">
-            <Card className="p-6">
+          <div className="space-y-3">
+            <div>
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-gray-900">Trade & Market Information</h3>
@@ -2195,7 +2194,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                   )}
                 </div>
               )}
-            </Card>
+            </div>
 
             {/* Trade & Market Info Modal */}
             <Dialog open={showTradeModal} onOpenChange={setShowTradeModal}>
@@ -2207,7 +2206,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                   </DialogDescription>
                 </DialogHeader>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+                <div className="grid grid-cols-3 md:grid-cols-4 gap-3 py-3">
                   {/* Origin & Destination */}
                   <div>
                     <Label htmlFor="countryOfOrigin">Country of Origin</Label>
@@ -2402,8 +2401,8 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
 
         {/* Attachments Section - CRUD Format */}
         {activeSection === 'attachments' && (
-          <div className="space-y-6">
-            <Card className="p-6">
+          <div className="space-y-3">
+            <div>
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-gray-900">Attachments</h3>
@@ -2482,7 +2481,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                   </div>
                 </div>
               )}
-            </Card>
+            </div>
           </div>
         )}
       </div>
