@@ -176,6 +176,9 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
   }, [formData, seedSnapshot, onDirtyChange]);
 
   const categoryOptions = formData.partnerClass === 'Carrier' ? carrierCategories : nonCarrierCategories;
+  const selectedPartnerRoles = normalizePartnerRoles(formData);
+  const hasBuyerRole = selectedPartnerRoles.includes('Buyer');
+  const hasSellerRole = selectedPartnerRoles.includes('Seller');
 
   const setPartnerType = (nextType: PartnerType, patch: Partial<Partner> = {}) => {
     const currentRoles = Array.isArray(formData.partnerRoles)
@@ -1148,43 +1151,47 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
             <div>
               <h3 className="text-xs uppercase tracking-wide font-semibold text-gray-500 dark:text-gray-400 mb-2 pb-1.5 border-b border-gray-200 dark:border-gray-700">Payment Terms</h3>
               <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <Label htmlFor="paymentTermsAsSupplier">Payment Terms as Supplier</Label>
-                  <Select
-                    value={formData.paymentTermsAsSupplier}
-                    onValueChange={(value) => setFormData({ ...formData, paymentTermsAsSupplier: value as PaymentTerms })}
-                    disabled={isViewMode}
-                  >
-                    <SelectTrigger id="paymentTermsAsSupplier">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Prepaid">Prepaid</SelectItem>
-                      <SelectItem value="15 Days">15 Days</SelectItem>
-                      <SelectItem value="30 Days">30 Days</SelectItem>
-                      <SelectItem value="60 Days">60 Days</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {hasSellerRole && (
+                  <div>
+                    <Label htmlFor="paymentTermsAsSupplier">Payment Terms as Supplier</Label>
+                    <Select
+                      value={formData.paymentTermsAsSupplier}
+                      onValueChange={(value) => setFormData({ ...formData, paymentTermsAsSupplier: value as PaymentTerms })}
+                      disabled={isViewMode}
+                    >
+                      <SelectTrigger id="paymentTermsAsSupplier">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Prepaid">Prepaid</SelectItem>
+                        <SelectItem value="15 Days">15 Days</SelectItem>
+                        <SelectItem value="30 Days">30 Days</SelectItem>
+                        <SelectItem value="60 Days">60 Days</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
-                <div>
-                  <Label htmlFor="paymentTermsAsClient">Payment Terms as Client</Label>
-                  <Select
-                    value={formData.paymentTermsAsClient}
-                    onValueChange={(value) => setFormData({ ...formData, paymentTermsAsClient: value as PaymentTerms })}
-                    disabled={isViewMode}
-                  >
-                    <SelectTrigger id="paymentTermsAsClient">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Prepaid">Prepaid</SelectItem>
-                      <SelectItem value="15 Days">15 Days</SelectItem>
-                      <SelectItem value="30 Days">30 Days</SelectItem>
-                      <SelectItem value="60 Days">60 Days</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {hasBuyerRole && (
+                  <div>
+                    <Label htmlFor="paymentTermsAsClient">Payment Terms as Client</Label>
+                    <Select
+                      value={formData.paymentTermsAsClient}
+                      onValueChange={(value) => setFormData({ ...formData, paymentTermsAsClient: value as PaymentTerms })}
+                      disabled={isViewMode}
+                    >
+                      <SelectTrigger id="paymentTermsAsClient">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Prepaid">Prepaid</SelectItem>
+                        <SelectItem value="15 Days">15 Days</SelectItem>
+                        <SelectItem value="30 Days">30 Days</SelectItem>
+                        <SelectItem value="60 Days">60 Days</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 <div>
                   <Label htmlFor="creditLimit">Credit Limit</Label>

@@ -62,10 +62,10 @@ const menuItems: MenuItem[] = [
     label: 'CRM', 
     icon: Users,
     subItems: [
+      { id: 'partners-management', label: 'Partners', icon: Handshake },
       { id: 'sales-leads', label: 'Sales Leads', icon: TrendingUp },
       { id: 'meeting-minutes', label: 'Meeting Minutes', icon: Calendar },
       { id: 'quotation-desk', label: 'Quotation Desk', icon: FileSpreadsheet },
-      { id: 'partners-management', label: 'Partners', icon: Handshake },
     ]
   },
   { 
