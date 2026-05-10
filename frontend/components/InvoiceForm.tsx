@@ -10,6 +10,7 @@ import {
 } from '../services/invoices';
 import { useAuth } from '../context/AuthContext';
 import { useCompanySettings } from '../context/CompanySettingsContext';
+import { isPartnerBuyer } from '../utils/partnerRoles';
 
 interface InvoiceFormProps {
   invoice?: Invoice | null;
@@ -40,10 +41,8 @@ export function InvoiceForm({ invoice, mode, onSaved, onCancel }: InvoiceFormPro
   const [loadingRef, setLoadingRef] = useState(true);
 
   const today = new Date().toISOString().split('T')[0];
-  const CLIENT_TYPES = ['Client', 'Buyer'];
   const clients = partners.filter(
-    (p) => p.status === 'Active' &&
-      (CLIENT_TYPES.includes(p.partnerType) || CLIENT_TYPES.includes(p.partnerCategory ?? ''))
+    (p) => p.status === 'Active' && isPartnerBuyer(p)
   );
   const currencyOptions = useMemo(() => {
     const set = new Set<string>([baseCurrency, ...COMMON_CURRENCIES].filter(Boolean));

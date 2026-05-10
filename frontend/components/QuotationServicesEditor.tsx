@@ -5,6 +5,7 @@ import { usePartners } from '../hooks/usePartners';
 import { Service } from '../types/service';
 import { QuotationServiceLine } from '../services/quotations';
 import { tableClasses } from './ui/table';
+import { isPartnerSeller } from '../utils/partnerRoles';
 
 interface Props {
   value: QuotationServiceLine[];
@@ -17,7 +18,7 @@ export function QuotationServicesEditor({ value, onChange, defaultCurrency = 'EU
   const [catalog, setCatalog] = useState<Service[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const { partners } = usePartners();
-  const suppliers = partners.filter((partner) => partner.status === 'Active');
+  const suppliers = partners.filter((partner) => partner.status === 'Active' && isPartnerSeller(partner));
   const currencyOptions = Array.from(new Set([defaultCurrency, 'EUR', 'USD', 'GBP'].filter(Boolean)));
 
   useEffect(() => {

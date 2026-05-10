@@ -11,6 +11,7 @@ import {
 } from '../services/quotations';
 import { QuotationServicesEditor } from './QuotationServicesEditor';
 import { useCompanySettings } from '../context/CompanySettingsContext';
+import { isPartnerBuyer } from '../utils/partnerRoles';
 
 interface QuotationFormProps {
   quotation?: Quotation | null;
@@ -29,10 +30,8 @@ export function QuotationForm({ quotation, mode, onSave, onCancel }: QuotationFo
     const set = new Set<string>([baseCurrency, ...COMMON_CURRENCIES].filter(Boolean));
     return Array.from(set);
   }, [baseCurrency]);
-  const CLIENT_TYPES = ['Client', 'Buyer'];
   const clients = partners.filter((partner) =>
-    partner.status === 'Active' &&
-    (CLIENT_TYPES.includes(partner.partnerType) || CLIENT_TYPES.includes(partner.partnerCategory ?? ''))
+    partner.status === 'Active' && isPartnerBuyer(partner)
   );
 
   const [form, setForm] = useState({

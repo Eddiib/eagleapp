@@ -7,6 +7,7 @@ import { Service } from '../types/service';
 import { BookingEquipmentLine, EquipmentServiceLine } from '../services/bookings';
 import { usePartners } from '../hooks/usePartners';
 import { tableClasses } from './ui/table';
+import { isPartnerSeller } from '../utils/partnerRoles';
 
 interface Props {
   value: BookingEquipmentLine[];
@@ -257,6 +258,8 @@ interface ServicesPanelProps {
 function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servicesCatalog, partners }: ServicesPanelProps) {
   const inp = (extra = '') =>
     `w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 disabled:opacity-60 focus:outline-none focus:ring-1 focus:ring-blue-500 ${extra}`;
+  const activePartners = partners.filter(p => p.status === 'Active');
+  const supplierPartners = activePartners.filter(isPartnerSeller);
 
   const setService = (idx: number, patch: Partial<EquipmentServiceLine>) => {
     onChange(services.map((s, i) => i === idx ? { ...s, ...patch } : s));
@@ -348,7 +351,7 @@ function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servic
                   className={inp()}
                 >
                   <option value="">Select Invoice Party...</option>
-                  {partners.filter(p => p.status === 'Active').map(p => (
+                  {activePartners.map(p => (
                     <option key={p.id} value={p.id}>{p.tradingName || p.companyLegalName}</option>
                   ))}
                 </select>
@@ -374,7 +377,7 @@ function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servic
                   className={inp()}
                 >
                   <option value="">Select Supplier...</option>
-                  {partners.filter(p => p.status === 'Active').map(p => (
+                  {supplierPartners.map(p => (
                     <option key={p.id} value={p.id}>{p.tradingName || p.companyLegalName}</option>
                   ))}
                 </select>

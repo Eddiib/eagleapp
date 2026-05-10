@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Partner, PartnerType, PartnerCategory, PartnerStatus, PaymentTerms, DefaultServiceType, PartnerContact, DeliveryAddress, PartnerBankDetails, PartnerDocument, TradeMarketInfo } from '../types/partner';
+import { Partner, PartnerType, PartnerCategory, PartnerStatus, PaymentTerms, DefaultServiceType, PartnerContact, DeliveryAddress, PartnerBankDetails, PartnerDocument, TradeMarketInfo, PartnerRole } from '../types/partner';
 import { Employee } from './EmployeesModule';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Checkbox } from './ui/checkbox';
 import { X, Plus, Trash2, FileText, Building2, MapPin, CreditCard, Paperclip, Edit2, Save, Ban, Globe } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
@@ -16,6 +17,12 @@ import { ports, getPortName } from '../data/ports';
 
 import { employeesApi } from '../services/employees';
 import { useCompanySettings } from '../context/CompanySettingsContext';
+import {
+  derivePartnerRolesFromType,
+  normalizePartnerRoles,
+  PARTNER_ROLE_OPTIONS,
+  samePartnerRoles,
+} from '../utils/partnerRoles';
 
 interface PartnerFormProps {
   partner?: Partner | null;
@@ -126,6 +133,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
     eoriNumber: partner?.eoriNumber || '',
     partnerClass: partner?.partnerClass || 'Carrier',
     partnerType: partner?.partnerType || 'Shipping Line',
+    partnerRoles: partner ? normalizePartnerRoles(partner) : derivePartnerRolesFromType('Shipping Line'),
     country: partner?.country || '',
     city: partner?.city || '',
     address: partner?.address || '',
@@ -169,20 +177,43 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
 
   const categoryOptions = formData.partnerClass === 'Carrier' ? carrierCategories : nonCarrierCategories;
 
+  const setPartnerType = (nextType: PartnerType, patch: Partial<Partner> = {}) => {
+    const currentRoles = Array.isArray(formData.partnerRoles)
+      ? formData.partnerRoles
+      : normalizePartnerRoles(formData);
+    const previousDefaultRoles = derivePartnerRolesFromType(formData.partnerType, formData.partnerCategory);
+    const shouldUseDefaultRoles = samePartnerRoles(currentRoles, previousDefaultRoles);
+
+    setFormData({
+      ...formData,
+      ...patch,
+      partnerType: nextType,
+      partnerRoles: shouldUseDefaultRoles
+        ? derivePartnerRolesFromType(nextType, nextType)
+        : currentRoles,
+    });
+  };
+
   const handlePartnerClassChange = (value: 'Carrier' | 'Non Carrier') => {
     const newCategories = value === 'Carrier' ? carrierCategories : nonCarrierCategories;
     const currentTypeValid = newCategories.includes(formData.partnerType || '');
-    setFormData({
-      ...formData,
-      partnerClass: value,
-      partnerType: (currentTypeValid ? formData.partnerType : newCategories[0]) as PartnerType,
-    });
+    const nextType = (currentTypeValid ? formData.partnerType : newCategories[0]) as PartnerType;
+    setPartnerType(nextType, { partnerClass: value });
+  };
+
+  const togglePartnerRole = (role: PartnerRole, checked: boolean) => {
+    const currentRoles = Array.isArray(formData.partnerRoles) ? formData.partnerRoles : normalizePartnerRoles(formData);
+    const nextRoles = checked
+      ? [...new Set([...currentRoles, role])]
+      : currentRoles.filter((currentRole) => currentRole !== role);
+    setFormData({ ...formData, partnerRoles: nextRoles });
   };
 
   useEffect(() => {
     if (partner) {
       setFormData({
         ...partner,
+        partnerRoles: normalizePartnerRoles(partner),
         contacts: Array.isArray(partner.contacts) && partner.contacts.length > 0 ? partner.contacts : [{
           id: '1',
           name: '',
@@ -210,7 +241,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
   const EORI_RE = /^[A-Z]{2}[A-Z0-9]{1,15}$/i;
 
   const ERROR_TO_SECTION: Record<string, FormSection> = {
-    companyLegalName: 'basic', tradingName: 'basic', country: 'basic', city: 'basic',
+    companyLegalName: 'basic', tradingName: 'basic', partnerRoles: 'basic', country: 'basic', city: 'basic',
     address: 'basic', taxNumber: 'basic', eoriNumber: 'basic', website: 'basic',
     contactName: 'basic', contactEmail: 'basic', contactPhone: 'basic',
     contacts: 'basic',
@@ -227,6 +258,9 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
     if (!formData.city?.trim())             newErrors.city = 'City is required';
     if (!formData.address?.trim())          newErrors.address = 'Address is required';
     if (!formData.taxNumber?.trim())        newErrors.taxNumber = 'Tax ID is required';
+    if (normalizePartnerRoles(formData).length === 0) {
+      newErrors.partnerRoles = 'Select at least one commercial role';
+    }
 
     if (formData.eoriNumber && !EORI_RE.test(formData.eoriNumber.trim())) {
       newErrors.eoriNumber = 'EORI must start with a 2-letter country code';
@@ -781,7 +815,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                   </Label>
                   <Select
                     value={formData.partnerType}
-                    onValueChange={(value) => setFormData({ ...formData, partnerType: value as PartnerType })}
+                    onValueChange={(value) => setPartnerType(value as PartnerType)}
                     disabled={isViewMode}
                   >
                     <SelectTrigger id="partnerType">
@@ -793,6 +827,33 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="col-span-2">
+                  <Label>
+                    Commercial Role <span className="text-red-500">*</span>
+                  </Label>
+                  <div className={`mt-2 grid grid-cols-2 gap-2 rounded-md border p-2 ${errors.partnerRoles ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'}`}>
+                    {PARTNER_ROLE_OPTIONS.map((role) => {
+                      const checked = normalizePartnerRoles(formData).includes(role);
+                      return (
+                        <label
+                          key={role}
+                          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-gray-700 dark:text-gray-200"
+                        >
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={(value) => togglePartnerRole(role, value === true)}
+                            disabled={isViewMode}
+                          />
+                          <span>{role}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {errors.partnerRoles && (
+                    <p className="text-red-500 text-sm mt-1">{errors.partnerRoles}</p>
+                  )}
                 </div>
 
                 <div>

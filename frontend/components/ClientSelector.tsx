@@ -19,6 +19,7 @@ import {
 } from './ui/popover';
 import { Button } from './ui/button';
 import { Check, ChevronsUpDown } from 'lucide-react';
+import { isPartnerBuyer } from '../utils/partnerRoles';
 import {
   Tooltip,
   TooltipContent,
@@ -47,7 +48,7 @@ export function ClientSelector({
   const [open, setOpen] = useState(false);
   const { partners: allPartners } = usePartners();
   const clients = allPartners.filter(
-    p => (p.partnerType === 'Client' || p.partnerType === 'Buyer') && p.status === 'Active'
+    p => isPartnerBuyer(p) && p.status === 'Active'
   );
   const [selectedClient, setSelectedClient] = useState<Partner | null>(null);
 
@@ -78,7 +79,7 @@ export function ClientSelector({
               <Info className="w-4 h-4 text-gray-400 cursor-help" />
             </TooltipTrigger>
             <TooltipContent>
-              <p className="max-w-xs">Clients must be selected from the Partners list. Only Partners with type "Client" or "Buyer" are available.</p>
+              <p className="max-w-xs">Clients must be selected from the Partners list. Only active partners with the Buyer role are available.</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

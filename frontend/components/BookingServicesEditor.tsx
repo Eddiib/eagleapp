@@ -5,6 +5,7 @@ import { usePartners } from '../hooks/usePartners';
 import { Service } from '../types/service';
 import { BookingServiceLine } from '../services/bookings';
 import { tableClasses } from './ui/table';
+import { isPartnerSeller } from '../utils/partnerRoles';
 
 interface Props {
   value: BookingServiceLine[];
@@ -17,7 +18,7 @@ export function BookingServicesEditor({ value, onChange, defaultCurrency = 'EUR'
   const [catalog, setCatalog] = useState<Service[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const { partners } = usePartners();
-  const suppliers = partners.filter(p => p.status === 'Active');
+  const suppliers = partners.filter(p => p.status === 'Active' && isPartnerSeller(p));
   const currencyOptions = Array.from(new Set([defaultCurrency, 'EUR', 'USD', 'GBP'].filter(Boolean)));
 
   useEffect(() => {

@@ -17,6 +17,7 @@ const VALID_PARTNER_TYPES = [
 ];
 const VALID_STATUSES = ['Active', 'Suspended', 'Blacklisted', 'Archived'];
 const VALID_PARTNER_CLASSES = ['Carrier', 'Non Carrier'];
+const VALID_PARTNER_ROLES = ['Buyer', 'Seller'];
 const VALID_DOCUMENT_TYPES = ['Contract', 'LOA', 'Certificate', 'License', 'Other'];
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -56,6 +57,47 @@ function mapTradeLane(t) {
     modeOfTransport: t.mode_of_transport,
     modeOfTrailer: t.mode_of_trailer,
   };
+}
+
+function parsePartnerRoles(value) {
+  if (Array.isArray(value)) return value;
+  if (typeof value !== 'string' || value.trim() === '') return null;
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function derivePartnerRoles(partnerType) {
+  return ['Client', 'Buyer'].includes(partnerType) ? ['Buyer'] : ['Seller'];
+}
+
+function normalizePartnerRoles(value, partnerType, existingValue) {
+  const parsed = value === undefined
+    ? parsePartnerRoles(existingValue)
+    : value;
+  const source = parsed ?? derivePartnerRoles(partnerType);
+
+  if (!Array.isArray(source)) {
+    throw new AppError(400, 'Invalid partner_roles: must be an array', 'INVALID_ARRAY');
+  }
+
+  const roles = [...new Set(source)];
+  const invalid = roles.filter((role) => !VALID_PARTNER_ROLES.includes(role));
+  if (invalid.length) {
+    throw new AppError(
+      400,
+      `Invalid partner_roles: must contain only ${VALID_PARTNER_ROLES.join(', ')}`,
+      'INVALID_ENUM',
+    );
+  }
+  if (roles.length === 0) {
+    throw new AppError(400, 'Select at least one partner role', 'MISSING_FIELDS');
+  }
+
+  return roles;
 }
 
 // ── Diff-and-merge helpers ────────────────────────────────────────────────────
@@ -222,6 +264,7 @@ router.get('/', asyncHandler(async (_req, res) => {
   const tradeLanesMap = group(tradeLanes);
 
   for (const p of partners) {
+    p.partner_roles     = normalizePartnerRoles(p.partner_roles, p.partner_type);
     p.contacts          = contactsMap[p.id]   || [];
     p.bankDetails       = banksMap[p.id]      || [];
     p.deliveryAddresses = addressesMap[p.id]  || [];
@@ -237,6 +280,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
   if (!rows.length) throw new AppError(404, 'Partner not found', 'NOT_FOUND');
 
   const partner = rows[0];
+  partner.partner_roles = normalizePartnerRoles(partner.partner_roles, partner.partner_type);
   const [contacts]          = await db.query('SELECT * FROM partner_contacts WHERE partner_id = ?', [partner.id]);
   const [bankDetails]       = await db.query('SELECT * FROM partner_bank_details WHERE partner_id = ?', [partner.id]);
   const [deliveryAddresses] = await db.query('SELECT * FROM partner_delivery_addresses WHERE partner_id = ?', [partner.id]);
@@ -290,17 +334,18 @@ router.post('/', asyncHandler(async (req, res) => {
       contacts = [], bankDetails = [], deliveryAddresses = [], tradeMarketInfo = [],
       documents = [],
     } = req.body;
+    const partner_roles = normalizePartnerRoles(req.body.partner_roles, partner_type);
 
     try {
       await conn.query(
         `INSERT INTO partners (id, partner_code, company_legal_name, trading_name, business_number,
-          eori_number, partner_type, partner_class, partner_category, country, city, address, zip_code,
+          eori_number, partner_type, partner_class, partner_roles, partner_category, country, city, address, zip_code,
           website, tax_number, registration_number, assigned_agent_id, payment_terms,
           payment_terms_as_supplier, payment_terms_as_client, credit_terms, currency,
           default_service_type, main_trades, notes, status, rating, open_balance, credit_limit, created_by)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
         [id, partnerCode, company_legal_name, trading_name, business_number,
-          eori_number, partner_type, partner_class, partner_type, // partner_category mirrors partner_type
+          eori_number, partner_type, partner_class, JSON.stringify(partner_roles), partner_type, // partner_category mirrors partner_type
           country, city, address, zip_code, website,
           tax_number, registration_number, assigned_agent_id || null,
           payment_terms_as_supplier || null, // legacy "payment_terms" mirrors supplier terms
@@ -381,18 +426,19 @@ router.put('/:id', asyncHandler(async (req, res) => {
       contacts = [], bankDetails = [], deliveryAddresses = [], tradeMarketInfo = [],
       documents = [],
     } = req.body;
+    const partner_roles = normalizePartnerRoles(req.body.partner_roles, partner_type ?? before.partner_type, before.partner_roles);
 
     try {
       await conn.query(
         `UPDATE partners SET company_legal_name=?, trading_name=?, business_number=?, eori_number=?,
-          partner_type=?, partner_class=?, partner_category=?, country=?, city=?, address=?, zip_code=?,
+          partner_type=?, partner_class=?, partner_roles=?, partner_category=?, country=?, city=?, address=?, zip_code=?,
           website=?, tax_number=?, registration_number=?, assigned_agent_id=?, payment_terms=?,
           payment_terms_as_supplier=?, payment_terms_as_client=?, credit_terms=?, currency=?,
           default_service_type=?, main_trades=?, notes=?, status=?, rating=?,
           credit_limit=?, last_updated_by=?, last_activity_date=NOW()
          WHERE id=?`,
         [company_legal_name, trading_name, business_number, eori_number,
-          partner_type, partner_class, partner_type,
+          partner_type, partner_class, JSON.stringify(partner_roles), partner_type,
           country, city, address, zip_code, website,
           tax_number, registration_number, assigned_agent_id || null,
           payment_terms_as_supplier || null,

@@ -3,6 +3,7 @@
 // The two high-level axes ('Carrier' | 'Non Carrier') are retained on `partnerClass`
 // for backend reporting; `partnerType` is the granular category.
 export type PartnerClass = 'Carrier' | 'Non Carrier';
+export type PartnerRole = 'Buyer' | 'Seller';
 
 export type PartnerType =
   | 'Client'
@@ -148,6 +149,7 @@ export interface Partner {
   eoriNumber?: string; // EORI Number for EU customs
   partnerType: PartnerType;
   partnerClass?: PartnerClass; // High-level carrier/non-carrier axis
+  partnerRoles?: PartnerRole[]; // Commercial role axis: buyer, seller, or both
   partnerCategory?: PartnerCategory; // Back-compat alias for partnerType
   country: string;
   city: string;

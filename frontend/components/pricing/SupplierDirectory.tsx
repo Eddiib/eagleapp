@@ -4,6 +4,7 @@ import { usePartners } from '../../hooks/usePartners';
 import { Partner, PartnerType } from '../../types/partner';
 import { TransportMode } from './types';
 import { getCountryName } from '../../data/countries';
+import { isPartnerSeller } from '../../utils/partnerRoles';
 
 // Partner types that are considered "suppliers" in pricing context
 const SUPPLIER_TYPES: PartnerType[] = [
@@ -50,7 +51,9 @@ export function SupplierDirectory() {
   const [filterType, setFilterType] = useState('all');
   const [filterSpec, setFilterSpec] = useState('all');
 
-  const suppliers = partners.filter(p => SUPPLIER_TYPES.includes(p.partnerType) && p.status === 'Active');
+  const suppliers = partners.filter(p =>
+    p.status === 'Active' && (isPartnerSeller(p) || SUPPLIER_TYPES.includes(p.partnerType))
+  );
 
   const filtered = suppliers.filter(p => {
     const txt = `${p.companyLegalName} ${p.tradingName} ${p.city} ${p.country} ${getCountryName(p.country)}`.toLowerCase();

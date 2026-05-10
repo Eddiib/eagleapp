@@ -31,6 +31,7 @@ import { usePartners } from '../hooks/usePartners';
 import { useConfirm } from '../context/ConfirmDialog';
 import { employeesApi } from '../services/employees';
 import { useCompanySettings } from '../context/CompanySettingsContext';
+import { normalizePartnerRoles } from '../utils/partnerRoles';
 
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -258,6 +259,7 @@ export function PartnersList({
               <TableHead className="sticky left-0 bg-gray-50 dark:bg-gray-700 dark:text-gray-300 z-10">Partner Code</TableHead>
               <TableHead className="dark:text-gray-300">Company Name</TableHead>
               <TableHead className="dark:text-gray-300">Partner Type</TableHead>
+              <TableHead className="dark:text-gray-300">Role</TableHead>
               <TableHead className="dark:text-gray-300">Country</TableHead>
               <TableHead className="dark:text-gray-300">City</TableHead>
               <TableHead className="dark:text-gray-300">Main Trades</TableHead>
@@ -275,7 +277,7 @@ export function PartnersList({
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={14} className="text-center py-10">
+                <TableCell colSpan={15} className="text-center py-10">
                   <div className="flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400">
                     <RefreshCw className="w-4 h-4 animate-spin" /> Loading partners...
                   </div>
@@ -283,7 +285,7 @@ export function PartnersList({
               </TableRow>
             ) : filteredPartners.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={14} className="text-center py-8 text-gray-500 dark:text-gray-400">
+                <TableCell colSpan={15} className="text-center py-8 text-gray-500 dark:text-gray-400">
                   {partners.length === 0 ? 'No partners yet. Create your first partner.' : 'No partners match your filters.'}
                 </TableCell>
               </TableRow>
@@ -303,6 +305,13 @@ export function PartnersList({
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">{partner.partnerType}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {normalizePartnerRoles(partner).map((role) => (
+                          <Badge key={role} variant="secondary">{role}</Badge>
+                        ))}
+                      </div>
                     </TableCell>
                     <TableCell>{getCountryName(partner.country)}</TableCell>
                     <TableCell>{partner.city}</TableCell>

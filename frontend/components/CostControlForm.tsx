@@ -7,6 +7,7 @@ import { Service } from '../types/service';
 import { CostEntry, CostEntryPayload, CostEntryStatus, costControlApi } from '../services/costControl';
 import { useAuth } from '../context/AuthContext';
 import { useCompanySettings } from '../context/CompanySettingsContext';
+import { isPartnerBuyer, isPartnerSeller } from '../utils/partnerRoles';
 
 interface CostControlFormProps {
   entry?: CostEntry | null;
@@ -32,12 +33,10 @@ export function CostControlForm({ entry, mode, onSaved, onCancel }: CostControlF
   const [services, setServices] = useState<Service[]>([]);
   const [loadingRef, setLoadingRef] = useState(true);
 
-  const CLIENT_TYPES = ['Client', 'Buyer'];
   const clients = partners.filter(
-    (p) => p.status === 'Active' &&
-      (CLIENT_TYPES.includes(p.partnerType) || CLIENT_TYPES.includes(p.partnerCategory ?? ''))
+    (p) => p.status === 'Active' && isPartnerBuyer(p)
   );
-  const suppliers = partners.filter((p) => p.status === 'Active');
+  const suppliers = partners.filter((p) => p.status === 'Active' && isPartnerSeller(p));
 
   const today = new Date().toISOString().split('T')[0];
   const currencyOptions = useMemo(() => {

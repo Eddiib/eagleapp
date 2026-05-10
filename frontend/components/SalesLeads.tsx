@@ -10,6 +10,7 @@ import {
   SalesLeadMeetingMinute as SalesLeadMeetingMinuteModel,
   salesLeadsApi,
 } from '../services/salesLeads';
+import { isPartnerBuyer } from '../utils/partnerRoles';
 
 export type {
   SalesLead,
@@ -38,14 +39,12 @@ export function SalesLeads({ onCreateBookingFromLead }: SalesLeadsProps) {
 
   const { partners: allPartners, loading: partnersLoading } = usePartners();
 
-  const CLIENT_TYPES = ['Client', 'Buyer'];
   const clientPartnerIds = useMemo(
     () =>
       allPartners
         .filter(
           (partner) =>
-            partner.status === 'Active' &&
-            (CLIENT_TYPES.includes(partner.partnerType) || CLIENT_TYPES.includes(partner.partnerCategory ?? ''))
+            partner.status === 'Active' && isPartnerBuyer(partner)
         )
         .map((partner) => partner.id),
     [allPartners]

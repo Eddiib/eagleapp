@@ -5,6 +5,7 @@ import { usePartners } from '../hooks/usePartners';
 import { employeesApi } from '../services/employees';
 import { Employee } from './EmployeesModule';
 import { useAuth } from '../context/AuthContext';
+import { isPartnerBuyer } from '../utils/partnerRoles';
 
 const MEETING_TYPES = ['On-site', 'Online', 'Office Visit', 'Dinner', 'Expo', 'Informal'];
 const CONTACT_TYPES: ContactType[] = ['Phone Call', 'Email', 'WhatsApp', 'Physical Meeting', 'Video Call', 'Other'];
@@ -31,7 +32,7 @@ export function MeetingMinutesForm({ initialData, leadId, mode, onSaved, onCance
   const { partners } = usePartners();
 
   const clients = partners.filter(p =>
-    (p.partnerType === 'Client' || p.partnerType === 'Buyer') && p.status === 'Active'
+    isPartnerBuyer(p) && p.status === 'Active'
   );
 
   const today = new Date().toISOString().split('T')[0];

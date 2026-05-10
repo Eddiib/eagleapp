@@ -161,6 +161,7 @@ test('MVP API smoke flow covers auth, master data, bookings, CRM, services, and 
       trading_name: 'Phase Seven Client',
       partner_type: 'Client',
       partner_class: 'Non Carrier',
+      partner_roles: ['Buyer', 'Seller'],
       partner_category: 'Client',
       country: 'Serbia',
       city: 'Belgrade',
@@ -219,6 +220,7 @@ test('MVP API smoke flow covers auth, master data, bookings, CRM, services, and 
       trading_name: 'Phase Seven Carrier',
       partner_type: 'Shipping Line',
       partner_class: 'Carrier',
+      partner_roles: ['Seller'],
       partner_category: 'Shipping Line',
       country: 'Germany',
       city: 'Hamburg',
@@ -258,6 +260,7 @@ test('MVP API smoke flow covers auth, master data, bookings, CRM, services, and 
 
     const partnerDetail = await jsonRequest(`/api/partners/${clientCreate.body.id}`, { token });
     assert.equal(partnerDetail.status, 200);
+    assert.deepEqual(partnerDetail.body.partner_roles, ['Buyer', 'Seller']);
     assert.equal(partnerDetail.body.contacts.length, 1);
     assert.equal(partnerDetail.body.tradeMarketInfo.length, 1);
 

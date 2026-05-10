@@ -1,5 +1,6 @@
 import { api } from './client';
 import { Partner } from '../types/partner';
+import { normalizePartnerRoles } from '../utils/partnerRoles';
 
 // ── DB row → camelCase Partner ────────────────────────────────────────────────
 function mapContact(c: any) {
@@ -62,6 +63,21 @@ export function toPartner(row: any): Partner {
     }
   } catch { mainTrades = []; }
 
+  let partnerRoles;
+  try {
+    if (Array.isArray(row.partner_roles)) {
+      partnerRoles = row.partner_roles;
+    } else if (typeof row.partner_roles === 'string' && row.partner_roles) {
+      partnerRoles = JSON.parse(row.partner_roles);
+    }
+  } catch { partnerRoles = undefined; }
+
+  const partner = {
+    partnerType: row.partner_type,
+    partnerCategory: row.partner_category || row.partner_type,
+    partnerRoles,
+  };
+
   return {
     id: row.id,
     partnerCode: row.partner_code,
@@ -71,6 +87,7 @@ export function toPartner(row: any): Partner {
     eoriNumber: row.eori_number,
     partnerType: row.partner_type,
     partnerClass: row.partner_class || undefined,
+    partnerRoles: normalizePartnerRoles(partner),
     partnerCategory: row.partner_category || row.partner_type,
     country: row.country,
     city: row.city,
@@ -121,6 +138,7 @@ export function toApiPayload(p: Partial<Partner>, extra: Record<string, any> = {
     eori_number: p.eoriNumber,
     partner_type: p.partnerType,
     partner_class: p.partnerClass || null,
+    partner_roles: normalizePartnerRoles(p),
     country: p.country,
     city: p.city,
     address: p.address,

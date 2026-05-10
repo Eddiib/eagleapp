@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Partner } from '../types/partner';
 import { partnersApi } from '../services/partners';
+import { isPartnerBuyer, isPartnerSeller } from '../utils/partnerRoles';
 
 // Module-level cache so helper functions (getCarriers, getClients, etc.)
 // always have access to the latest fetched data.
@@ -63,7 +64,6 @@ export function getPartnersByCategory(category: string | string[]) {
 }
 
 const CARRIER_TYPES = ['Shipping Line', 'Air Carrier', 'Trucking Company', 'Rail Operator'];
-const CLIENT_TYPES = ['Client', 'Buyer'];
 
 export function getCarriers() {
   return partnersCache.filter(p =>
@@ -75,10 +75,7 @@ export function getCarriers() {
 
 export function getClients() {
   return partnersCache
-    .filter(p =>
-      CLIENT_TYPES.includes(p.partnerType) ||
-      CLIENT_TYPES.includes(p.partnerCategory ?? '')
-    )
+    .filter(isPartnerBuyer)
     .map(client => ({
       value: client.id,
       label: `${client.tradingName} (${client.city}, ${client.country})`,
@@ -92,7 +89,7 @@ export function getSuppliers() {
     'Insurance Company', 'Surveyor / Inspector', 'Special Services Provider',
   ];
   return partnersCache
-    .filter(p => p.partnerCategory && supplierCategories.includes(p.partnerCategory))
+    .filter(p => isPartnerSeller(p) || (p.partnerCategory && supplierCategories.includes(p.partnerCategory)))
     .map(supplier => ({
       value: supplier.id,
       label: `${supplier.tradingName} - ${supplier.partnerCategory}`,

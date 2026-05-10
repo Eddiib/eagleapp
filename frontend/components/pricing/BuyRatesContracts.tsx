@@ -5,6 +5,7 @@ import { usePartners } from '../../hooks/usePartners';
 import { TransportMode } from './types';
 import { useConfirm } from '../../context/ConfirmDialog';
 import { useCompanySettings } from '../../context/CompanySettingsContext';
+import { isPartnerSeller } from '../../utils/partnerRoles';
 
 const MODES: TransportMode[] = ['FCL','LCL','FTL','LTL','AIR','PARCEL','RAIL','BULK','SPECIAL'];
 
@@ -21,7 +22,7 @@ function ContractForm({ initial, onSaved, onCancel }: ContractFormProps) {
   const { baseCurrency } = useCompanySettings();
   const currencyOptions = Array.from(new Set([baseCurrency, 'EUR', 'USD', 'GBP', 'AED'].filter(Boolean)));
   const suppliers = partners.filter(p => p.status === 'Active' &&
-    !['Client','Buyer'].includes(p.partnerType));
+    isPartnerSeller(p));
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);

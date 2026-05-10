@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { useCompanySettings } from '../context/CompanySettingsContext';
 import { exchangeRatesApi } from '../services/exchangeRates';
 import { countries, getCountryName } from '../data/countries';
+import { isPartnerBuyer } from '../utils/partnerRoles';
 
 const COMMON_CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF', 'CNY', 'JPY', 'CAD', 'AUD', 'SGD'];
 
@@ -27,10 +28,9 @@ export function BookingForm({ draft, onChange, mode, error, leadData }: BookingF
   const { baseCurrency } = useCompanySettings();
   const isViewMode = mode === 'view';
   const { partners } = usePartners();
-  const CLIENT_TYPES = ['Client', 'Buyer'];
   const CARRIER_TYPES = ['Shipping Line', 'Air Carrier', 'Trucking Company', 'Rail Operator'];
   const clients = partners.filter((p) =>
-    p.status === 'Active' && CLIENT_TYPES.includes(p.partnerType),
+    p.status === 'Active' && isPartnerBuyer(p),
   );
   const carriers = partners.filter((p) =>
     p.status === 'Active' && (p.partnerClass === 'Carrier' || CARRIER_TYPES.includes(p.partnerType)),

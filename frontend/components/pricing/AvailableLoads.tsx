@@ -12,6 +12,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useConfirm } from '../../context/ConfirmDialog';
 import { useCompanySettings } from '../../context/CompanySettingsContext';
 import { Load, TransportMode, LoadStatus } from './types';
+import { isPartnerBuyer, isPartnerSeller } from '../../utils/partnerRoles';
 
 const MODES: TransportMode[] = ['FCL','LCL','FTL','LTL','AIR','PARCEL','RAIL','BULK','SPECIAL'];
 const STATUSES: LoadStatus[] = ['Open','Quoting','Offers Received','Rate Selected','Closed'];
@@ -51,7 +52,7 @@ interface LoadFormProps {
 function LoadForm({ initial, onSaved, onCancel }: LoadFormProps) {
   const { partners } = usePartners();
   const { user } = useAuth();
-  const clients = partners.filter(p => (p.partnerType === 'Client' || p.partnerType === 'Buyer') && p.status === 'Active');
+  const clients = partners.filter(p => isPartnerBuyer(p) && p.status === 'Active');
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -254,7 +255,7 @@ function AddQuoteForm({ load, onSaved, onCancel }: AddQuoteFormProps) {
   const { baseCurrency } = useCompanySettings();
   const currencyOptions = Array.from(new Set([baseCurrency, 'EUR', 'USD', 'GBP', 'AED'].filter(Boolean)));
   const suppliers = partners.filter(p => p.status === 'Active' &&
-    ['Shipping Line','Air Carrier','Trucking Company','Rail Operator','Overseas Agent'].includes(p.partnerType));
+    isPartnerSeller(p));
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);

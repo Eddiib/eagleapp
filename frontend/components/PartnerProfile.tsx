@@ -29,6 +29,7 @@ import {
   Upload
 } from 'lucide-react';
 import { getCountryName } from '../data/countries';
+import { normalizePartnerRoles } from '../utils/partnerRoles';
 
 interface PartnerProfileProps {
   partner: Partner;
@@ -100,6 +101,9 @@ export function PartnerProfile({ partner, onBack, onEdit }: PartnerProfileProps)
                 <span className="text-gray-500 dark:text-gray-400">Partner Code: {partner.partnerCode}</span>
                 <span className="text-gray-400 dark:text-gray-500">•</span>
                 <Badge variant="outline">{partner.partnerType}</Badge>
+                {normalizePartnerRoles(partner).map((role) => (
+                  <Badge key={role} variant="secondary">{role}</Badge>
+                ))}
                 <span className="text-gray-400 dark:text-gray-500">•</span>
                 {renderStars(partner.rating)}
               </div>
@@ -221,6 +225,10 @@ export function PartnerProfile({ partner, onBack, onEdit }: PartnerProfileProps)
                 <div>
                   <dt className="text-gray-600">Partner Type</dt>
                   <dd className="text-gray-900">{partner.partnerType}</dd>
+                </div>
+                <div>
+                  <dt className="text-gray-600">Commercial Role</dt>
+                  <dd className="text-gray-900">{normalizePartnerRoles(partner).join(', ')}</dd>
                 </div>
                 <div>
                   <dt className="text-gray-600">Tax Number</dt>
