@@ -264,6 +264,16 @@ test('MVP API smoke flow covers auth, master data, bookings, CRM, services, and 
     assert.equal(partnerDetail.body.contacts.length, 1);
     assert.equal(partnerDetail.body.tradeMarketInfo.length, 1);
 
+    const carrierUpdateWithJsonRoles = await jsonRequest(`/api/partners/${carrierCreate.body.id}`, {
+      method: 'PUT',
+      token,
+      body: {
+        ...partnerCarrierPayload,
+        partner_roles: '["Buyer","Seller"]',
+      },
+    });
+    assert.equal(carrierUpdateWithJsonRoles.status, 200);
+
     const partnerUpdate = await jsonRequest(`/api/partners/${clientCreate.body.id}`, {
       method: 'PUT',
       token,

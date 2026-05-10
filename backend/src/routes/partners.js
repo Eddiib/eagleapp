@@ -61,13 +61,18 @@ function mapTradeLane(t) {
 
 function parsePartnerRoles(value) {
   if (Array.isArray(value)) return value;
+  if (Buffer.isBuffer(value)) return parsePartnerRoles(value.toString('utf8'));
   if (typeof value !== 'string' || value.trim() === '') return null;
+  const trimmed = value.trim();
   try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed : null;
+    const parsed = JSON.parse(trimmed);
+    if (Array.isArray(parsed)) return parsed;
+    if (typeof parsed === 'string') return [parsed];
   } catch {
-    return null;
+    // Accept simple form-encoded / hand-written values too.
+    return trimmed.split(',').map((role) => role.trim()).filter(Boolean);
   }
+  return null;
 }
 
 function derivePartnerRoles(partnerType) {
@@ -77,7 +82,7 @@ function derivePartnerRoles(partnerType) {
 function normalizePartnerRoles(value, partnerType, existingValue) {
   const parsed = value === undefined
     ? parsePartnerRoles(existingValue)
-    : value;
+    : parsePartnerRoles(value);
   const source = parsed ?? derivePartnerRoles(partnerType);
 
   if (!Array.isArray(source)) {
