@@ -39,3 +39,37 @@ export function pathToModuleId(pathname: string): string {
 export function moduleIdToPath(moduleId: string): string {
   return MODULE_PATHS[moduleId] ?? '/';
 }
+
+export const MODULE_TITLES: Record<string, string> = {
+  'main-dashboard':       'Dashboard',
+  'sales-leads':          'Sales Leads',
+  'meeting-minutes':      'Meeting Minutes',
+  'quotation-desk':       'Quotation Desk',
+  'available-loads':      'Available Loads',
+  'buy-rates-contracts':  'Buy Rates & Contracts',
+  'pricing-models':       'Pricing Models',
+  'supplier-directory':   'Supplier Directory',
+  'booking-sheet':        'Booking Sheet',
+  'booking-details':      'Booking Details',
+  'new-booking':          'New Booking',
+  'partners-management':  'Partners',
+  'service-management':   'Service Management',
+  'equipment':            'Equipment',
+  'cost-control':         'Cost Control',
+  'invoicing':            'Invoicing',
+  'receivables':          'Receivables',
+  'payables':             'Payables',
+  'bank-transactions':    'Bank Transactions',
+  'forex-management':     'Forex Management',
+  'profit-loss':          'Profit & Loss',
+  'tax-compliance':       'Tax Compliance',
+  'employees':            'Employees',
+  'user-management':      'User Management',
+  'audit-log':            'Audit Log',
+  'company-settings':     'Company Settings',
+  'administration':       'Administration',
+};
+
+export function pathToTitle(pathname: string): string {
+  return MODULE_TITLES[pathToModuleId(pathname)] ?? 'Page';
+}

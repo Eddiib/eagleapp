@@ -6,6 +6,7 @@ import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { ConfirmDialogProvider } from './context/ConfirmDialog';
 import { CompanySettingsProvider } from './context/CompanySettingsContext';
+import { TabsProvider } from './context/TabsContext';
 import './styles/globals.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -14,7 +15,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <AuthProvider>
         <CompanySettingsProvider>
           <ConfirmDialogProvider>
-            <App />
+            <TabsProvider>
+              <App />
+            </TabsProvider>
           </ConfirmDialogProvider>
         </CompanySettingsProvider>
       </AuthProvider>

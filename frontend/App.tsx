@@ -47,8 +47,9 @@ import {
 import { useAuth } from './context/AuthContext';
 import { useConfirm } from './context/ConfirmDialog';
 import { useCompanySettings } from './context/CompanySettingsContext';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { moduleIdToPath, pathToModuleId } from './router';
+import { useLocation } from 'react-router-dom';
+import { moduleIdToPath, pathToModuleId, MODULE_TITLES } from './router';
+import { useTabs } from './context/TabsContext';
 import { modulePermission } from './lib/modulePermissions';
 import { toast } from 'sonner';
 import { useCallback, useState, useEffect } from 'react';
@@ -108,8 +109,8 @@ function AppShell() {
   const { user, can } = useAuth();
   const { baseCurrency } = useCompanySettings();
   const confirmDialog = useConfirm();
-  const navigate = useNavigate();
   const location = useLocation();
+  const { openTab, navigateInActiveTab, setNavigationGuard } = useTabs();
   const activeModule = pathToModuleId(location.pathname);
   const [activeTab, setActiveTab] = useState('equipment');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -193,9 +194,9 @@ function AppShell() {
   // If someone opens /bookings/new directly (no draft in memory), redirect to the list.
   useEffect(() => {
     if (activeModule === 'new-booking' && !bookingDraft) {
-      navigate(moduleIdToPath('booking-sheet'), { replace: true });
+      navigateInActiveTab(moduleIdToPath('booking-sheet'), { replace: true });
     }
-  }, [activeModule, bookingDraft, navigate]);
+  }, [activeModule, bookingDraft, navigateInActiveTab]);
 
   const isNewBookingModule = activeModule === 'new-booking';
   const isBookingSheetModule = activeModule === 'booking-sheet';
@@ -222,6 +223,30 @@ function AppShell() {
   const canViewBookings = can(modulePermission('booking-sheet'));
   const canEditBookings = can(modulePermission('booking-sheet', 'edit'));
 
+  const confirmModuleNavigation = useCallback(async (targetPath: string) => {
+    const targetModule = pathToModuleId(targetPath);
+    if (targetModule === activeModule) return true;
+
+    const editingBooking = (bookingMode === 'edit' || bookingMode === 'new') && bookingView === 'detail';
+    if (editingBooking && bookingDirty) {
+      const ok = await confirmDialog({
+        title: 'Discard booking changes?',
+        message: 'You have unsaved changes on this booking. Closing this tab will lose them.',
+        tone: 'danger',
+        confirmLabel: 'Discard',
+      });
+      if (!ok) return false;
+      setBookingDirty(false);
+    }
+
+    return true;
+  }, [activeModule, bookingDirty, bookingMode, bookingView, confirmDialog]);
+
+  useEffect(() => {
+    setNavigationGuard(confirmModuleNavigation);
+    return () => setNavigationGuard(null);
+  }, [confirmModuleNavigation, setNavigationGuard]);
+
   const stagedModuleTitles: Record<string, string> = {
     'receivables': 'Receivables',
     'payables': 'Payables',
@@ -243,19 +268,8 @@ function AppShell() {
 
   const handleModuleChange = async (moduleId: string) => {
     if (moduleId === activeModule) return;
-    // If the booking editor has unsaved edits, confirm before navigating away.
-    const editingBooking = (bookingMode === 'edit' || bookingMode === 'new') && bookingView === 'detail';
-    if (editingBooking && bookingDirty) {
-      const ok = await confirmDialog({
-        title: 'Discard booking changes?',
-        message: 'You have unsaved changes on this booking. Switching modules will lose them.',
-        tone: 'danger',
-        confirmLabel: 'Discard',
-      });
-      if (!ok) return;
-      setBookingDirty(false);
-    }
-    navigate(moduleIdToPath(moduleId));
+    const opened = await openTab(moduleIdToPath(moduleId), MODULE_TITLES[moduleId]);
+    if (!opened) return;
     if (moduleId === 'booking-sheet') {
       setBookingView('list');
       setBookingDraft(null);
@@ -308,7 +322,7 @@ function AppShell() {
     setBookingMode('new');
     setBookingView('detail');
     setActiveTab('equipment');
-    navigate(moduleIdToPath('new-booking'));
+    navigateInActiveTab(moduleIdToPath('new-booking'));
   };
 
   const handleNewBooking = () => {
@@ -368,7 +382,7 @@ function AppShell() {
     setEditEquipment([]);
     setBookingMode('view');
     setBookingView('list');
-    navigate(moduleIdToPath('booking-sheet'));
+    navigateInActiveTab(moduleIdToPath('booking-sheet'));
   };
 
   const handleEnableEdit = () => {
@@ -423,7 +437,7 @@ function AppShell() {
         setLeadDataForBooking(null);
         setBookingDirty(false);
         refreshBookingList();
-        navigate(moduleIdToPath('booking-sheet'));
+        navigateInActiveTab(moduleIdToPath('booking-sheet'));
         setBookingMode('view');
         setBookingView('detail');
         setActiveTab('equipment');
@@ -475,7 +489,7 @@ function AppShell() {
     } as unknown as Invoice;
     setEditingInvoice(seed);
     setInvoiceFormOpen(true);
-    navigate(moduleIdToPath('invoicing'));
+    navigateInActiveTab(moduleIdToPath('invoicing'));
   };
 
   const handleCloseEmployeeForm = () => {
@@ -620,13 +634,13 @@ function AppShell() {
         ) : isDashboardModule ? (
           <Dashboard
             onNewBooking={canEditBookings ? handleNewBooking : undefined}
-            onViewAllBookings={canViewBookings ? () => { navigate(moduleIdToPath('booking-sheet')); setBookingView('list'); } : undefined}
+            onViewAllBookings={canViewBookings ? () => { navigateInActiveTab(moduleIdToPath('booking-sheet')); setBookingView('list'); } : undefined}
             onViewBooking={async (booking: any) => {
               if (!canViewBookings) return;
               if (!booking?.id) return;
               try {
                 const full = await bookingsApi.getById(booking.id);
-                navigate(moduleIdToPath('booking-sheet'));
+                navigateInActiveTab(moduleIdToPath('booking-sheet'));
                 setBookingDraft(full);
                 setEditServices(full.services);
                 setEditEquipment(full.equipment);
@@ -715,7 +729,7 @@ function AppShell() {
               onNavigateToBooking={async (bookingId) => {
                 try {
                   const full = await bookingsApi.getById(bookingId);
-                  navigate(moduleIdToPath('booking-sheet'));
+                  navigateInActiveTab(moduleIdToPath('booking-sheet'));
                   setBookingDraft(full);
                   setEditServices(full.services);
                   setEditEquipment(full.equipment);
