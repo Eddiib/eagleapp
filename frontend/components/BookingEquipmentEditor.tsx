@@ -48,7 +48,7 @@ function emptyLine(catalog: EquipmentType[]): BookingEquipmentLine {
 }
 
 function emptyServiceLine(): EquipmentServiceLine {
-  return { serviceId: '', equipmentId: '', invoicePartyId: '', agreedRate: null, supplierId: '', agreedCost: null };
+  return { serviceId: '', equipmentId: '', invoicePartyId: '', agreedRate: null, supplierId: '', agreedCost: null, plannedDate: null };
 }
 
 // ── Weight & Dimensions sub-panel ─────────────────────────────────────────────
@@ -268,6 +268,12 @@ function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servic
   const addService = () => onChange([...services, emptyServiceLine()]);
   const removeService = (idx: number) => onChange(services.filter((_, i) => i !== idx));
 
+  const [bulkDate, setBulkDate] = useState('');
+  const applyBulkDate = () => {
+    if (!bulkDate) return;
+    onChange(services.map((s) => ({ ...s, plannedDate: bulkDate })));
+  };
+
   const thBase = `${tableClasses.denseHead} text-gray-500 dark:text-gray-400`;
   const th = `${thBase} text-left`;
   const thRight = `${thBase} text-right`;
@@ -275,10 +281,34 @@ function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servic
 
   return (
     <div className="p-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      {/* Bulk apply planned date */}
+      <div className="flex items-end gap-2 mb-3">
+        <div>
+          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Planned Date (apply to all)</label>
+          <input
+            type="date"
+            value={bulkDate}
+            onChange={e => setBulkDate(e.target.value)}
+            disabled={disabled || services.length === 0}
+            className="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 disabled:opacity-60"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={applyBulkDate}
+          disabled={disabled || !bulkDate || services.length === 0}
+          className="px-3 py-1.5 text-sm bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50"
+          title="Set this date as the planned completion date for every service below. You can still change each row individually."
+        >
+          Apply to all
+        </button>
+      </div>
+
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-200 dark:border-gray-700">
             <th className={th} style={{ width: 60 }}>Equip. ID</th>
+            <th className={th} style={{ width: 140 }}>Planned Date</th>
             <th className={th}>Service Type</th>
             <th className={th}>Equipment</th>
             <th className={th}>Invoice Party</th>
@@ -291,7 +321,7 @@ function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servic
         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
           {services.length === 0 ? (
             <tr>
-              <td colSpan={8} className="px-3 py-4 text-center text-sm text-gray-400 dark:text-gray-500">
+              <td colSpan={9} className="px-3 py-4 text-center text-sm text-gray-400 dark:text-gray-500">
                 No services added for this equipment row.
               </td>
             </tr>
@@ -299,6 +329,15 @@ function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servic
             <tr key={idx}>
               <td className={td}>
                 <span className="text-gray-500 dark:text-gray-400 text-sm">{rowIndex + 1}</span>
+              </td>
+              <td className={td}>
+                <input
+                  type="date"
+                  value={svc.plannedDate ?? ''}
+                  onChange={e => setService(idx, { plannedDate: e.target.value || null })}
+                  disabled={disabled}
+                  className={inp()}
+                />
               </td>
               <td className={td}>
                 <select

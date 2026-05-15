@@ -32,7 +32,6 @@ import { ServiceManagement } from './components/ServiceManagement';
 import { Equipment } from './components/Equipment';
 import { Dashboard } from './components/Dashboard';
 import { TopNav } from './components/TopNav';
-import { BookingForm } from './components/BookingForm';
 import { LoginPage } from './components/LoginPage';
 import { employeesApi } from './services/employees';
 import {
@@ -113,7 +112,7 @@ function AppShell() {
   const location = useLocation();
   const activeModule = pathToModuleId(location.pathname);
   const [activeTab, setActiveTab] = useState('equipment');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [bookingView, setBookingView] = useState<'list' | 'detail'>('list');
 
   // Booking editor state — single draft that Header + Form + Sidebar all mutate.
@@ -121,7 +120,7 @@ function AppShell() {
   const [editServices, setEditServices] = useState<BookingServiceLine[]>([]);
   const [editEquipment, setEditEquipment] = useState<BookingEquipmentLine[]>([]);
   const [bookingMode, setBookingMode] = useState<'view' | 'edit' | 'new'>('view');
-  const [leadDataForBooking, setLeadDataForBooking] = useState<any>(null);
+  const [, setLeadDataForBooking] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -308,7 +307,7 @@ function AppShell() {
     setBookingDirty(false);
     setBookingMode('new');
     setBookingView('detail');
-    setActiveTab('general');
+    setActiveTab('equipment');
     navigate(moduleIdToPath('new-booking'));
   };
 
@@ -570,18 +569,6 @@ function AppShell() {
                     disabled={mode === 'view'}
                   />
                 </div>
-              )}
-              {activeTab === 'general' && (
-                <BookingForm
-                  draft={bookingDraft}
-                  onChange={patchDraft}
-                  mode={mode}
-                  saving={saving}
-                  error={saveError}
-                  onSave={persistDraft}
-                  onCancel={mode === 'new' ? handleCancelNewBooking : handleCancelEdit}
-                  leadData={mode === 'new' ? leadDataForBooking : undefined}
-                />
               )}
               {activeTab === 'services' && (
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">

@@ -32,6 +32,7 @@ export interface EquipmentServiceLine {
   supplierId?: string;
   supplierName?: string;
   agreedCost?: number | null;
+  plannedDate?: string | null;
 }
 
 export interface BookingEquipmentLine {
@@ -244,6 +245,7 @@ function mapEquipmentServiceLine(row: any): EquipmentServiceLine {
     supplierId: row.supplier_id ?? undefined,
     supplierName: row.supplier_name ?? undefined,
     agreedCost: row.agreed_cost != null ? Number(row.agreed_cost) : null,
+    plannedDate: row.planned_date ? String(row.planned_date).slice(0, 10) : null,
   };
 }
 
@@ -532,6 +534,7 @@ function toApiPayload(p: BookingPayload, extra: Record<string, any> = {}) {
         agreed_rate: s.agreedRate ?? null,
         supplier_id: s.supplierId || null,
         agreed_cost: s.agreedCost ?? null,
+        planned_date: s.plannedDate || null,
       })),
     })),
     ...extra,

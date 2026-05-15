@@ -379,21 +379,21 @@ async function reconcileEquipmentServices(conn, bookingId, equipmentRowId, incom
     if (s.id && isUuid(s.id) && existingIds.has(s.id)) {
       await conn.query(
         `UPDATE booking_equipment_services
-            SET service_id=?, equipment_id=?, invoice_party_id=?, agreed_rate=?, supplier_id=?, agreed_cost=?, sort_order=?
+            SET service_id=?, equipment_id=?, invoice_party_id=?, agreed_rate=?, supplier_id=?, agreed_cost=?, planned_date=?, sort_order=?
           WHERE id=?`,
         [s.service_id || null, s.equipment_id || null, s.invoice_party_id || null, s.agreed_rate ?? null,
-          s.supplier_id || null, s.agreed_cost ?? null, i, s.id],
+          s.supplier_id || null, s.agreed_cost ?? null, s.planned_date || null, i, s.id],
       );
       keptIds.add(s.id);
     } else {
       await conn.query(
         `INSERT INTO booking_equipment_services
             (id, equipment_row_id, booking_id, service_id, equipment_id, invoice_party_id, agreed_rate,
-             supplier_id, agreed_cost, sort_order)
-          VALUES (?,?,?,?,?,?,?,?,?,?)`,
+             supplier_id, agreed_cost, planned_date, sort_order)
+          VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
         [uuidv4(), equipmentRowId, bookingId, s.service_id || null, s.equipment_id || null,
           s.invoice_party_id || null, s.agreed_rate ?? null,
-          s.supplier_id || null, s.agreed_cost ?? null, i],
+          s.supplier_id || null, s.agreed_cost ?? null, s.planned_date || null, i],
       );
     }
   }
@@ -473,10 +473,10 @@ async function insertBookingEquipmentForCreate(conn, bookingId, incoming) {
       const s = services[i];
       await conn.query(
         `INSERT INTO booking_equipment_services
-           (id, equipment_row_id, booking_id, service_id, equipment_id, invoice_party_id, agreed_rate, supplier_id, agreed_cost, sort_order)
-         VALUES (?,?,?,?,?,?,?,?,?,?)`,
+           (id, equipment_row_id, booking_id, service_id, equipment_id, invoice_party_id, agreed_rate, supplier_id, agreed_cost, planned_date, sort_order)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
         [uuidv4(), rowId, bookingId, s.service_id || null, s.equipment_id || null, s.invoice_party_id || null,
-          s.agreed_rate ?? null, s.supplier_id || null, s.agreed_cost ?? null, i],
+          s.agreed_rate ?? null, s.supplier_id || null, s.agreed_cost ?? null, s.planned_date || null, i],
       );
     }
   }

@@ -5,7 +5,6 @@ interface TabsNavProps {
 
 export function TabsNav({ activeTab, onTabChange }: TabsNavProps) {
   const tabs = [
-    { id: 'general', label: 'General' },
     { id: 'equipment', label: 'Equipment Matrix' },
     { id: 'services', label: 'Services' },
     { id: 'docs', label: 'Docs' },
