@@ -2,6 +2,36 @@ import { api } from './client';
 import { Partner } from '../types/partner';
 import { normalizePartnerRoles } from '../utils/partnerRoles';
 
+export interface PartnerImportResult {
+  totalRows: number;
+  parsedRows: number;
+  imported: number;
+  skipped: number;
+  duplicates: number;
+  failed: number;
+  skippedRows: Array<{ rowNumber: number; reason: string }>;
+  warnings: Array<{ rowNumber: number; message: string }>;
+}
+
+export interface PartnerPageParams {
+  page: number;
+  limit: number;
+  search?: string;
+  type?: string;
+  status?: string;
+  country?: string;
+  preferredTrade?: string;
+}
+
+export interface PartnerPage {
+  data: Partner[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  totalOpenBalance: Record<string, number>;
+}
+
 // ── DB row → camelCase Partner ────────────────────────────────────────────────
 function mapContact(c: any) {
   return {
@@ -172,6 +202,25 @@ export const partnersApi = {
     const rows = await api.get<any[]>('/partners');
     return rows.map(toPartner);
   },
+  getPage: async (params: PartnerPageParams): Promise<PartnerPage> => {
+    const qs = new URLSearchParams();
+    qs.set('page', String(params.page));
+    qs.set('limit', String(params.limit));
+    if (params.search?.trim()) qs.set('search', params.search.trim());
+    if (params.type && params.type !== 'All') qs.set('type', params.type);
+    if (params.status && params.status !== 'All') qs.set('status', params.status);
+    if (params.country?.trim()) qs.set('country', params.country.trim());
+    if (params.preferredTrade) qs.set('preferredTrade', params.preferredTrade);
+    const res = await api.get<any>(`/partners?${qs.toString()}`);
+    return {
+      data: (res.data || []).map(toPartner),
+      total: res.total ?? 0,
+      page: res.page ?? params.page,
+      limit: res.limit ?? params.limit,
+      totalPages: res.totalPages ?? 1,
+      totalOpenBalance: res.totalOpenBalance ?? {},
+    };
+  },
   getById: async (id: string): Promise<Partner> => {
     const row = await api.get<any>(`/partners/${id}`);
     return toPartner(row);
@@ -180,6 +229,11 @@ export const partnersApi = {
     api.post<{ id: string; message: string }>('/partners', toApiPayload(data, { created_by: createdBy })),
   update: (id: string, data: Partial<Partner>, updatedBy?: string) =>
     api.put<{ message: string }>(`/partners/${id}`, toApiPayload(data, { last_updated_by: updatedBy })),
+  importFromExcel: (file: File): Promise<PartnerImportResult> => {
+    const form = new FormData();
+    form.append('file', file);
+    return api.postForm<PartnerImportResult>('/partners/import', form);
+  },
   delete: (id: string) =>
     api.delete<{ message: string }>(`/partners/${id}`),
 };

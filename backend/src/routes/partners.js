@@ -2,9 +2,12 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { v4: uuidv4 } = require('uuid');
+const multer = require('multer');
+const ExcelJS = require('exceljs');
 const { asyncHandler, AppError } = require('../middleware/errorHandler');
 const { requireFields, requireEnum, requireUUID, requireEmail, requireNumber, requireArray } = require('../middleware/validate');
 const { logAudit, snapshotRow } = require('../lib/audit');
+const { cleanText, normalizePartnerImportRows } = require('../lib/partnerImport');
 
 // Must stay in sync with frontend PartnerType / PartnerStatus / PartnerClass unions
 // (see frontend/types/partner.ts). Mismatch here silently blocks partner
@@ -19,6 +22,18 @@ const VALID_STATUSES = ['Active', 'Suspended', 'Blacklisted', 'Archived'];
 const VALID_PARTNER_CLASSES = ['Carrier', 'Non Carrier'];
 const VALID_PARTNER_ROLES = ['Buyer', 'Seller'];
 const VALID_DOCUMENT_TYPES = ['Contract', 'LOA', 'Certificate', 'License', 'Other'];
+const MAX_IMPORT_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+
+const importUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_IMPORT_FILE_SIZE_BYTES },
+  fileFilter: (_req, file, cb) => {
+    const isExcel = /\.xlsx$/i.test(file.originalname || '')
+      || file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    if (!isExcel) return cb(new AppError(400, 'Upload an .xlsx file', 'INVALID_FILE_TYPE'));
+    cb(null, true);
+  },
+});
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const isUuid = (v) => typeof v === 'string' && UUID_RE.test(v);
@@ -40,6 +55,77 @@ async function generateUniquePartnerCode(conn, attempts = 25) {
     if (!rows.length) return code;
   }
   throw new AppError(500, 'Failed to allocate a unique partner code', 'CODE_ALLOCATION_FAILED');
+}
+
+function excelWorksheetToRows(worksheet) {
+  const rows = [];
+  for (let rowNumber = 1; rowNumber <= worksheet.rowCount; rowNumber++) {
+    const row = worksheet.getRow(rowNumber);
+    const values = [];
+    for (let columnNumber = 1; columnNumber <= worksheet.columnCount; columnNumber++) {
+      values.push(row.getCell(columnNumber).value);
+    }
+    rows.push(values);
+  }
+  return rows;
+}
+
+function normalizePersonName(value) {
+  return cleanText(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+async function buildEmployeeNameMap(conn) {
+  const [employees] = await conn.query(
+    'SELECT id, first_name, surname FROM employees WHERE is_active = 1',
+  );
+  const map = new Map();
+  for (const employee of employees) {
+    const fullName = normalizePersonName(`${employee.first_name || ''} ${employee.surname || ''}`);
+    if (fullName && !map.has(fullName)) map.set(fullName, employee.id);
+  }
+  return map;
+}
+
+function businessNumberParts(value) {
+  return cleanText(value)
+    .split('/')
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+async function buildPartnerDuplicateIndex(conn) {
+  const [partners] = await conn.query('SELECT partner_code, business_number FROM partners');
+  const partnerCodes = new Set();
+  const businessNumbers = new Set();
+
+  for (const partner of partners) {
+    if (partner.partner_code) partnerCodes.add(String(partner.partner_code));
+    for (const part of businessNumberParts(partner.business_number)) {
+      businessNumbers.add(part);
+    }
+    if (partner.business_number) businessNumbers.add(String(partner.business_number).trim());
+  }
+
+  return { partnerCodes, businessNumbers };
+}
+
+function hasBusinessNumberConflict(businessNumber, businessNumbers) {
+  if (!businessNumber) return false;
+  if (businessNumbers.has(businessNumber)) return true;
+  return businessNumberParts(businessNumber).some((part) => businessNumbers.has(part));
+}
+
+function addBusinessNumberToIndex(businessNumber, businessNumbers) {
+  if (!businessNumber) return;
+  businessNumbers.add(businessNumber);
+  for (const part of businessNumberParts(businessNumber)) {
+    businessNumbers.add(part);
+  }
 }
 
 function mapTradeLane(t) {
@@ -244,13 +330,10 @@ function validateSingleDefault(arr, label, key = 'isDefault') {
   }
 }
 
-// ── Routes ────────────────────────────────────────────────────────────────────
-
-// GET all partners
-router.get('/', asyncHandler(async (_req, res) => {
-  const [partners] = await db.query('SELECT * FROM partners ORDER BY created_date DESC');
-
-  if (partners.length === 0) return res.json([]);
+// Attach child collections and normalize partner_roles onto a list of partner
+// rows, in place. Shared by the full-list and paginated GET modes.
+async function attachPartnerChildren(partners) {
+  if (partners.length === 0) return partners;
 
   const ids = partners.map(p => p.id);
   const [contacts]          = await db.query('SELECT * FROM partner_contacts WHERE partner_id IN (?)', [ids]);
@@ -275,8 +358,204 @@ router.get('/', asyncHandler(async (_req, res) => {
     p.deliveryAddresses = addressesMap[p.id]  || [];
     p.tradeMarketInfo   = (tradeLanesMap[p.id] || []).map(mapTradeLane);
   }
+  return partners;
+}
 
-  res.json(partners);
+// ── Routes ────────────────────────────────────────────────────────────────────
+
+// GET partners.
+//  • No `page` query param  → full list (used by dropdown helpers / exports).
+//  • `page` query param set → server-side paginated + filtered envelope, so the
+//    list view never has to load every partner at once.
+router.get('/', asyncHandler(async (req, res) => {
+  if (req.query.page === undefined) {
+    const [partners] = await db.query('SELECT * FROM partners ORDER BY created_date DESC');
+    await attachPartnerChildren(partners);
+    return res.json(partners);
+  }
+
+  const page   = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const limit  = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 25));
+  const offset = (page - 1) * limit;
+
+  const where = [];
+  const params = [];
+
+  const search = String(req.query.search || '').trim();
+  if (search) {
+    where.push('(company_legal_name LIKE ? OR trading_name LIKE ? OR partner_code LIKE ? OR country LIKE ?)');
+    const like = `%${search}%`;
+    params.push(like, like, like, like);
+  }
+
+  const type = String(req.query.type || '').trim();
+  if (type && type !== 'All') { where.push('partner_type = ?'); params.push(type); }
+
+  const status = String(req.query.status || '').trim();
+  if (status && status !== 'All') { where.push('status = ?'); params.push(status); }
+
+  const country = String(req.query.country || '').trim();
+  if (country) { where.push('country LIKE ?'); params.push(`%${country}%`); }
+
+  const preferredTrade = String(req.query.preferredTrade || '').trim();
+  if (preferredTrade) {
+    where.push("JSON_SEARCH(main_trades, 'one', ?) IS NOT NULL");
+    params.push(preferredTrade);
+  }
+
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+  const [[{ total }]] = await db.query(`SELECT COUNT(*) AS total FROM partners ${whereSql}`, params);
+
+  // Open-balance totals across the whole filtered set (not just the page).
+  const [balances] = await db.query(
+    `SELECT currency, SUM(open_balance) AS amount FROM partners ${whereSql} GROUP BY currency`,
+    params,
+  );
+  const totalOpenBalance = balances.reduce((acc, row) => {
+    const currency = (row.currency || '').toUpperCase() || 'N/A';
+    acc[currency] = (acc[currency] || 0) + Number(row.amount || 0);
+    return acc;
+  }, {});
+
+  const [partners] = await db.query(
+    `SELECT * FROM partners ${whereSql} ORDER BY created_date DESC LIMIT ? OFFSET ?`,
+    [...params, limit, offset],
+  );
+  await attachPartnerChildren(partners);
+
+  res.json({
+    data: partners,
+    total,
+    page,
+    limit,
+    totalPages: Math.max(1, Math.ceil(total / limit)),
+    totalOpenBalance,
+  });
+}));
+
+// POST import partners from Excel (.xlsx, multipart field name "file")
+router.post('/import', importUpload.single('file'), asyncHandler(async (req, res) => {
+  if (!req.file) throw new AppError(400, 'No file uploaded (expected field "file")', 'NO_FILE');
+
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(req.file.buffer);
+  const worksheet = workbook.getWorksheet('Pro-Data Export') || workbook.worksheets[0];
+  if (!worksheet) throw new AppError(400, 'The workbook does not contain any sheets', 'EMPTY_WORKBOOK');
+
+  const rows = excelWorksheetToRows(worksheet);
+  const parsed = normalizePartnerImportRows(rows);
+  const result = {
+    totalRows: Math.max(rows.length - 1, 0),
+    parsedRows: parsed.records.length,
+    imported: 0,
+    skipped: parsed.skippedRows.length,
+    duplicates: 0,
+    failed: 0,
+    skippedRows: [...parsed.skippedRows],
+    warnings: [...parsed.warnings],
+  };
+
+  if (!parsed.records.length) {
+    return res.status(400).json(result);
+  }
+
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    const employeeNameMap = await buildEmployeeNameMap(conn);
+    const duplicateIndex = await buildPartnerDuplicateIndex(conn);
+
+    for (const record of parsed.records) {
+      const sourcePartnerCode = record.sourcePartnerCode;
+      if (sourcePartnerCode && duplicateIndex.partnerCodes.has(sourcePartnerCode)) {
+        result.duplicates += 1;
+        result.skipped += 1;
+        result.skippedRows.push({
+          rowNumber: record.rowNumber,
+          reason: `Partner Code already exists: ${sourcePartnerCode}`,
+        });
+        continue;
+      }
+
+      if (hasBusinessNumberConflict(record.business_number, duplicateIndex.businessNumbers)) {
+        result.duplicates += 1;
+        result.skipped += 1;
+        result.skippedRows.push({
+          rowNumber: record.rowNumber,
+          reason: `Business Number already exists: ${record.business_number}`,
+        });
+        continue;
+      }
+
+      let assignedAgentId = null;
+      if (record.assigned_agent_name) {
+        assignedAgentId = employeeNameMap.get(normalizePersonName(record.assigned_agent_name)) || null;
+        if (!assignedAgentId) {
+          result.warnings.push({
+            rowNumber: record.rowNumber,
+            message: `Assigned Agent not matched: ${record.assigned_agent_name}`,
+          });
+        }
+      }
+
+      const id = uuidv4();
+      const partnerCode = sourcePartnerCode || await generateUniquePartnerCode(conn);
+
+      try {
+        await conn.query(
+          `INSERT INTO partners (id, partner_code, company_legal_name, trading_name, business_number,
+            eori_number, partner_type, partner_class, partner_roles, partner_category, country, city, address, zip_code,
+            website, tax_number, registration_number, assigned_agent_id, payment_terms,
+            payment_terms_as_supplier, payment_terms_as_client, credit_terms, currency,
+            default_service_type, main_trades, notes, status, rating, open_balance, credit_limit, created_by)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+          [id, partnerCode, record.company_legal_name, record.trading_name, record.business_number || null,
+            null, record.partner_type, record.partner_class, JSON.stringify(record.partner_roles), record.partner_type,
+            record.country || null, record.city || null, record.address || null, null,
+            null, record.tax_number || null, null, assignedAgentId,
+            record.payment_terms_as_supplier || null,
+            record.payment_terms_as_supplier || null, record.payment_terms_as_client || null,
+            null, record.currency,
+            record.default_service_type, JSON.stringify(record.main_trades || []), record.notes,
+            record.status || 'Active', record.rating || 3, 0, record.credit_limit, req.user?.username ?? null]
+        );
+
+        for (const c of record.contacts || []) {
+          await insertContact(conn, uuidv4(), id, c);
+        }
+
+        const after = await snapshotRow(conn, 'partners', id);
+        await logAudit(conn, {
+          tableName: 'partners', rowId: id, action: 'INSERT',
+          actor: req.user, after,
+        });
+
+        duplicateIndex.partnerCodes.add(partnerCode);
+        addBusinessNumberToIndex(record.business_number, duplicateIndex.businessNumbers);
+        result.imported += 1;
+      } catch (err) {
+        result.failed += 1;
+        result.skipped += 1;
+        result.skippedRows.push({
+          rowNumber: record.rowNumber,
+          reason: err?.message || 'Failed to import row',
+        });
+      }
+    }
+
+    await conn.commit();
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
+
+  result.skippedRows = result.skippedRows.slice(0, 100);
+  result.warnings = result.warnings.slice(0, 100);
+  res.status(201).json(result);
 }));
 
 // GET single partner

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { ChangeEvent, useRef, useState, useEffect } from 'react';
 import { Partner, PartnerType, PartnerStatus, PartnerFilters } from '../types/partner';
 import { Employee } from './EmployeesModule';
 import { Button } from './ui/button';
@@ -27,9 +27,10 @@ import {
   TableRow,
 } from './ui/table';
 import { getCountryName, countries } from '../data/countries';
-import { usePartners } from '../hooks/usePartners';
 import { useConfirm } from '../context/ConfirmDialog';
 import { employeesApi } from '../services/employees';
+import { partnersApi, PartnerImportResult, PartnerPage } from '../services/partners';
+import { PaginationBar } from './ui/PaginationBar';
 import { useCompanySettings } from '../context/CompanySettingsContext';
 import { normalizePartnerRoles } from '../utils/partnerRoles';
 
@@ -60,8 +61,11 @@ export function PartnersList({
 }: PartnersListProps) {
   const confirmDialog = useConfirm();
   const { baseCurrency } = useCompanySettings();
-  const { partners, loading, error, refresh } = usePartners();
+  const importInputRef = useRef<HTMLInputElement | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<PartnerImportResult | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
   useEffect(() => {
     employeesApi.getAll().then(setEmployees).catch(() => {});
   }, []);
@@ -75,29 +79,60 @@ export function PartnersList({
     preferredTrade: ''
   });
 
-  // Filter partners based on current filters
-  const filteredPartners = partners.filter(partner => {
-    const matchesSearch = 
-      partner.companyLegalName.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-      partner.tradingName.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-      partner.partnerCode.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-      partner.country.toLowerCase().includes(filters.searchTerm.toLowerCase());
-    
-    const matchesType = filters.partnerType === 'All' || partner.partnerType === filters.partnerType;
-    const matchesStatus = filters.status === 'All' || partner.status === filters.status;
-    const matchesCountry = !filters.country || partner.country.toLowerCase().includes(filters.country.toLowerCase());
-    const matchesRating = filters.rating === null || partner.rating >= filters.rating;
-    const matchesPreferredTrade = !filters.preferredTrade || 
-      (partner.mainTrades && partner.mainTrades.includes(filters.preferredTrade));
+  // Pagination + server-side data state.
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const [pageData, setPageData] = useState<PartnerPage | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
-    return matchesSearch && matchesType && matchesStatus && matchesCountry && matchesRating && matchesPreferredTrade;
-  });
-  const openBalanceByCurrency = filteredPartners.reduce<Record<string, number>>((acc, partner) => {
-    const currency = (partner.currency || baseCurrency).toUpperCase();
-    acc[currency] = (acc[currency] || 0) + (partner.openBalance || 0);
-    return acc;
-  }, {});
-  const openBalanceSummary = Object.entries(openBalanceByCurrency)
+  // Text filters (search, country) are debounced so each keystroke does not
+  // fire a request; selects apply immediately.
+  const [appliedSearch, setAppliedSearch] = useState('');
+  const [appliedCountry, setAppliedCountry] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setAppliedSearch(filters.searchTerm);
+      setAppliedCountry(filters.country);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [filters.searchTerm, filters.country]);
+
+  useEffect(() => {
+    let ignore = false;
+    setLoading(true);
+    setError(null);
+    partnersApi.getPage({
+      page,
+      limit: pageSize,
+      search: appliedSearch,
+      type: filters.partnerType,
+      status: filters.status,
+      country: appliedCountry,
+      preferredTrade: filters.preferredTrade,
+    })
+      .then(res => { if (!ignore) setPageData(res); })
+      .catch(err => { if (!ignore) setError(err.message || 'Failed to load partners'); })
+      .finally(() => { if (!ignore) setLoading(false); });
+    return () => { ignore = true; };
+  }, [page, pageSize, appliedSearch, appliedCountry, filters.partnerType, filters.status, filters.preferredTrade, reloadKey]);
+
+  const refresh = () => setReloadKey(k => k + 1);
+
+  // Any filter change returns to page 1 so the result set stays reachable.
+  const updateFilters = (patch: Partial<PartnerFilters>) => {
+    setFilters(f => ({ ...f, ...patch }));
+    setPage(1);
+  };
+
+  const partners = pageData?.data ?? [];
+  const total = pageData?.total ?? 0;
+  const hasActiveFilters =
+    !!filters.searchTerm || filters.partnerType !== 'All' || filters.status !== 'All' ||
+    !!filters.country || !!filters.preferredTrade;
+
+  const openBalanceSummary = Object.entries(pageData?.totalOpenBalance ?? {})
     .map(([currency, amount]) => `${currency} ${amount.toLocaleString()}`)
     .join(' · ') || `${baseCurrency} 0`;
 
@@ -116,6 +151,24 @@ export function PartnersList({
     }
   };
 
+  const handleImportFile = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    setImporting(true);
+    setImportError(null);
+    setImportResult(null);
+    try {
+      const result = await partnersApi.importFromExcel(file);
+      setImportResult(result);
+      refresh();
+    } catch (err: any) {
+      setImportError(err?.message || 'Import failed');
+    } finally {
+      setImporting(false);
+    }
+  };
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-lg shadow">
@@ -129,9 +182,21 @@ export function PartnersList({
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" className="gap-2">
-              <Upload className="w-4 h-4" />
-              Import
+            <input
+              ref={importInputRef}
+              type="file"
+              accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              onChange={handleImportFile}
+              className="hidden"
+            />
+            <Button
+              variant="outline"
+              className="gap-2"
+              disabled={importing}
+              onClick={() => importInputRef.current?.click()}
+            >
+              {importing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+              {importing ? 'Importing...' : 'Import'}
             </Button>
             <Button variant="outline" className="gap-2">
               <Download className="w-4 h-4" />
@@ -154,14 +219,14 @@ export function PartnersList({
             <Input
               placeholder="Search partners..."
               value={filters.searchTerm}
-              onChange={(e) => setFilters({ ...filters, searchTerm: e.target.value })}
+              onChange={(e) => updateFilters({ searchTerm: e.target.value })}
               className="pl-9"
             />
           </div>
           
           <Select
             value={filters.partnerType}
-            onValueChange={(value) => setFilters({ ...filters, partnerType: value as PartnerType | 'All' })}
+            onValueChange={(value) => updateFilters({ partnerType: value as PartnerType | 'All' })}
           >
             <SelectTrigger>
               <SelectValue placeholder="Partner Type" />
@@ -183,7 +248,7 @@ export function PartnersList({
 
           <Select
             value={filters.status}
-            onValueChange={(value) => setFilters({ ...filters, status: value as PartnerStatus | 'All' })}
+            onValueChange={(value) => updateFilters({ status: value as PartnerStatus | 'All' })}
           >
             <SelectTrigger>
               <SelectValue placeholder="Status" />
@@ -200,12 +265,12 @@ export function PartnersList({
           <Input
             placeholder="Country..."
             value={filters.country}
-            onChange={(e) => setFilters({ ...filters, country: e.target.value })}
+            onChange={(e) => updateFilters({ country: e.target.value })}
           />
 
           <Select
             value={filters.preferredTrade || 'all'}
-            onValueChange={(value) => setFilters({ ...filters, preferredTrade: value === 'all' ? '' : value })}
+            onValueChange={(value) => updateFilters({ preferredTrade: value === 'all' ? '' : value })}
           >
             <SelectTrigger>
               <SelectValue placeholder="Preferred Trade..." />
@@ -223,25 +288,41 @@ export function PartnersList({
 
         <div className="flex items-center justify-between mt-4 text-gray-600 dark:text-gray-400">
           <span>
-            Showing {filteredPartners.length} of {partners.length} partners
+            {total} {total === 1 ? 'partner' : 'partners'}{hasActiveFilters ? ' matching filters' : ''}
           </span>
-          {(filters.searchTerm || filters.partnerType !== 'All' || filters.status !== 'All' || filters.country || filters.preferredTrade) && (
+          {hasActiveFilters && (
             <Button
               variant="ghost"
-              onClick={() => setFilters({
-                searchTerm: '',
-                partnerType: 'All',
-                status: 'All',
-                country: '',
-                rating: null,
-                preferredTrade: ''
-              })}
+              onClick={() => {
+                setFilters({
+                  searchTerm: '',
+                  partnerType: 'All',
+                  status: 'All',
+                  country: '',
+                  rating: null,
+                  preferredTrade: ''
+                });
+                setPage(1);
+              }}
             >
               <Filter className="w-4 h-4 mr-2" />
               Clear Filters
             </Button>
           )}
         </div>
+
+        {importResult && (
+          <div className="mt-4 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-200">
+            Imported {importResult.imported} partners. Skipped {importResult.skipped} rows
+            {importResult.duplicates > 0 ? ` (${importResult.duplicates} duplicates)` : ''}.
+            {importResult.warnings.length > 0 ? ` ${importResult.warnings.length} warnings.` : ''}
+          </div>
+        )}
+        {importError && (
+          <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-700 dark:bg-red-900/20 dark:text-red-300">
+            {importError}
+          </div>
+        )}
       </div>
 
       {/* Error */}
@@ -277,20 +358,20 @@ export function PartnersList({
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={15} className="text-center py-10">
+                <TableCell colSpan={16} className="text-center py-10">
                   <div className="flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400">
                     <RefreshCw className="w-4 h-4 animate-spin" /> Loading partners...
                   </div>
                 </TableCell>
               </TableRow>
-            ) : filteredPartners.length === 0 ? (
+            ) : partners.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={15} className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  {partners.length === 0 ? 'No partners yet. Create your first partner.' : 'No partners match your filters.'}
+                <TableCell colSpan={16} className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  {hasActiveFilters ? 'No partners match your filters.' : 'No partners yet. Create your first partner.'}
                 </TableCell>
               </TableRow>
             ) : (
-              filteredPartners.map((partner) => {
+              partners.map((partner) => {
                 const primaryContact = partner.contacts.find(c => c.isPrimary) || partner.contacts[0];
                 return (
                   <TableRow key={partner.id} className="hover:bg-gray-50">
@@ -429,11 +510,16 @@ export function PartnersList({
       </div>
 
       {/* Footer */}
-      <div className="border-t border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between">
-        <div className="text-gray-600 dark:text-gray-400">
-          Total Partners: {filteredPartners.length}
-        </div>
-        <div className="text-gray-600 dark:text-gray-400">
+      <div className="border-t border-gray-200 dark:border-gray-700 p-4 space-y-3">
+        <PaginationBar
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+          label="partners"
+        />
+        <div className="flex justify-end text-gray-600 dark:text-gray-400">
           Total Open Balance: {openBalanceSummary}
         </div>
       </div>
