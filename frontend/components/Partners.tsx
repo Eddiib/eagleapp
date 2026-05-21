@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, ComponentProps } from 'react';
 import { Partner } from '../types/partner';
 import { PartnersList } from './PartnersList';
 import { PartnerForm } from './PartnerForm';
@@ -9,9 +9,16 @@ import { invalidatePartnersCache, usePartners } from '../hooks/usePartners';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../context/ConfirmDialog';
 
+// The partner form needs the full partner list (for its carrier picker), but the
+// list view itself is paginated. This wrapper only mounts when the create/edit
+// modal opens, so simply browsing the list never fetches every partner.
+function PartnerFormWithPartners(props: Omit<ComponentProps<typeof PartnerForm>, 'allPartners'>) {
+  const { partners } = usePartners();
+  return <PartnerForm {...props} allPartners={partners} />;
+}
+
 export function Partners() {
   const { user } = useAuth();
-  const { partners } = usePartners();
   const confirmDialog = useConfirm();
   const [view, setView] = useState<'list' | 'detail'>('list');
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
@@ -180,12 +187,11 @@ export function Partners() {
 
             {/* Modal Body - Scrollable */}
             <div className="flex-1 overflow-y-auto px-6 py-4">
-              <PartnerForm
+              <PartnerFormWithPartners
                 partner={selectedPartner}
                 mode={formMode}
                 onSave={handleSavePartner}
                 onCancel={guardedClose}
-                allPartners={partners}
                 onDirtyChange={setDirty}
               />
             </div>

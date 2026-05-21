@@ -51,17 +51,13 @@ export function LoginPage() {
             <img
               src={logoUrl}
               alt={brandName || 'Company logo'}
-              className="mx-auto mb-4 max-h-20 w-auto object-contain"
+              className="mx-auto max-h-20 w-auto object-contain"
             />
           ) : (
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-[#030213] rounded-xl mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-[#030213] rounded-xl">
               <span className="text-white text-2xl font-bold">E</span>
             </div>
           )}
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-            {brandName || 'Eagle Logistics'}
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Sign in to your account</p>
         </div>
 
         {/* Card */}
