@@ -68,7 +68,21 @@ export function BookingHeader({
   const partyOptions = activePartners;
 
   const [isShipperDropdownOpen, setIsShipperDropdownOpen] = useState(false);
+  const [shipperSearch, setShipperSearch] = useState('');
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+
+  // Reset the filter text whenever the shipper dropdown closes.
+  useEffect(() => {
+    if (!isShipperDropdownOpen) setShipperSearch('');
+  }, [isShipperDropdownOpen]);
+
+  const filteredShipperOptions = useMemo(() => {
+    const q = shipperSearch.trim().toLowerCase();
+    if (!q) return partyOptions;
+    return partyOptions.filter(p =>
+      (p.tradingName || p.companyLegalName || '').toLowerCase().includes(q),
+    );
+  }, [partyOptions, shipperSearch]);
 
   useEffect(() => {
     if (!isShipperDropdownOpen) return;
@@ -374,25 +388,41 @@ export function BookingHeader({
                   </div>
 
                   {isShipperDropdownOpen && !isViewMode && (
-                    <div className="absolute z-50 mt-1 w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded shadow-lg max-h-60 overflow-y-auto">
-                      {partyOptions.map((p) => {
-                        const label = p.tradingName || p.companyLegalName;
-                        const checked = selectedShipperIds.has(p.id);
-                        return (
-                          <label
-                            key={p.id}
-                            className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() => toggleShipper(p.id, label)}
-                              className="w-3 h-3 text-blue-600 rounded focus:ring-blue-500"
-                            />
-                            <span className="text-xs text-gray-700 dark:text-gray-300">{label}</span>
-                          </label>
-                        );
-                      })}
+                    <div className="absolute z-50 mt-1 w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded shadow-lg">
+                      <div className="p-1.5 border-b border-gray-200 dark:border-gray-600">
+                        <input
+                          type="text"
+                          autoFocus
+                          value={shipperSearch}
+                          onChange={(e) => setShipperSearch(e.target.value)}
+                          placeholder="Type to filter shippers…"
+                          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div className="max-h-60 overflow-y-auto">
+                        {filteredShipperOptions.length === 0 ? (
+                          <div className="px-3 py-2 text-xs text-gray-400 dark:text-gray-500">
+                            No shippers match “{shipperSearch}”.
+                          </div>
+                        ) : filteredShipperOptions.map((p) => {
+                          const label = p.tradingName || p.companyLegalName;
+                          const checked = selectedShipperIds.has(p.id);
+                          return (
+                            <label
+                              key={p.id}
+                              className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() => toggleShipper(p.id, label)}
+                                className="w-3 h-3 text-blue-600 rounded focus:ring-blue-500"
+                              />
+                              <span className="text-xs text-gray-700 dark:text-gray-300">{label}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
                 </div>

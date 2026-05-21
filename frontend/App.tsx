@@ -396,7 +396,7 @@ function AppShell() {
   }, []);
 
   const validateDraft = (d: Booking): string | null => {
-    if (!d.clientId) return 'Please select a client';
+    if (!d.consigneeId) return 'Please select a consignee';
     if (editServices.some(s => !s.serviceId)) return 'All service lines need a service selected';
     if (editEquipment.some(e => !e.equipmentId)) return 'All equipment lines need an equipment type selected';
     if (d.estimatedDeparture && d.estimatedArrival && new Date(d.estimatedArrival) < new Date(d.estimatedDeparture)) {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Partner, PartnerType, PartnerCategory, PartnerStatus, PaymentTerms, DefaultServiceType, PartnerContact, DeliveryAddress, PartnerBankDetails, PartnerDocument, TradeMarketInfo, PartnerRole } from '../types/partner';
 import { Employee } from './EmployeesModule';
@@ -167,6 +167,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const contentRef = useRef<HTMLDivElement | null>(null);
 
   // Dirty tracking — bubble up to the modal so the X / overlay / Esc can
   // confirm before discarding edits. We snapshot the seed state once.
@@ -255,12 +256,12 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
+    // Hard requirements mirror what the backend/DB enforces: company_legal_name
+    // is NOT NULL, and create also needs a trading name. Country, City, Address,
+    // Tax ID and contact details are optional — many imported partners lack
+    // them and the backend accepts updates without them.
     if (!formData.companyLegalName?.trim()) newErrors.companyLegalName = 'Business Legal Name is required';
-    if (!formData.tradingName?.trim())      newErrors.tradingName = 'Business Trade Name is required';
-    if (!formData.country?.trim())          newErrors.country = 'Country is required';
-    if (!formData.city?.trim())             newErrors.city = 'City is required';
-    if (!formData.address?.trim())          newErrors.address = 'Address is required';
-    if (!formData.taxNumber?.trim())        newErrors.taxNumber = 'Tax ID is required';
+    if (isNewMode && !formData.tradingName?.trim()) newErrors.tradingName = 'Business Trade Name is required';
     if (normalizePartnerRoles(formData).length === 0) {
       newErrors.partnerRoles = 'Select at least one commercial role';
     }
@@ -272,24 +273,17 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
       newErrors.website = 'Website must look like example.com';
     }
 
+    // Contacts are optional; only enforce single-primary and format checks.
     const primaryContacts = (formData.contacts ?? []).filter((c) => c.isPrimary).length;
-    if ((formData.contacts ?? []).length === 0 || primaryContacts === 0) {
-      newErrors.contacts = 'At least one primary contact is required';
-    }
     if (primaryContacts > 1) {
       newErrors.contacts = 'Only one contact may be marked Primary';
     }
     (formData.contacts ?? []).forEach((c, i) => {
-      if (!c.name?.trim() && i === 0) newErrors.contactName = 'Contact Person is required';
       if (c.email && !EMAIL_RE.test(c.email.trim())) {
         newErrors[`contactEmail_${i}`] = `Contact ${i + 1}: invalid email`;
       }
       if (c.phone && !PHONE_RE.test(c.phone.trim())) {
         newErrors[`contactPhone_${i}`] = `Contact ${i + 1}: invalid phone`;
-      }
-      if (i === 0) {
-        if (!c.email?.trim()) newErrors.contactEmail = 'Contact Email is required';
-        if (!c.phone?.trim()) newErrors.contactPhone = 'Contact Phone is required';
       }
     });
 
@@ -339,6 +333,10 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
       onSave(partnerData);
     } else {
       jumpToFirstError(errs);
+      // Surface the failure: the summary banner sits at the top of the
+      // scrollable content, so scroll it back into view after the section
+      // switches. Without this the Save click looks like a no-op.
+      setTimeout(() => contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 0);
     }
   };
 
@@ -664,7 +662,20 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
       </div>
 
       {/* Form Content */}
-      <div className="form-compact flex-1 space-y-4 overflow-y-auto pr-2" style={{ maxHeight: 'calc(95vh - 160px)' }}>
+      <div ref={contentRef} className="form-compact flex-1 space-y-4 overflow-y-auto pr-2" style={{ maxHeight: 'calc(95vh - 160px)' }}>
+        {/* Validation summary — keeps a failed save from looking like a no-op */}
+        {Object.keys(errors).length > 0 && (
+          <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 dark:border-red-700 dark:bg-red-900/20">
+            <p className="text-sm font-medium text-red-700 dark:text-red-300">
+              Please fix the following before saving:
+            </p>
+            <ul className="mt-1 list-disc pl-5 text-sm text-red-600 dark:text-red-400 space-y-0.5">
+              {[...new Set(Object.values(errors))].map((msg) => (
+                <li key={msg}>{msg}</li>
+              ))}
+            </ul>
+          </div>
+        )}
         {/* Basic Information Section */}
         {activeSection === 'basic' && (
           <div className="space-y-3">
@@ -732,7 +743,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
 
                 <div>
                   <Label htmlFor="taxNumber">
-                    Tax ID <span className="text-red-500">*</span>
+                    Tax ID
                   </Label>
                   <Input
                     id="taxNumber"
@@ -913,7 +924,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label htmlFor="address">
-                    Full Address <span className="text-red-500">*</span>
+                    Full Address
                   </Label>
                   <Input
                     id="address"
@@ -930,7 +941,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
 
                 <div>
                   <Label htmlFor="city">
-                    City <span className="text-red-500">*</span>
+                    City
                   </Label>
                   <Input
                     id="city"
@@ -946,7 +957,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
 
                 <div>
                   <Label htmlFor="country">
-                    Country <span className="text-red-500">*</span>
+                    Country
                   </Label>
                   <Select
                     value={formData.country || ''}
@@ -1073,7 +1084,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                             <div className="grid grid-cols-2 gap-2">
                               <div>
                                 <Label htmlFor={`contact-name-${index}`}>
-                                  Name {index === 0 && <span className="text-red-500">*</span>}
+                                  Name
                                 </Label>
                                 <Input
                                   id={`contact-name-${index}`}
@@ -1099,7 +1110,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
 
                               <div>
                                 <Label htmlFor={`contact-phone-${index}`}>
-                                  Phone {index === 0 && <span className="text-red-500">*</span>}
+                                  Phone
                                 </Label>
                                 <Input
                                   id={`contact-phone-${index}`}
@@ -1115,7 +1126,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
 
                               <div>
                                 <Label htmlFor={`contact-email-${index}`}>
-                                  Email {index === 0 && <span className="text-red-500">*</span>}
+                                  Email
                                 </Label>
                                 <Input
                                   id={`contact-email-${index}`}

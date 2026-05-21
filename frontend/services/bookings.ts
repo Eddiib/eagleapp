@@ -674,7 +674,8 @@ export function bookingToPayload(
     bookingNumber: b.bookingNumber,
     status: b.status,
     serviceType: b.serviceType,
-    clientId: b.clientId,
+    // The consignee is treated as the client — keep client_id mirrored to it.
+    clientId: b.consigneeId || b.clientId,
     carrierId: b.carrierId || undefined,
     shipperId: b.shipperId || undefined,
     consigneeId: b.consigneeId || undefined,
