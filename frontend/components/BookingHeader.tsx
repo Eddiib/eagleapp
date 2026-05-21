@@ -121,9 +121,21 @@ export function BookingHeader({
               <h3 className="text-xs uppercase tracking-wide text-gray-700 dark:text-gray-300">
                 Booking Info
               </h3>
-              <span className={`px-2 py-0.5 rounded text-xs ${getStatusColor(draft.status)}`}>
-                {displayBookingNumber}
-              </span>
+              {isEditMode ? (
+                <input
+                  type="text"
+                  value={draft.bookingNumber}
+                  onChange={(e) => onChange({ bookingNumber: e.target.value })}
+                  maxLength={30}
+                  placeholder="Booking #"
+                  aria-label="Booking number"
+                  className="px-2 py-0.5 w-32 rounded text-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              ) : (
+                <span className={`px-2 py-0.5 rounded text-xs ${getStatusColor(draft.status)}`}>
+                  {displayBookingNumber}
+                </span>
+              )}
               {isViewMode && onEdit && (
                 <div className="flex items-center gap-1 ml-auto">
                   {onGenerateInvoice && (

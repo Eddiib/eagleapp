@@ -658,9 +658,34 @@ router.put('/:id', asyncHandler(async (req, res) => {
     const shipperIds = shipperIdsFromInput(shippers);
     if (!header.shipper_id && shipperIds.length) header.shipper_id = shipperIds[0];
 
-    const assignments = HEADER_COLUMNS.map((c) => `${c}=?`).concat(['updated_by=?']).join(', ');
-    const values = [...HEADER_COLUMNS.map((c) => header[c]), req.user?.username ?? null, req.params.id];
-    const [result] = await conn.query(`UPDATE bookings SET ${assignments} WHERE id=?`, values);
+    const updateColumns = [...HEADER_COLUMNS];
+    const updateValues = HEADER_COLUMNS.map((c) => header[c]);
+
+    // The booking number can be edited from the header. A blank value is
+    // ignored so it can never wipe the existing NOT NULL UNIQUE column.
+    const newBookingNumber = typeof req.body.booking_number === 'string'
+      ? req.body.booking_number.trim()
+      : '';
+    if (newBookingNumber) {
+      if (newBookingNumber.length > 30) {
+        throw new AppError(400, 'Booking number must be 30 characters or fewer', 'INVALID_BOOKING_NUMBER');
+      }
+      updateColumns.push('booking_number');
+      updateValues.push(newBookingNumber);
+    }
+
+    const assignments = updateColumns.map((c) => `${c}=?`).concat(['updated_by=?']).join(', ');
+    const values = [...updateValues, req.user?.username ?? null, req.params.id];
+
+    let result;
+    try {
+      [result] = await conn.query(`UPDATE bookings SET ${assignments} WHERE id=?`, values);
+    } catch (err) {
+      if (err.code === 'ER_DUP_ENTRY' && /booking_number/i.test(err.sqlMessage || '')) {
+        throw new AppError(409, `Booking number "${newBookingNumber}" is already in use`, 'DUPLICATE_BOOKING_NUMBER');
+      }
+      throw err;
+    }
 
     if (result.affectedRows === 0) {
       await conn.rollback();

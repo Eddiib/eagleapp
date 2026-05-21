@@ -557,7 +557,10 @@ export const bookingsApi = {
   create: (data: BookingPayload, createdBy?: string) =>
     api.post<{ id: string; message: string }>('/bookings', toApiPayload(data, { created_by: createdBy })),
   update: (id: string, data: BookingPayload, updatedBy?: string) =>
-    api.put<{ message: string }>(`/bookings/${id}`, toApiPayload(data, { updated_by: updatedBy })),
+    api.put<{ message: string }>(`/bookings/${id}`, toApiPayload(data, {
+      updated_by: updatedBy,
+      booking_number: data.bookingNumber || undefined,
+    })),
   delete: (id: string) =>
     api.delete<{ message: string }>(`/bookings/${id}`),
   saveNotes: (id: string, internalNotes: string, freeTextComments: string) =>
@@ -665,8 +668,10 @@ export function bookingToPayload(
   equipment: BookingEquipmentLine[]
 ): BookingPayload {
   return {
-    // bookingNumber omitted for new bookings — backend auto-assigns sequentially.
-    // It is present here only for reference; toApiPayload does not send it.
+    // bookingNumber is carried through so edits can save a changed code.
+    // App.tsx strips it from the create payload — new bookings are
+    // auto-numbered by the backend.
+    bookingNumber: b.bookingNumber,
     status: b.status,
     serviceType: b.serviceType,
     clientId: b.clientId,

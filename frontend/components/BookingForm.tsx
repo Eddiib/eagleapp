@@ -93,7 +93,15 @@ export function BookingForm({ draft, onChange, mode, error, leadData }: BookingF
               <div className="space-y-2">
                 <div>
                   <label className={labelClass}>Booking Number</label>
-                  <input type="text" value={draft.bookingNumber} disabled className={inputClass()} placeholder="Auto-generated" />
+                  <input
+                    type="text"
+                    value={draft.bookingNumber}
+                    onChange={(e) => onChange({ bookingNumber: e.target.value })}
+                    disabled={mode !== 'edit'}
+                    maxLength={30}
+                    className={inputClass()}
+                    placeholder={mode === 'edit' ? 'Booking number' : 'Auto-generated'}
+                  />
                 </div>
                 <div>
                   <label className={labelClass}>Client <span className="text-red-500">*</span></label>
