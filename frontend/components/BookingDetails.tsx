@@ -2,89 +2,110 @@ import { useState, useEffect } from 'react';
 import { Download, Filter, Search, X, RefreshCw } from 'lucide-react';
 import { bookingsApi, Booking } from '../services/bookings';
 
+// One row per service line: booking → equipment line → equipment service.
+// Booking + equipment fields repeat across the rows so any single service is
+// findable on its own line.
 interface BookingDetailRow {
   bookingId: string;
   bookingNumber: string;
   clientName: string;
-  carrierName: string;
+  container: string;
+  typeSize: string;
+  equipment: string;
+  carrier: string;
   placeOfLoading: string;
   finalDestination: string;
   etd: string;
   eta: string;
-  equipmentSummary: string;
   commodity: string;
 
-  serviceCode: string;
-  serviceName: string;
-  supplierName: string;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
+  serviceType: string;
+  plannedDate: string;
+  supplier: string;
+  rate: number | null;
+  cost: number | null;
   currency: string;
-  notes: string;
 }
 
 type ColumnKey =
-  | 'bookingNumber' | 'clientName' | 'carrierName' | 'placeOfLoading' | 'finalDestination'
-  | 'etd' | 'eta' | 'equipmentSummary' | 'commodity'
-  | 'serviceCode' | 'serviceName' | 'supplierName'
-  | 'quantity' | 'unitPrice' | 'totalPrice' | 'currency' | 'notes';
+  | 'bookingNumber' | 'clientName' | 'container' | 'typeSize' | 'equipment' | 'carrier'
+  | 'placeOfLoading' | 'finalDestination' | 'etd' | 'eta' | 'commodity'
+  | 'serviceType' | 'plannedDate' | 'supplier' | 'rate' | 'cost' | 'currency';
 
 interface BookingDetailsProps {
   onNavigateToBooking?: (bookingId: string) => void;
 }
 
-function summarizeEquipment(b: Booking): string {
-  if (!b.equipment.length) return '—';
-  return b.equipment
-    .map(e => `${e.quantity}×${e.equipmentCode || e.equipmentName || '?'}`)
-    .join('; ');
-}
-
+// Flatten every booking into one row per equipment service. Equipment lines
+// with no services still produce a row (empty service columns); likewise
+// bookings with no equipment.
 function buildRows(bookings: Booking[]): BookingDetailRow[] {
   const rows: BookingDetailRow[] = [];
   for (const b of bookings) {
-    const base = {
+    const bookingBase = {
       bookingId: b.id,
       bookingNumber: b.bookingNumber,
-      clientName: b.clientName || '',
-      carrierName: b.carrierName || '',
-      placeOfLoading: b.origin || '',
-      finalDestination: b.destination || '',
-      etd: b.estimatedDeparture || '',
-      eta: b.estimatedArrival || '',
-      equipmentSummary: summarizeEquipment(b),
-      commodity: b.commodity || '',
+      clientName: b.clientName || b.consigneeName || '',
+      currency: b.currency || '',
     };
-    if (b.services.length === 0) {
-      rows.push({
-        ...base,
-        serviceCode: '',
-        serviceName: '',
-        supplierName: '',
-        quantity: 0,
-        unitPrice: 0,
-        totalPrice: 0,
-        currency: b.currency || '',
-        notes: '',
-      });
-    } else {
-      for (const s of b.services) {
-        rows.push({
-          ...base,
-          serviceCode: s.serviceCode || '',
-          serviceName: s.serviceName || '',
-          supplierName: s.supplierName || '',
-          quantity: s.quantity,
-          unitPrice: s.unitPrice,
-          totalPrice: s.totalPrice,
-          currency: s.currency,
-          notes: s.notes || '',
-        });
+    const emptyEquipment = {
+      container: '', typeSize: '', equipment: '', carrier: b.carrierName || '',
+      placeOfLoading: '', finalDestination: '', etd: '', eta: '', commodity: b.commodity || '',
+    };
+    const emptyService = { serviceType: '', plannedDate: '', supplier: '', rate: null, cost: null };
+
+    if (b.equipment.length === 0) {
+      rows.push({ ...bookingBase, ...emptyEquipment, ...emptyService });
+      continue;
+    }
+
+    for (const e of b.equipment) {
+      const equipmentBase = {
+        ...bookingBase,
+        container: e.containerId || '',
+        typeSize: e.typeSize || '',
+        equipment: e.equipmentName || e.equipmentCode || '',
+        carrier: e.carrierName || b.carrierName || '',
+        placeOfLoading: e.placeOfLoading || '',
+        finalDestination: e.finalDestination || '',
+        etd: e.etd || '',
+        eta: e.eta || '',
+        commodity: e.commodity || b.commodity || '',
+      };
+      const services = e.equipmentServices || [];
+      if (services.length === 0) {
+        rows.push({ ...equipmentBase, ...emptyService });
+      } else {
+        for (const s of services) {
+          rows.push({
+            ...equipmentBase,
+            serviceType: s.serviceName || s.serviceCode || '',
+            plannedDate: s.plannedDate || '',
+            supplier: s.supplierName || '',
+            rate: s.agreedRate ?? null,
+            cost: s.agreedCost ?? null,
+          });
+        }
       }
     }
   }
   return rows;
+}
+
+// Cell value as text — '—' for empty, 2dp for money.
+function cellText(row: BookingDetailRow, key: ColumnKey): string {
+  const v = row[key];
+  if (v === null || v === undefined || v === '') return '—';
+  if (typeof v === 'number') return v.toFixed(2);
+  return String(v);
+}
+
+// Like cellText but blank (not '—') for empty — used for search/filter matching.
+function filterText(row: BookingDetailRow, key: ColumnKey): string {
+  const v = row[key];
+  if (v === null || v === undefined) return '';
+  if (typeof v === 'number') return v.toFixed(2);
+  return String(v);
 }
 
 export function BookingDetails({ onNavigateToBooking }: BookingDetailsProps) {
@@ -95,23 +116,23 @@ export function BookingDetails({ onNavigateToBooking }: BookingDetailsProps) {
   const [columnFilters, setColumnFilters] = useState<Partial<Record<ColumnKey, string>>>({});
   const [activeFilterColumn, setActiveFilterColumn] = useState<ColumnKey | null>(null);
   const [columnWidths, setColumnWidths] = useState<Record<ColumnKey, number>>({
-    bookingNumber: 140,
-    clientName: 180,
-    carrierName: 160,
-    placeOfLoading: 180,
-    finalDestination: 180,
-    etd: 110,
-    eta: 110,
-    equipmentSummary: 160,
+    bookingNumber: 130,
+    clientName: 170,
+    container: 130,
+    typeSize: 110,
+    equipment: 150,
+    carrier: 150,
+    placeOfLoading: 160,
+    finalDestination: 160,
+    etd: 100,
+    eta: 100,
     commodity: 140,
-    serviceCode: 120,
-    serviceName: 200,
-    supplierName: 180,
-    quantity: 80,
-    unitPrice: 110,
-    totalPrice: 110,
+    serviceType: 170,
+    plannedDate: 120,
+    supplier: 160,
+    rate: 100,
+    cost: 100,
     currency: 90,
-    notes: 160,
   });
   const [resizing, setResizing] = useState<ColumnKey | null>(null);
   const [startX, setStartX] = useState(0);
@@ -165,18 +186,19 @@ export function BookingDetails({ onNavigateToBooking }: BookingDetailsProps) {
     const matchesSearch = needle === '' ||
       row.bookingNumber.toLowerCase().includes(needle) ||
       row.clientName.toLowerCase().includes(needle) ||
-      row.serviceName.toLowerCase().includes(needle) ||
+      row.serviceType.toLowerCase().includes(needle) ||
+      row.container.toLowerCase().includes(needle) ||
+      row.equipment.toLowerCase().includes(needle) ||
       row.commodity.toLowerCase().includes(needle);
     const matchesColumnFilters = Object.entries(columnFilters).every(([key, value]) => {
       if (!value) return true;
-      const cellValue = String(row[key as ColumnKey]).toLowerCase();
-      return cellValue.includes(String(value).toLowerCase());
+      return filterText(row, key as ColumnKey).toLowerCase().includes(String(value).toLowerCase());
     });
     return matchesSearch && matchesColumnFilters;
   });
 
   const getUniqueValues = (key: ColumnKey) => {
-    const values = rows.map(row => String(row[key]));
+    const values = rows.map(row => filterText(row, key));
     return Array.from(new Set(values)).filter(v => v !== '').sort();
   };
 
@@ -245,28 +267,34 @@ export function BookingDetails({ onNavigateToBooking }: BookingDetailsProps) {
 
   const activeFiltersCount = Object.keys(columnFilters).length;
 
-  const bookingCols: { key: ColumnKey; label: string; align?: 'right'; bgClass?: string }[] = [
+  // Booking + equipment columns (left, plain); commodity tinted blue.
+  const mainCols: { key: ColumnKey; label: string; align?: 'right'; bgClass?: string }[] = [
     { key: 'bookingNumber', label: 'Booking Number' },
     { key: 'clientName', label: 'Client' },
-    { key: 'carrierName', label: 'Carrier' },
+    { key: 'container', label: 'Container' },
+    { key: 'typeSize', label: 'Type / Size' },
+    { key: 'equipment', label: 'Equipment' },
+    { key: 'carrier', label: 'Carrier' },
     { key: 'placeOfLoading', label: 'Place of Loading' },
     { key: 'finalDestination', label: 'Final Destination' },
     { key: 'etd', label: 'ETD' },
     { key: 'eta', label: 'ETA' },
-    { key: 'equipmentSummary', label: 'Equipment' },
     { key: 'commodity', label: 'Commodity', bgClass: 'bg-blue-50 dark:bg-blue-900/20' },
   ];
 
+  // Service-line columns (right, tinted green).
   const serviceCols: { key: ColumnKey; label: string; align?: 'right' }[] = [
-    { key: 'serviceCode', label: 'Service Code' },
-    { key: 'serviceName', label: 'Service' },
-    { key: 'supplierName', label: 'Supplier' },
-    { key: 'quantity', label: 'Qty', align: 'right' },
-    { key: 'unitPrice', label: 'Unit Price', align: 'right' },
-    { key: 'totalPrice', label: 'Total', align: 'right' },
+    { key: 'serviceType', label: 'Service Type' },
+    { key: 'plannedDate', label: 'Planned Date' },
+    { key: 'supplier', label: 'Supplier' },
+    { key: 'rate', label: 'Rate', align: 'right' },
+    { key: 'cost', label: 'Cost', align: 'right' },
     { key: 'currency', label: 'Currency' },
-    { key: 'notes', label: 'Notes' },
   ];
+
+  const totalCols = mainCols.length + serviceCols.length;
+  const totalRate = filteredRows.reduce((sum, row) => sum + (row.rate ?? 0), 0);
+  const totalCost = filteredRows.reduce((sum, row) => sum + (row.cost ?? 0), 0);
 
   return (
     <div className="space-y-4">
@@ -275,7 +303,7 @@ export function BookingDetails({ onNavigateToBooking }: BookingDetailsProps) {
           <div>
             <h2 className="text-xl text-gray-900 dark:text-gray-100">Booking Details</h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Detailed breakdown of all services per booking and equipment
+              One row per service — every container and service across all bookings
             </p>
           </div>
           <div className="flex gap-3">
@@ -309,7 +337,7 @@ export function BookingDetails({ onNavigateToBooking }: BookingDetailsProps) {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by booking number, client, service, or commodity..."
+            placeholder="Search by booking number, client, service, container, equipment, or commodity..."
             className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
           />
         </div>
@@ -326,7 +354,7 @@ export function BookingDetails({ onNavigateToBooking }: BookingDetailsProps) {
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
               <tr>
-                {bookingCols.map(({ key, label, align, bgClass }) => (
+                {mainCols.map(({ key, label, align, bgClass }) => (
                   <th
                     key={key}
                     style={{ width: `${columnWidths[key]}px`, minWidth: `${columnWidths[key]}px` }}
@@ -365,46 +393,49 @@ export function BookingDetails({ onNavigateToBooking }: BookingDetailsProps) {
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {loading ? (
                 <tr>
-                  <td colSpan={bookingCols.length + serviceCols.length} className="px-4 py-10 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={totalCols} className="px-4 py-10 text-center text-gray-500 dark:text-gray-400">
                     Loading bookings...
                   </td>
                 </tr>
               ) : filteredRows.length === 0 ? (
                 <tr>
-                  <td colSpan={bookingCols.length + serviceCols.length} className="px-4 py-10 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={totalCols} className="px-4 py-10 text-center text-gray-500 dark:text-gray-400">
                     {rows.length === 0 ? 'No bookings yet.' : 'No rows match your search.'}
                   </td>
                 </tr>
               ) : filteredRows.map((row, idx) => (
-                <tr key={`${row.bookingNumber}-${idx}`} className={idx % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-900/50'}>
-                  <td
-                    style={{ width: `${columnWidths.bookingNumber}px`, minWidth: `${columnWidths.bookingNumber}px` }}
-                    className="px-3 py-2 text-sm border-r border-gray-200 dark:border-gray-700"
-                  >
-                    <button
-                      onClick={() => handleBookingClick(row.bookingId)}
-                      className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                <tr key={`${row.bookingId}-${idx}`} className={idx % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-900/50'}>
+                  {mainCols.map(({ key, align, bgClass }) => (
+                    <td
+                      key={key}
+                      style={{ width: `${columnWidths[key]}px`, minWidth: `${columnWidths[key]}px` }}
+                      className={`px-3 py-2 text-sm text-gray-900 dark:text-gray-100 border-r border-gray-200 dark:border-gray-700 ${
+                        align === 'right' ? 'text-right tabular-nums' : ''
+                      } ${bgClass ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}
                     >
-                      {row.bookingNumber}
-                    </button>
-                  </td>
-                  <td style={{ width: columnWidths.clientName }} className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100 border-r border-gray-200 dark:border-gray-700">{row.clientName || '—'}</td>
-                  <td style={{ width: columnWidths.carrierName }} className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100 border-r border-gray-200 dark:border-gray-700">{row.carrierName || '—'}</td>
-                  <td style={{ width: columnWidths.placeOfLoading }} className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100 border-r border-gray-200 dark:border-gray-700">{row.placeOfLoading || '—'}</td>
-                  <td style={{ width: columnWidths.finalDestination }} className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100 border-r border-gray-200 dark:border-gray-700">{row.finalDestination || '—'}</td>
-                  <td style={{ width: columnWidths.etd }} className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100 border-r border-gray-200 dark:border-gray-700">{row.etd || '—'}</td>
-                  <td style={{ width: columnWidths.eta }} className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100 border-r border-gray-200 dark:border-gray-700">{row.eta || '—'}</td>
-                  <td style={{ width: columnWidths.equipmentSummary }} className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100 border-r border-gray-200 dark:border-gray-700">{row.equipmentSummary}</td>
-                  <td style={{ width: columnWidths.commodity }} className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100 border-r border-gray-200 dark:border-gray-700 bg-blue-50/50 dark:bg-blue-900/10">{row.commodity || '—'}</td>
-
-                  <td style={{ width: columnWidths.serviceCode }} className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100 border-r border-gray-200 dark:border-gray-700 bg-green-50/50 dark:bg-green-900/10">{row.serviceCode || '—'}</td>
-                  <td style={{ width: columnWidths.serviceName }} className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100 border-r border-gray-200 dark:border-gray-700 bg-green-50/50 dark:bg-green-900/10">{row.serviceName || '—'}</td>
-                  <td style={{ width: columnWidths.supplierName }} className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100 border-r border-gray-200 dark:border-gray-700 bg-green-50/50 dark:bg-green-900/10">{row.supplierName || '—'}</td>
-                  <td style={{ width: columnWidths.quantity }} className="px-3 py-2 text-sm text-right text-gray-900 dark:text-gray-100 border-r border-gray-200 dark:border-gray-700 bg-green-50/50 dark:bg-green-900/10 tabular-nums">{row.quantity}</td>
-                  <td style={{ width: columnWidths.unitPrice }} className="px-3 py-2 text-sm text-right text-gray-900 dark:text-gray-100 border-r border-gray-200 dark:border-gray-700 bg-green-50/50 dark:bg-green-900/10 tabular-nums">{row.unitPrice.toFixed(2)}</td>
-                  <td style={{ width: columnWidths.totalPrice }} className="px-3 py-2 text-sm text-right text-gray-900 dark:text-gray-100 border-r border-gray-200 dark:border-gray-700 bg-green-50/50 dark:bg-green-900/10 tabular-nums">{row.totalPrice.toFixed(2)}</td>
-                  <td style={{ width: columnWidths.currency }} className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100 border-r border-gray-200 dark:border-gray-700 bg-green-50/50 dark:bg-green-900/10">{row.currency}</td>
-                  <td style={{ width: columnWidths.notes }} className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100 bg-green-50/50 dark:bg-green-900/10">{row.notes || '—'}</td>
+                      {key === 'bookingNumber' ? (
+                        <button
+                          onClick={() => handleBookingClick(row.bookingId)}
+                          className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                        >
+                          {row.bookingNumber}
+                        </button>
+                      ) : (
+                        cellText(row, key)
+                      )}
+                    </td>
+                  ))}
+                  {serviceCols.map(({ key, align }, sIdx) => (
+                    <td
+                      key={key}
+                      style={{ width: `${columnWidths[key]}px`, minWidth: `${columnWidths[key]}px` }}
+                      className={`px-3 py-2 text-sm text-gray-900 dark:text-gray-100 bg-green-50/50 dark:bg-green-900/10 ${
+                        sIdx === serviceCols.length - 1 ? '' : 'border-r border-gray-200 dark:border-gray-700'
+                      } ${align === 'right' ? 'text-right tabular-nums' : ''}`}
+                    >
+                      {cellText(row, key)}
+                    </td>
+                  ))}
                 </tr>
               ))}
             </tbody>
@@ -414,15 +445,17 @@ export function BookingDetails({ onNavigateToBooking }: BookingDetailsProps) {
         <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between text-sm">
             <div className="text-gray-600 dark:text-gray-400">
-              Showing {filteredRows.length} service {filteredRows.length === 1 ? 'entry' : 'entries'}
+              Showing {filteredRows.length} service {filteredRows.length === 1 ? 'row' : 'rows'}
               {activeFiltersCount > 0 && ` (${activeFiltersCount} filter${activeFiltersCount > 1 ? 's' : ''} active)`}
             </div>
             <div className="flex gap-6">
               <div className="text-gray-900 dark:text-gray-100">
-                <span className="text-gray-600 dark:text-gray-400">Total:</span>{' '}
-                <span className="font-semibold tabular-nums">
-                  {filteredRows.reduce((sum, row) => sum + row.totalPrice, 0).toFixed(2)}
-                </span>
+                <span className="text-gray-600 dark:text-gray-400">Total Rate:</span>{' '}
+                <span className="font-semibold tabular-nums">{totalRate.toFixed(2)}</span>
+              </div>
+              <div className="text-gray-900 dark:text-gray-100">
+                <span className="text-gray-600 dark:text-gray-400">Total Cost:</span>{' '}
+                <span className="font-semibold tabular-nums">{totalCost.toFixed(2)}</span>
               </div>
             </div>
           </div>
