@@ -32,7 +32,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCompanySettings } from '../context/CompanySettingsContext';
 import { useAuth } from '../context/AuthContext';
 import { modulePermission } from '../lib/modulePermissions';
@@ -152,6 +152,15 @@ export function LeftSidebar({
   const { settings, logoUrl } = useCompanySettings();
   const { can } = useAuth();
   const [isHovering, setIsHovering] = useState(false);
+  // After an explicit collapse, the layout change unmounts children the cursor
+  // was over and React's synthetic `mouseenter` re-fires on the aside — which
+  // would immediately flip `isHovering` back on and undo the collapse. Suppress
+  // hover until the cursor actually leaves and re-enters the sidebar.
+  const suppressHover = useRef(false);
+  useEffect(() => {
+    if (collapsed) suppressHover.current = true;
+    setIsHovering(false);
+  }, [collapsed]);
   const isExpandedView = !collapsed || isHovering;
 
   const visibleMenuItems = useMemo(() => {
@@ -200,8 +209,14 @@ export function LeftSidebar({
       className={`fixed left-0 top-0 bottom-0 bg-[#1E1E1E] text-white flex flex-col z-[60] transition-[width,box-shadow] duration-300 ${
         isExpandedView ? 'w-60 shadow-2xl' : 'w-16 shadow-lg'
       }`}
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
+      onMouseEnter={() => {
+        if (suppressHover.current) return;
+        setIsHovering(true);
+      }}
+      onMouseLeave={() => {
+        suppressHover.current = false;
+        setIsHovering(false);
+      }}
       aria-label="Primary navigation"
     >
       {/* Logo */}
@@ -218,15 +233,6 @@ export function LeftSidebar({
               <div className="h-9 w-9 shrink-0 rounded-full bg-[#2563EB] flex items-center justify-center text-sm font-semibold">
                 {brandInitial}
               </div>
-            )}
-            {isExpandedView && (
-              brandLine ? (
-                <span className="min-w-0 truncate text-sm text-white">{brandLine}</span>
-              ) : (
-                <h1 className="min-w-0 truncate text-xl text-white">
-                  <span className="text-[#2563EB]">Eagle</span> Logistics
-                </h1>
-              )
             )}
           </div>
           <button

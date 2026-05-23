@@ -1,6 +1,7 @@
 import { ArrowLeft, Edit, Save, X, ChevronDown, Loader2, FileText } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Booking, BookingPartySummary, BookingStatus } from '../services/bookings';
+import { Partner } from '../types/partner';
 import { usePartners } from '../hooks/usePartners';
 import { countries } from '../data/countries';
 import { ports } from '../data/ports';
@@ -68,12 +69,11 @@ export function BookingHeader({
   const activePartners = useMemo(() => partners.filter(p => p.status === 'Active'), [partners]);
   const partyOptions = activePartners;
 
-  const [isShipperDropdownOpen, setIsShipperDropdownOpen] = useState(false);
-  const [shipperSearch, setShipperSearch] = useState('');
-  const dropdownRef = useRef<HTMLDivElement | null>(null);
   const [consigneePickerOpen, setConsigneePickerOpen] = useState(false);
+  const [shipperPickerOpen, setShipperPickerOpen] = useState(false);
+  const [notifyPickerOpen, setNotifyPickerOpen] = useState(false);
 
-  // Name to show in the consignee field — prefer the value the API gave us,
+  // Names to show in the read-only fields — prefer what the API gave us,
   // fall back to a lookup against the loaded partner list.
   const consigneeDisplayName = useMemo(() => {
     if (draft.consigneeName) return draft.consigneeName;
@@ -82,42 +82,24 @@ export function BookingHeader({
     return p?.tradingName || p?.companyLegalName || '';
   }, [draft.consigneeName, draft.consigneeId, partyOptions]);
 
-  // Reset the filter text whenever the shipper dropdown closes.
-  useEffect(() => {
-    if (!isShipperDropdownOpen) setShipperSearch('');
-  }, [isShipperDropdownOpen]);
+  const notifyDisplayName = useMemo(() => {
+    if (draft.notifyPartyName) return draft.notifyPartyName;
+    if (!draft.notifyPartyId) return '';
+    const p = partyOptions.find((x) => x.id === draft.notifyPartyId);
+    return p?.tradingName || p?.companyLegalName || '';
+  }, [draft.notifyPartyName, draft.notifyPartyId, partyOptions]);
 
-  const filteredShipperOptions = useMemo(() => {
-    const q = shipperSearch.trim().toLowerCase();
-    if (!q) return partyOptions;
-    return partyOptions.filter(p =>
-      (p.tradingName || p.companyLegalName || '').toLowerCase().includes(q),
-    );
-  }, [partyOptions, shipperSearch]);
-
-  useEffect(() => {
-    if (!isShipperDropdownOpen) return;
-    const onClick = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setIsShipperDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', onClick);
-    return () => document.removeEventListener('mousedown', onClick);
-  }, [isShipperDropdownOpen]);
-
-  const selectedShipperIds = new Set(draft.shippers.map(s => s.shipperId));
-
-  const toggleShipper = (partnerId: string, partnerName: string) => {
-    const next: BookingPartySummary[] = selectedShipperIds.has(partnerId)
-      ? draft.shippers.filter(s => s.shipperId !== partnerId)
-      : [...draft.shippers, { shipperId: partnerId, shipperName: partnerName }];
+  const applyShippers = (chosen: Partner[]) => {
+    const next: BookingPartySummary[] = chosen.map((p) => ({
+      shipperId: p.id,
+      shipperName: p.tradingName || p.companyLegalName,
+    }));
     const primaryShipperId = next[0]?.shipperId ?? '';
     onChange({ shippers: next, shipperId: primaryShipperId });
   };
 
   const removeShipper = (partnerId: string) => {
-    const next = draft.shippers.filter(s => s.shipperId !== partnerId);
+    const next = draft.shippers.filter((s) => s.shipperId !== partnerId);
     const primaryShipperId = next[0]?.shipperId ?? '';
     onChange({ shippers: next, shipperId: primaryShipperId });
   };
@@ -375,93 +357,65 @@ export function BookingHeader({
               </div>
               <div>
                 <label className={labelCls}>Shipper</label>
-                <div className="relative" ref={dropdownRef}>
-                  <div
-                    className="w-full px-1.5 py-1 border border-gray-300 dark:border-gray-600 rounded focus-within:ring-1 focus-within:ring-blue-500 bg-white dark:bg-gray-700 min-h-[50px] cursor-pointer"
-                    onClick={() => !isViewMode && setIsShipperDropdownOpen(v => !v)}
-                  >
-                    <div className="flex gap-1 flex-wrap items-center">
-                      {draft.shippers.length === 0 && (
-                        <span className="text-xs text-gray-400 dark:text-gray-500">Select shippers…</span>
-                      )}
-                      {draft.shippers.map((s) => (
-                        <span
-                          key={s.shipperId}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded whitespace-nowrap"
-                        >
-                          {s.shipperName || s.shipperId}
-                          {!isViewMode && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                removeShipper(s.shipperId);
-                              }}
-                              className="hover:text-blue-900 dark:hover:text-blue-100"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          )}
-                        </span>
-                      ))}
-                      {!isViewMode && (
-                        <ChevronDown className="w-3 h-3 text-gray-500 dark:text-gray-400 ml-auto" />
-                      )}
-                    </div>
+                <div
+                  className={`w-full px-1.5 py-1 border border-gray-300 dark:border-gray-600 rounded focus-within:ring-1 focus-within:ring-blue-500 bg-white dark:bg-gray-700 min-h-[50px] ${
+                    isViewMode ? 'cursor-default' : 'cursor-pointer'
+                  }`}
+                  onClick={() => !isViewMode && setShipperPickerOpen(true)}
+                >
+                  <div className="flex gap-1 flex-wrap items-center">
+                    {draft.shippers.length === 0 && (
+                      <span className="text-xs text-gray-400 dark:text-gray-500">Select shippers…</span>
+                    )}
+                    {draft.shippers.map((s) => (
+                      <span
+                        key={s.shipperId}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded whitespace-nowrap"
+                      >
+                        {s.shipperName || s.shipperId}
+                        {!isViewMode && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeShipper(s.shipperId);
+                            }}
+                            className="hover:text-blue-900 dark:hover:text-blue-100"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
+                      </span>
+                    ))}
+                    {!isViewMode && (
+                      <ChevronDown className="w-3 h-3 text-gray-500 dark:text-gray-400 ml-auto" />
+                    )}
                   </div>
-
-                  {isShipperDropdownOpen && !isViewMode && (
-                    <div className="absolute z-50 mt-1 w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded shadow-lg">
-                      <div className="p-1.5 border-b border-gray-200 dark:border-gray-600">
-                        <input
-                          type="text"
-                          autoFocus
-                          value={shipperSearch}
-                          onChange={(e) => setShipperSearch(e.target.value)}
-                          placeholder="Type to filter shippers…"
-                          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        />
-                      </div>
-                      <div className="max-h-60 overflow-y-auto">
-                        {filteredShipperOptions.length === 0 ? (
-                          <div className="px-3 py-2 text-xs text-gray-400 dark:text-gray-500">
-                            No shippers match “{shipperSearch}”.
-                          </div>
-                        ) : filteredShipperOptions.map((p) => {
-                          const label = p.tradingName || p.companyLegalName;
-                          const checked = selectedShipperIds.has(p.id);
-                          return (
-                            <label
-                              key={p.id}
-                              className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={checked}
-                                onChange={() => toggleShipper(p.id, label)}
-                                className="w-3 h-3 text-blue-600 rounded focus:ring-blue-500"
-                              />
-                              <span className="text-xs text-gray-700 dark:text-gray-300">{label}</span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
               <div>
                 <label className={labelCls}>Notify</label>
-                <select
-                  className={inputCls}
-                  disabled={isViewMode}
-                  value={draft.notifyPartyId}
-                  onChange={(e) => onChange({ notifyPartyId: e.target.value })}
-                >
-                  <option value="">Select notify party</option>
-                  {partyOptions.map(p => (
-                    <option key={p.id} value={p.id}>{p.tradingName || p.companyLegalName}</option>
-                  ))}
-                </select>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setNotifyPickerOpen(true)}
+                    disabled={isViewMode}
+                    className={`${inputCls} text-left truncate ${
+                      notifyDisplayName ? '' : 'text-gray-400 dark:text-gray-500'
+                    } disabled:cursor-not-allowed`}
+                  >
+                    {notifyDisplayName || 'Select notify party…'}
+                  </button>
+                  {!isViewMode && draft.notifyPartyId && (
+                    <button
+                      type="button"
+                      onClick={() => onChange({ notifyPartyId: '', notifyPartyName: '' })}
+                      title="Clear notify party"
+                      className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 flex-shrink-0"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -604,6 +558,31 @@ export function BookingHeader({
             consigneeName: p.tradingName || p.companyLegalName,
           });
           setConsigneePickerOpen(false);
+        }}
+      />
+
+      <PartnerPicker
+        open={shipperPickerOpen}
+        title="Select Shippers"
+        mode="multi"
+        selectedIds={draft.shippers.map((s) => s.shipperId)}
+        filter={(p) => p.status === 'Active'}
+        onClose={() => setShipperPickerOpen(false)}
+        onConfirm={applyShippers}
+      />
+
+      <PartnerPicker
+        open={notifyPickerOpen}
+        title="Select Notify Party"
+        currentId={draft.notifyPartyId || undefined}
+        filter={(p) => p.status === 'Active'}
+        onClose={() => setNotifyPickerOpen(false)}
+        onSelect={(p) => {
+          onChange({
+            notifyPartyId: p.id,
+            notifyPartyName: p.tradingName || p.companyLegalName,
+          });
+          setNotifyPickerOpen(false);
         }}
       />
     </div>

@@ -1,21 +1,31 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Search, X, RefreshCw } from 'lucide-react';
+import { Search, X, RefreshCw, Check } from 'lucide-react';
 import { Partner } from '../types/partner';
 import { usePartners } from '../hooks/usePartners';
 import { getCountryName } from '../data/countries';
 
-// A searchable partner table that pops up as a modal — used wherever a single
-// partner has to be picked out of the full list (e.g. Consignee on a booking).
-// The dropdown <select> doesn't scale once there are hundreds of partners.
+// A searchable partner table that pops up as a modal — used wherever a
+// partner has to be picked out of the full list. Supports a single-select
+// mode (closes on row click via onSelect) and a multi-select mode (checkbox
+// rows + Done button, confirms via onConfirm).
 interface PartnerPickerProps {
   open: boolean;
   title?: string;
-  /** Highlight the currently-selected partner row, if any. */
-  currentId?: string;
   /** Optional restriction (e.g. only Active partners). Defaults to all. */
   filter?: (partner: Partner) => boolean;
   onClose: () => void;
-  onSelect: (partner: Partner) => void;
+
+  /** Single-select (default) closes on row click; multi-select shows
+   *  checkboxes and confirms via Done. */
+  mode?: 'single' | 'multi';
+
+  // Single-select API
+  currentId?: string;
+  onSelect?: (partner: Partner) => void;
+
+  // Multi-select API
+  selectedIds?: string[];
+  onConfirm?: (partners: Partner[]) => void;
 }
 
 function primaryContact(p: Partner) {
@@ -29,21 +39,31 @@ const RENDER_CAP = 300;
 export function PartnerPicker({
   open,
   title = 'Select Partner',
-  currentId,
   filter,
   onClose,
+  mode = 'single',
+  currentId,
   onSelect,
+  selectedIds,
+  onConfirm,
 }: PartnerPickerProps) {
   const { partners, loading } = usePartners();
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [pickedIds, setPickedIds] = useState<Set<string>>(() => new Set(selectedIds ?? []));
 
-  // Reset search every time the picker opens so a stale query doesn't carry over.
+  const isMulti = mode === 'multi';
+
+  // Reset state every time the picker opens — including the multi-select
+  // staging set, so it starts from the caller's current selection.
   useEffect(() => {
     if (open) {
       setSearch('');
       setDebouncedSearch('');
+      setPickedIds(new Set(selectedIds ?? []));
     }
+    // selectedIds intentionally omitted — re-init only on open, never mid-edit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   // Debounce so typing doesn't filter 1300 rows on every keystroke.
@@ -53,7 +73,6 @@ export function PartnerPicker({
     return () => clearTimeout(t);
   }, [search, open]);
 
-  // Escape closes the modal.
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -94,6 +113,35 @@ export function PartnerPicker({
   const visible = filtered.slice(0, RENDER_CAP);
 
   if (!open) return null;
+
+  const togglePicked = (id: string) => {
+    setPickedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleRowClick = (p: Partner) => {
+    if (isMulti) togglePicked(p.id);
+    else onSelect?.(p);
+  };
+
+  const handleConfirm = () => {
+    // Resolve picked IDs against the full (unfiltered) partner list so a
+    // previously-chosen partner that no longer matches the active filter
+    // still survives the confirm.
+    const byId = new Map(partners.map((p) => [p.id, p]));
+    const chosen: Partner[] = [...pickedIds]
+      .map((id) => byId.get(id))
+      .filter((p): p is Partner => !!p);
+    onConfirm?.(chosen);
+    onClose();
+  };
+
+  const cellCls = 'px-3 py-2';
+  const headCls = 'px-3 py-2 text-left text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider';
+  const tableSpan = isMulti ? 9 : 8;
 
   return (
     <div
@@ -138,51 +186,63 @@ export function PartnerPicker({
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
             <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 z-10">
               <tr>
-                <th className="px-3 py-2 text-left text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider">Code</th>
-                <th className="px-3 py-2 text-left text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider">Trading Name</th>
-                <th className="px-3 py-2 text-left text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider">Legal Name</th>
-                <th className="px-3 py-2 text-left text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider">Tax Number</th>
-                <th className="px-3 py-2 text-left text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider">Address</th>
-                <th className="px-3 py-2 text-left text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider">City</th>
-                <th className="px-3 py-2 text-left text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider">Country</th>
-                <th className="px-3 py-2 text-left text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider">Phone</th>
+                {isMulti && <th className="px-3 py-2 w-10"></th>}
+                <th className={headCls}>Code</th>
+                <th className={headCls}>Trading Name</th>
+                <th className={headCls}>Legal Name</th>
+                <th className={headCls}>Tax Number</th>
+                <th className={headCls}>Address</th>
+                <th className={headCls}>City</th>
+                <th className={headCls}>Country</th>
+                <th className={headCls}>Phone</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={tableSpan} className="px-4 py-10 text-center text-gray-500 dark:text-gray-400">
                     <RefreshCw className="inline w-4 h-4 animate-spin mr-2" /> Loading partners…
                   </td>
                 </tr>
               ) : visible.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={tableSpan} className="px-4 py-10 text-center text-gray-500 dark:text-gray-400">
                     {partners.length === 0 ? 'No partners.' : 'No partners match.'}
                   </td>
                 </tr>
               ) : visible.map((p) => {
                 const c = primaryContact(p);
-                const selected = p.id === currentId;
+                const highlighted = isMulti ? pickedIds.has(p.id) : p.id === currentId;
                 return (
                   <tr
                     key={p.id}
-                    onClick={() => onSelect(p)}
-                    onDoubleClick={() => onSelect(p)}
+                    onClick={() => handleRowClick(p)}
+                    onDoubleClick={() => { if (!isMulti) onSelect?.(p); }}
                     className={`cursor-pointer ${
-                      selected
+                      highlighted
                         ? 'bg-blue-50 dark:bg-blue-900/30'
                         : 'hover:bg-gray-50 dark:hover:bg-gray-800'
                     }`}
                   >
-                    <td className="px-3 py-2 text-blue-600 dark:text-blue-400 font-medium">{p.partnerCode}</td>
-                    <td className="px-3 py-2 text-gray-900 dark:text-gray-100">{p.tradingName || '—'}</td>
-                    <td className="px-3 py-2 text-gray-600 dark:text-gray-400">{p.companyLegalName || '—'}</td>
-                    <td className="px-3 py-2 text-gray-900 dark:text-gray-100">{p.taxNumber || '—'}</td>
-                    <td className="px-3 py-2 text-gray-600 dark:text-gray-400">{p.address || '—'}</td>
-                    <td className="px-3 py-2 text-gray-900 dark:text-gray-100">{p.city || '—'}</td>
-                    <td className="px-3 py-2 text-gray-900 dark:text-gray-100">{getCountryName(p.country) || '—'}</td>
-                    <td className="px-3 py-2 text-gray-900 dark:text-gray-100">{c?.phone || '—'}</td>
+                    {isMulti && (
+                      <td className={cellCls}>
+                        <input
+                          type="checkbox"
+                          checked={pickedIds.has(p.id)}
+                          onChange={() => togglePicked(p.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="rounded border-gray-300 dark:border-gray-600"
+                        />
+                      </td>
+                    )}
+                    <td className={`${cellCls} text-blue-600 dark:text-blue-400 font-medium`}>{p.partnerCode}</td>
+                    <td className={`${cellCls} text-gray-900 dark:text-gray-100`}>{p.tradingName || '—'}</td>
+                    <td className={`${cellCls} text-gray-600 dark:text-gray-400`}>{p.companyLegalName || '—'}</td>
+                    <td className={`${cellCls} text-gray-900 dark:text-gray-100`}>{p.taxNumber || '—'}</td>
+                    <td className={`${cellCls} text-gray-600 dark:text-gray-400`}>{p.address || '—'}</td>
+                    <td className={`${cellCls} text-gray-900 dark:text-gray-100`}>{p.city || '—'}</td>
+                    <td className={`${cellCls} text-gray-900 dark:text-gray-100`}>{getCountryName(p.country) || '—'}</td>
+                    <td className={`${cellCls} text-gray-900 dark:text-gray-100`}>{c?.phone || '—'}</td>
                   </tr>
                 );
               })}
@@ -197,14 +257,28 @@ export function PartnerPicker({
               ? '0 partners'
               : `Showing ${visible.length} of ${filtered.length} partner${filtered.length === 1 ? '' : 's'}`}
             {filtered.length > RENDER_CAP && ' — refine the search to see more.'}
+            {isMulti && pickedIds.size > 0 && (
+              <span className="ml-3 text-gray-700 dark:text-gray-200">· {pickedIds.size} selected</span>
+            )}
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors"
-          >
-            Cancel
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors"
+            >
+              Cancel
+            </button>
+            {isMulti && (
+              <button
+                type="button"
+                onClick={handleConfirm}
+                className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center gap-1.5"
+              >
+                <Check className="w-4 h-4" /> Done
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
