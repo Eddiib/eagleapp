@@ -4,6 +4,7 @@ import { Booking, BookingPartySummary, BookingStatus } from '../services/booking
 import { usePartners } from '../hooks/usePartners';
 import { countries } from '../data/countries';
 import { ports } from '../data/ports';
+import { PartnerPicker } from './PartnerPicker';
 
 type Patch = Partial<Booking>;
 
@@ -70,6 +71,16 @@ export function BookingHeader({
   const [isShipperDropdownOpen, setIsShipperDropdownOpen] = useState(false);
   const [shipperSearch, setShipperSearch] = useState('');
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const [consigneePickerOpen, setConsigneePickerOpen] = useState(false);
+
+  // Name to show in the consignee field — prefer the value the API gave us,
+  // fall back to a lookup against the loaded partner list.
+  const consigneeDisplayName = useMemo(() => {
+    if (draft.consigneeName) return draft.consigneeName;
+    if (!draft.consigneeId) return '';
+    const p = partyOptions.find((x) => x.id === draft.consigneeId);
+    return p?.tradingName || p?.companyLegalName || '';
+  }, [draft.consigneeName, draft.consigneeId, partyOptions]);
 
   // Reset the filter text whenever the shipper dropdown closes.
   useEffect(() => {
@@ -339,17 +350,28 @@ export function BookingHeader({
             <div className="space-y-2">
               <div>
                 <label className={labelCls}>Consignee</label>
-                <select
-                  className={inputCls}
-                  disabled={isViewMode}
-                  value={draft.consigneeId}
-                  onChange={(e) => onChange({ consigneeId: e.target.value })}
-                >
-                  <option value="">Select consignee</option>
-                  {partyOptions.map(p => (
-                    <option key={p.id} value={p.id}>{p.tradingName || p.companyLegalName}</option>
-                  ))}
-                </select>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setConsigneePickerOpen(true)}
+                    disabled={isViewMode}
+                    className={`${inputCls} text-left truncate ${
+                      consigneeDisplayName ? '' : 'text-gray-400 dark:text-gray-500'
+                    } disabled:cursor-not-allowed`}
+                  >
+                    {consigneeDisplayName || 'Select consignee…'}
+                  </button>
+                  {!isViewMode && draft.consigneeId && (
+                    <button
+                      type="button"
+                      onClick={() => onChange({ consigneeId: '', consigneeName: '' })}
+                      title="Clear consignee"
+                      className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 flex-shrink-0"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
               </div>
               <div>
                 <label className={labelCls}>Shipper</label>
@@ -569,6 +591,21 @@ export function BookingHeader({
           </div>
         </div>
       </div>
+
+      <PartnerPicker
+        open={consigneePickerOpen}
+        title="Select Consignee"
+        currentId={draft.consigneeId || undefined}
+        filter={(p) => p.status === 'Active'}
+        onClose={() => setConsigneePickerOpen(false)}
+        onSelect={(p) => {
+          onChange({
+            consigneeId: p.id,
+            consigneeName: p.tradingName || p.companyLegalName,
+          });
+          setConsigneePickerOpen(false);
+        }}
+      />
     </div>
   );
 }
