@@ -117,11 +117,11 @@ export function BookingHeader({
   const labelCls = 'text-xs text-gray-500 dark:text-gray-400 block mb-0.5';
 
   return (
-    <div className="bg-white dark:bg-[#262626] border-b border-gray-200 dark:border-[#374151] sticky top-[57px] z-40">
-      <div className="px-6 py-3">
-        <div className="grid grid-cols-12 gap-4">
+    <div className="border-b border-gray-200 bg-white dark:border-[#374151] dark:bg-[#262626] 2xl:sticky 2xl:top-[57px] z-30">
+      <div className="px-4 py-3 sm:px-6">
+        <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-4">
           {/* Column 1 - BOOKING INFO */}
-          <div className="col-span-3">
+          <div className="min-w-0">
             <div className="flex items-center gap-2 mb-2 pb-1.5 border-b border-gray-200 dark:border-gray-700">
               {onBack && (
                 <button
@@ -332,7 +332,7 @@ export function BookingHeader({
           </div>
 
           {/* Column 2 - INVOLVED PARTIES */}
-          <div className="col-span-3">
+          <div className="min-w-0">
             <h3 className="text-xs uppercase tracking-wide text-gray-700 dark:text-gray-300 mb-2 pb-1.5 border-b border-gray-200 dark:border-gray-700">
               Involved Parties
             </h3>
@@ -445,7 +445,7 @@ export function BookingHeader({
           </div>
 
           {/* Column 3 - ROUTING AND EQUIPMENT */}
-          <div className="col-span-3">
+          <div className="min-w-0">
             <h3 className="text-xs uppercase tracking-wide text-gray-700 dark:text-gray-300 mb-2 pb-1.5 border-b border-gray-200 dark:border-gray-700">
               Routing and Equipment
             </h3>
@@ -527,7 +527,7 @@ export function BookingHeader({
           </div>
 
           {/* Column 4 - CARGO DETAILS */}
-          <div className="col-span-3">
+          <div className="min-w-0">
             <h3 className="text-xs uppercase tracking-wide text-gray-700 dark:text-gray-300 mb-2 pb-1.5 border-b border-gray-200 dark:border-gray-700">
               Cargo Details
             </h3>

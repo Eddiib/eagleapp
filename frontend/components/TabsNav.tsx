@@ -12,9 +12,9 @@ export function TabsNav({ activeTab, onTabChange }: TabsNavProps) {
   ];
 
   return (
-    <div className="bg-white dark:bg-[#262626] border-b border-gray-200 dark:border-[#374151] sticky top-[217px] z-30">
-      <div className="px-6">
-        <nav className="flex gap-8">
+    <div className="border-b border-gray-200 bg-white dark:border-[#374151] dark:bg-[#262626] 2xl:sticky 2xl:top-[217px] z-20">
+      <div className="px-4 sm:px-6">
+        <nav className="flex gap-6 overflow-x-auto sm:gap-8">
           {tabs.map(tab => (
             <button
               key={tab.id}

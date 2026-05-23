@@ -90,7 +90,7 @@ function DimensionPanel({ line, onChange, disabled }: DimensionPanelProps) {
 
   return (
     <div className="p-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
-      <div className="grid grid-cols-7 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-7">
         {/* Net Weight */}
         <div>
           <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wider">Net Weight</label>
@@ -282,7 +282,7 @@ function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servic
   return (
     <div className="p-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
       {/* Bulk apply planned date */}
-      <div className="flex items-end gap-2 mb-3">
+      <div className="mb-3 flex flex-wrap items-end gap-2">
         <div>
           <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Planned Date (apply to all)</label>
           <input
@@ -567,18 +567,45 @@ export function BookingEquipmentEditor({ value, onChange, disabled }: Props) {
   const inp = (extra = '') =>
     `w-full px-1.5 py-1 text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 disabled:bg-gray-50 dark:disabled:bg-gray-700 disabled:text-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 ${extra}`;
 
-  const COL_COUNT = 13;
+  const COL_COUNT = 14;
 
   return (
-    <div className="space-y-3">
+    <div className="min-w-0 space-y-3">
       {loadError && (
         <div className="text-sm text-red-600 dark:text-red-400">Failed to load equipment catalog: {loadError}</div>
       )}
 
-      <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-x-auto">
+      {/* Action buttons — kept above the table so they stay reachable with many rows */}
+      <div className="flex flex-wrap items-center gap-2">
+        <button type="button" onClick={addRow} disabled={disabled}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors">
+          <Plus className="w-4 h-4" /> Add Row
+        </button>
+        <button type="button" onClick={duplicateRow} disabled={disabled || value.length === 0}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 transition-colors">
+          <Copy className="w-4 h-4" /> Duplicate Row
+        </button>
+        <button type="button" onClick={deleteRows} disabled={disabled || selected.size === 0}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-red-300 dark:border-red-700 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 disabled:opacity-50 transition-colors">
+          <Trash2 className="w-4 h-4" /> Delete Row
+        </button>
+        <button type="button" onClick={autoCalcTotals} disabled={disabled || value.length === 0}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 transition-colors">
+          <Calculator className="w-4 h-4" /> Auto-calc Totals
+        </button>
+        {value.length > 0 && (
+          <span className="text-xs text-gray-400 dark:text-gray-500 sm:ml-auto">
+            {value.length} row{value.length !== 1 ? 's' : ''}
+            {selected.size > 0 && ` · ${selected.size} selected`}
+          </span>
+        )}
+      </div>
+
+      <div className="w-full max-w-full overflow-x-auto rounded-lg border border-gray-200 overscroll-x-contain dark:border-gray-700">
         <table className="w-full min-w-[1400px] text-sm">
           <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
             <tr>
+              <th className={`${thBase} text-center w-10`}>#</th>
               <th className="px-2 py-2 w-8">
                 <input type="checkbox"
                   checked={value.length > 0 && selected.size === value.length}
@@ -621,6 +648,9 @@ export function BookingEquipmentEditor({ value, onChange, disabled }: Props) {
                       : 'hover:bg-gray-50 dark:hover:bg-gray-800/40'
                     }
                   >
+                    <td className={`${td} w-10 text-center text-gray-400 dark:text-gray-500 tabular-nums`}>
+                      {idx + 1}
+                    </td>
                     <td className={`${td} w-8`}>
                       <input type="checkbox"
                         checked={selected.has(idx)}
@@ -813,32 +843,6 @@ export function BookingEquipmentEditor({ value, onChange, disabled }: Props) {
             </tfoot>
           )}
         </table>
-      </div>
-
-      {/* Action buttons */}
-      <div className="flex items-center gap-2">
-        <button type="button" onClick={addRow} disabled={disabled}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors">
-          <Plus className="w-4 h-4" /> Add Row
-        </button>
-        <button type="button" onClick={duplicateRow} disabled={disabled || value.length === 0}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 transition-colors">
-          <Copy className="w-4 h-4" /> Duplicate Row
-        </button>
-        <button type="button" onClick={deleteRows} disabled={disabled || selected.size === 0}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-red-300 dark:border-red-700 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 disabled:opacity-50 transition-colors">
-          <Trash2 className="w-4 h-4" /> Delete Row
-        </button>
-        <button type="button" onClick={autoCalcTotals} disabled={disabled || value.length === 0}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 transition-colors">
-          <Calculator className="w-4 h-4" /> Auto-calc Totals
-        </button>
-        {value.length > 0 && (
-          <span className="ml-auto text-xs text-gray-400 dark:text-gray-500">
-            {value.length} row{value.length !== 1 ? 's' : ''}
-            {selected.size > 0 && ` · ${selected.size} selected`}
-          </span>
-        )}
       </div>
     </div>
   );

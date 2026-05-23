@@ -187,6 +187,16 @@ html {
   font-size: var(--font-size);
 }
 
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  overflow-x: hidden;
+}
+
 /* Compact form — matches booking header field style */
 .form-compact label {
   font-size: 0.75rem;
