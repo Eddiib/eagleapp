@@ -24,6 +24,7 @@ export const MODULE_PATHS: Record<string, string> = {
   'employees':            '/hr/employees',
   'user-management':      '/admin/users',
   'audit-log':            '/admin/audit-log',
+  'ports-management':     '/admin/ports',
   'company-settings':     '/admin/settings',
   'administration':       '/admin',
 };
@@ -66,6 +67,7 @@ export const MODULE_TITLES: Record<string, string> = {
   'employees':            'Employees',
   'user-management':      'User Management',
   'audit-log':            'Audit Log',
+  'ports-management':     'Ports',
   'company-settings':     'Company Settings',
   'administration':       'Administration',
 };

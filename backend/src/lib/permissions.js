@@ -58,6 +58,7 @@ const MODULES = [
   { key: 'employees', name: 'Employees', category: 'Human Resources', sortOrder: 220 },
   { key: 'user-management', name: 'User Management', category: 'Administration', sortOrder: 230 },
   { key: 'audit-log', name: 'Audit Log', category: 'Administration', sortOrder: 240 },
+  { key: 'ports-management', name: 'Ports', category: 'Administration', sortOrder: 245 },
   { key: 'company-settings', name: 'Company Settings', category: 'Administration', sortOrder: 250 },
 ];
 

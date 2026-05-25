@@ -20,6 +20,7 @@ const exchangeRatesRouter     = require('./routes/exchangeRates');
 const auditLogRouter          = require('./routes/auditLog');
 const companySettingsRouter   = require('./routes/companySettings');
 const brandingRouter          = require('./routes/branding');
+const portsRouter             = require('./routes/ports');
 
 const PORT = Number(process.env.PORT) || 3001;
 
@@ -59,6 +60,9 @@ function createApp() {
   app.use('/api/exchange-rates', verifyToken, requireModuleAccess('forex-management'),  exchangeRatesRouter);
   app.use('/api/audit-log',      verifyToken, requireModuleAccess('audit-log'),         auditLogRouter);
   app.use('/api/company-settings', verifyToken, companySettingsRouter);
+  // Ports: GET is open to any signed-in user (powers booking POL/POD pickers);
+  // mutations enforce admin-only inside the router.
+  app.use('/api/ports',            verifyToken, portsRouter);
 
   // 404 + central error handler (must be last)
   app.use('/api', notFoundHandler);

@@ -22,6 +22,7 @@ import { ExchangeRatesManager } from './components/ExchangeRatesManager';
 import { PnL } from './components/PnL';
 import { AuditLog } from './components/AuditLog';
 import { CompanySettings } from './components/CompanySettings';
+import { PortsManagement } from './components/PortsManagement';
 import { MeetingMinutes } from './components/MeetingMinutes';
 import { QuotationDeskManager } from './components/QuotationDeskManager';
 import { PricingDepartment } from './components/pricing/PricingDepartment';
@@ -218,6 +219,7 @@ function AppShell() {
   const isAdministrationModule = activeModule === 'user-management' || activeModule === 'administration';
   const isAuditLogModule       = activeModule === 'audit-log';
   const isCompanySettingsModule = activeModule === 'company-settings';
+  const isPortsManagementModule = activeModule === 'ports-management';
   const isQuotationDeskModule = activeModule === 'quotation-desk';
   const isEmployeesModule = activeModule === 'employees';
   const isServiceManagementModule = activeModule === 'service-management';
@@ -773,6 +775,8 @@ function AppShell() {
           <div className="p-6"><AuditLog /></div>
         ) : isCompanySettingsModule ? (
           <div className="p-6"><CompanySettings /></div>
+        ) : isPortsManagementModule ? (
+          <PortsManagement />
         ) : isExchangeRatesModule ? (
           <div className="p-6"><ExchangeRatesManager /></div>
         ) : isPnLModule ? (

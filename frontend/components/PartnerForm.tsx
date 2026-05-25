@@ -13,7 +13,7 @@ import { Badge } from './ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
 import { countries, getCountryName } from '../data/countries';
 import { MultiSelectCountry } from './MultiSelectCountry';
-import { ports, getPortName } from '../data/ports';
+import { usePorts, getPortLabel } from '../hooks/usePorts';
 
 import { employeesApi } from '../services/employees';
 import { useCompanySettings } from '../context/CompanySettingsContext';
@@ -46,6 +46,7 @@ const CURRENCY_LABELS: Record<string, string> = {
 
 export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [], onDirtyChange }: PartnerFormProps) {
   const { user } = useAuth();
+  const { ports } = usePorts();
   const { baseCurrency } = useCompanySettings();
   const isViewMode = mode === 'view';
   const isEditMode = mode === 'edit';
@@ -2235,13 +2236,13 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                           {trade.pol && (
                             <div>
                               <span className="text-gray-500 block mb-1">POL</span>
-                              <span className="text-gray-900">{getPortName(trade.pol)}</span>
+                              <span className="text-gray-900">{getPortLabel(ports, trade.pol)}</span>
                             </div>
                           )}
                           {trade.pod && (
                             <div>
                               <span className="text-gray-500 block mb-1">POD</span>
-                              <span className="text-gray-900">{getPortName(trade.pod)}</span>
+                              <span className="text-gray-900">{getPortLabel(ports, trade.pod)}</span>
                             </div>
                           )}
                           {trade.finalDestination && (

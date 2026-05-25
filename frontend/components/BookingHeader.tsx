@@ -4,8 +4,9 @@ import { Booking, BookingPartySummary, BookingStatus } from '../services/booking
 import { Partner } from '../types/partner';
 import { usePartners } from '../hooks/usePartners';
 import { countries } from '../data/countries';
-import { ports } from '../data/ports';
+import { usePorts } from '../hooks/usePorts';
 import { PartnerPicker } from './PartnerPicker';
+import { PortPicker } from './PortPicker';
 
 type Patch = Partial<Booking>;
 
@@ -66,12 +67,27 @@ export function BookingHeader({
   const isNewMode = bookingMode === 'new';
 
   const { partners } = usePartners();
+  const { ports } = usePorts();
   const activePartners = useMemo(() => partners.filter(p => p.status === 'Active'), [partners]);
   const partyOptions = activePartners;
 
   const [consigneePickerOpen, setConsigneePickerOpen] = useState(false);
   const [shipperPickerOpen, setShipperPickerOpen] = useState(false);
   const [notifyPickerOpen, setNotifyPickerOpen] = useState(false);
+  const [polPickerOpen, setPolPickerOpen] = useState(false);
+  const [podPickerOpen, setPodPickerOpen] = useState(false);
+
+  const polDisplay = useMemo(() => {
+    if (!draft.originPort) return '';
+    const p = ports.find((x) => x.code === draft.originPort);
+    return p ? `${p.code} - ${p.name}` : draft.originPort;
+  }, [draft.originPort, ports]);
+
+  const podDisplay = useMemo(() => {
+    if (!draft.destinationPort) return '';
+    const p = ports.find((x) => x.code === draft.destinationPort);
+    return p ? `${p.code} - ${p.name}` : draft.destinationPort;
+  }, [draft.destinationPort, ports]);
 
   // Names to show in the read-only fields — prefer what the API gave us,
   // fall back to a lookup against the loaded partner list.
@@ -456,35 +472,53 @@ export function BookingHeader({
               <div className="grid grid-cols-2 gap-1.5">
                 <div>
                   <label className={labelCls}>POL (UN/LOCODE)</label>
-                  <select
-                    className={inputCls}
-                    value={draft.originPort}
-                    onChange={(e) => onChange({ originPort: e.target.value })}
-                    disabled={isViewMode}
-                  >
-                    <option value="">Select UN/LOCODE…</option>
-                    {ports.map((port) => (
-                      <option key={port.code} value={port.code}>
-                        {port.code} - {port.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setPolPickerOpen(true)}
+                      disabled={isViewMode}
+                      className={`${inputCls} text-left truncate ${
+                        polDisplay ? '' : 'text-gray-400 dark:text-gray-500'
+                      } disabled:cursor-not-allowed`}
+                    >
+                      {polDisplay || 'Select UN/LOCODE…'}
+                    </button>
+                    {!isViewMode && draft.originPort && (
+                      <button
+                        type="button"
+                        onClick={() => onChange({ originPort: '' })}
+                        title="Clear POL"
+                        className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 flex-shrink-0"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <label className={labelCls}>POD (UN/LOCODE)</label>
-                  <select
-                    className={inputCls}
-                    value={draft.destinationPort}
-                    onChange={(e) => onChange({ destinationPort: e.target.value })}
-                    disabled={isViewMode}
-                  >
-                    <option value="">Select UN/LOCODE…</option>
-                    {ports.map((port) => (
-                      <option key={port.code} value={port.code}>
-                        {port.code} - {port.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setPodPickerOpen(true)}
+                      disabled={isViewMode}
+                      className={`${inputCls} text-left truncate ${
+                        podDisplay ? '' : 'text-gray-400 dark:text-gray-500'
+                      } disabled:cursor-not-allowed`}
+                    >
+                      {podDisplay || 'Select UN/LOCODE…'}
+                    </button>
+                    {!isViewMode && draft.destinationPort && (
+                      <button
+                        type="button"
+                        onClick={() => onChange({ destinationPort: '' })}
+                        title="Clear POD"
+                        className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 flex-shrink-0"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -583,6 +617,28 @@ export function BookingHeader({
             notifyPartyName: p.tradingName || p.companyLegalName,
           });
           setNotifyPickerOpen(false);
+        }}
+      />
+
+      <PortPicker
+        open={polPickerOpen}
+        title="Select Port of Loading"
+        currentCode={draft.originPort || undefined}
+        onClose={() => setPolPickerOpen(false)}
+        onSelect={(p) => {
+          onChange({ originPort: p.code });
+          setPolPickerOpen(false);
+        }}
+      />
+
+      <PortPicker
+        open={podPickerOpen}
+        title="Select Port of Discharge"
+        currentCode={draft.destinationPort || undefined}
+        onClose={() => setPodPickerOpen(false)}
+        onSelect={(p) => {
+          onChange({ destinationPort: p.code });
+          setPodPickerOpen(false);
         }}
       />
     </div>

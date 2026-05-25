@@ -30,7 +30,8 @@ import {
   Settings2,
   LayoutDashboard,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
+  Anchor
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCompanySettings } from '../context/CompanySettingsContext';
@@ -129,6 +130,7 @@ const menuItems: MenuItem[] = [
     subItems: [
       { id: 'user-management',    label: 'User Management',    icon: UserCheck },
       { id: 'audit-log',          label: 'Audit Log',          icon: ClipboardList },
+      { id: 'ports-management',   label: 'Ports',              icon: Anchor },
       { id: 'company-settings',   label: 'Company Settings',   icon: Building2 },
     ]
   },
