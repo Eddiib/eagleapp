@@ -18,7 +18,7 @@ interface PortPickerProps {
 const RENDER_CAP = 300;
 
 export function PortPicker({ open, title = 'Select Port', currentCode, onClose, onSelect }: PortPickerProps) {
-  const { ports, loading } = usePorts();
+  const { ports, loading, error, refresh } = usePorts();
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
 
@@ -110,6 +110,19 @@ export function PortPicker({ open, title = 'Select Port', currentCode, onClose, 
                     <RefreshCw className="inline w-4 h-4 animate-spin mr-2" /> Loading ports…
                   </td>
                 </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan={3} className="px-4 py-10 text-center text-red-700 dark:text-red-400">
+                    <div>{error}</div>
+                    <button
+                      type="button"
+                      onClick={refresh}
+                      className="mt-3 inline-flex items-center gap-1.5 rounded border border-red-200 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900/20"
+                    >
+                      <RefreshCw className="w-4 h-4" /> Retry
+                    </button>
+                  </td>
+                </tr>
               ) : visible.length === 0 ? (
                 <tr>
                   <td colSpan={3} className="px-4 py-10 text-center text-gray-500 dark:text-gray-400">
@@ -145,10 +158,12 @@ export function PortPicker({ open, title = 'Select Port', currentCode, onClose, 
         {/* Footer */}
         <div className="flex items-center justify-between px-5 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-sm text-gray-600 dark:text-gray-400">
           <div>
-            {filtered.length === 0
+            {error
+              ? 'Unable to load ports'
+              : filtered.length === 0
               ? '0 ports'
               : `Showing ${visible.length} of ${filtered.length} port${filtered.length === 1 ? '' : 's'}`}
-            {filtered.length > RENDER_CAP && ' — refine the search to see more.'}
+            {!error && filtered.length > RENDER_CAP && ' — refine the search to see more.'}
           </div>
           <button
             type="button"

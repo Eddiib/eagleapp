@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { asyncHandler, AppError } = require('../middleware/errorHandler');
-const { requireRole } = require('../middleware/auth');
+const { requirePermission } = require('../middleware/auth');
 const { requireFields } = require('../middleware/validate');
 const { logAudit } = require('../lib/audit');
 
@@ -42,8 +42,8 @@ router.get('/', asyncHandler(async (_req, res) => {
   res.json(rows);
 }));
 
-// All mutations: admin only.
-router.post('/', requireRole('admin'), asyncHandler(async (req, res) => {
+// All mutations require edit access to the ports-management module.
+router.post('/', requirePermission('edit:ports-management'), asyncHandler(async (req, res) => {
   requireFields(req.body, ['code', 'name', 'country']);
   const code = String(req.body.code).trim().toUpperCase();
   const name = String(req.body.name).trim();
@@ -79,7 +79,7 @@ router.post('/', requireRole('admin'), asyncHandler(async (req, res) => {
 
 // PUT updates name / country / sort_order. The code is the primary key —
 // changing it would orphan booking history, so it's immutable.
-router.put('/:code', requireRole('admin'), asyncHandler(async (req, res) => {
+router.put('/:code', requirePermission('edit:ports-management'), asyncHandler(async (req, res) => {
   const code = String(req.params.code).trim().toUpperCase();
   const before = await loadPort(code);
   if (!before) throw new AppError(404, 'Port not found', 'NOT_FOUND');
@@ -127,7 +127,7 @@ router.put('/:code', requireRole('admin'), asyncHandler(async (req, res) => {
   res.json({ message: 'Port updated' });
 }));
 
-router.delete('/:code', requireRole('admin'), asyncHandler(async (req, res) => {
+router.delete('/:code', requirePermission('edit:ports-management'), asyncHandler(async (req, res) => {
   const code = String(req.params.code).trim().toUpperCase();
   const before = await loadPort(code);
   if (!before) throw new AppError(404, 'Port not found', 'NOT_FOUND');

@@ -118,3 +118,14 @@ test('employee overlay uses live persistence instead of placeholder callbacks', 
   assert.match(employeeFormSource, /Failed to save employee/);
   assert.match(employeeFormSource, /Saving\.\.\./);
 });
+
+test('ports management honors edit permission and picker surfaces load errors', () => {
+  const portsManagementSource = read('components/PortsManagement.tsx');
+  const portPickerSource = read('components/PortPicker.tsx');
+
+  assert.match(portsManagementSource, /modulePermission\('ports-management', 'edit'\)/);
+  assert.match(portsManagementSource, /canEditPorts && \(/);
+  assert.match(portPickerSource, /const \{ ports, loading, error, refresh \} = usePorts\(\)/);
+  assert.match(portPickerSource, /Unable to load ports/);
+  assert.match(portPickerSource, /> Retry/);
+});

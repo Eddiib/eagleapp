@@ -4,6 +4,8 @@ import { Port, PortPayload, portsApi } from '../services/ports';
 import { invalidatePortsCache, usePorts } from '../hooks/usePorts';
 import { countries, getCountryName } from '../data/countries';
 import { useConfirm } from '../context/ConfirmDialog';
+import { useAuth } from '../context/AuthContext';
+import { modulePermission } from '../lib/modulePermissions';
 
 const CODE_RE = /^[A-Z0-9]{2,10}$/;
 const COUNTRY_RE = /^[A-Z]{2}$/;
@@ -30,6 +32,8 @@ function toFormState(port?: Port): FormState {
 export function PortsManagement() {
   const { ports, loading, error, refresh } = usePorts();
   const confirmDialog = useConfirm();
+  const { can } = useAuth();
+  const canEditPorts = can(modulePermission('ports-management', 'edit'));
 
   const [searchTerm, setSearchTerm] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
@@ -59,6 +63,7 @@ export function PortsManagement() {
   }, [ports, searchTerm]);
 
   function openCreate() {
+    if (!canEditPorts) return;
     setEditingCode(null);
     setForm(emptyForm);
     setFormError(null);
@@ -66,6 +71,7 @@ export function PortsManagement() {
   }
 
   function openEdit(port: Port) {
+    if (!canEditPorts) return;
     setEditingCode(port.code);
     setForm(toFormState(port));
     setFormError(null);
@@ -83,6 +89,10 @@ export function PortsManagement() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setFormError(null);
+    if (!canEditPorts) {
+      setFormError('You do not have permission to manage ports.');
+      return;
+    }
 
     const code = form.code.trim().toUpperCase();
     const name = form.name.trim();
@@ -127,6 +137,7 @@ export function PortsManagement() {
   }
 
   async function handleDelete(port: Port) {
+    if (!canEditPorts) return;
     const ok = await confirmDialog({
       title: 'Delete port?',
       message: `Permanently delete ${port.name} (${port.code})? Existing bookings keep the code on record, but it will no longer appear in the dropdowns.`,
@@ -164,12 +175,14 @@ export function PortsManagement() {
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
-          <button
-            onClick={openCreate}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
-          >
-            <Plus className="w-4 h-4" /> New Port
-          </button>
+          {canEditPorts && (
+            <button
+              onClick={openCreate}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+            >
+              <Plus className="w-4 h-4" /> New Port
+            </button>
+          )}
         </div>
       </div>
 
@@ -200,17 +213,21 @@ export function PortsManagement() {
               <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Name</th>
               <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Country</th>
               <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sort</th>
-              <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+              {canEditPorts && (
+                <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
             {loading ? (
-              <tr><td colSpan={5} className="px-4 py-10 text-center text-gray-500 dark:text-gray-400">
+              <tr><td colSpan={canEditPorts ? 5 : 4} className="px-4 py-10 text-center text-gray-500 dark:text-gray-400">
                 <Loader2 className="inline w-4 h-4 animate-spin mr-2" /> Loading ports…
               </td></tr>
             ) : filteredPorts.length === 0 ? (
-              <tr><td colSpan={5} className="px-4 py-10 text-center text-gray-500 dark:text-gray-400">
-                {ports.length === 0 ? 'No ports yet. Add the first one.' : 'No ports match your search.'}
+              <tr><td colSpan={canEditPorts ? 5 : 4} className="px-4 py-10 text-center text-gray-500 dark:text-gray-400">
+                {ports.length === 0
+                  ? canEditPorts ? 'No ports yet. Add the first one.' : 'No ports yet.'
+                  : 'No ports match your search.'}
               </td></tr>
             ) : filteredPorts.map((port) => (
               <tr key={port.code} className="hover:bg-gray-50 dark:hover:bg-gray-700/40">
@@ -221,25 +238,27 @@ export function PortsManagement() {
                   <span className="ml-2 text-xs text-gray-400">{port.country}</span>
                 </td>
                 <td className="px-4 py-2 text-right text-gray-500 dark:text-gray-400 tabular-nums">{port.sortOrder}</td>
-                <td className="px-4 py-2">
-                  <div className="flex items-center justify-end gap-1">
-                    <button
-                      onClick={() => openEdit(port)}
-                      className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 rounded transition-colors"
-                      title="Edit"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(port)}
-                      disabled={deletingCode === port.code}
-                      className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 rounded transition-colors disabled:opacity-50"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </td>
+                {canEditPorts && (
+                  <td className="px-4 py-2">
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => openEdit(port)}
+                        className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 rounded transition-colors"
+                        title="Edit"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(port)}
+                        disabled={deletingCode === port.code}
+                        className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 rounded transition-colors disabled:opacity-50"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
@@ -252,7 +271,7 @@ export function PortsManagement() {
       </div>
 
       {/* Modal */}
-      {modalOpen && (
+      {modalOpen && canEditPorts && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
           onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}
