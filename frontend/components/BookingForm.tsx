@@ -7,6 +7,8 @@ import { usePartners } from '../hooks/usePartners';
 import { useAuth } from '../context/AuthContext';
 import { useCompanySettings } from '../context/CompanySettingsContext';
 import { exchangeRatesApi } from '../services/exchangeRates';
+import { employeesApi } from '../services/employees';
+import { Employee } from './EmployeesModule';
 import { countries, getCountryName } from '../data/countries';
 import { isPartnerBuyer } from '../utils/partnerRoles';
 
@@ -24,7 +26,7 @@ interface BookingFormProps {
 }
 
 export function BookingForm({ draft, onChange, mode, error, leadData }: BookingFormProps) {
-  const { user } = useAuth();
+  const { user, can } = useAuth();
   const { baseCurrency } = useCompanySettings();
   const isViewMode = mode === 'view';
   const { partners } = usePartners();
@@ -35,6 +37,30 @@ export function BookingForm({ draft, onChange, mode, error, leadData }: BookingF
   const carriers = partners.filter((p) =>
     p.status === 'Active' && (p.partnerClass === 'Carrier' || CARRIER_TYPES.includes(p.partnerType)),
   );
+
+  // Active employees feed the Assigned Agent dropdown. The list is small enough
+  // that we keep it inline; PartnerPicker-style modal is overkill here.
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  useEffect(() => {
+    employeesApi.getAll().then((rows) => setEmployees(rows.filter((e) => e.isActive))).catch(() => {});
+  }, []);
+
+  // On a fresh booking with no agent set yet, default to the current user's
+  // linked employee so the field mirrors what the backend will save.
+  useEffect(() => {
+    if (mode === 'new' && !draft.assignedAgentId && user?.employee_id) {
+      onChange({ assignedAgentId: user.employee_id });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, user?.employee_id]);
+
+  const canReassignAgent = can('edit:booking-agent-assignment');
+  const agentFieldDisabled = isViewMode || !canReassignAgent;
+  const formatEmployeeName = (e: Employee) => `${e.firstName} ${e.surname}`.trim() || e.employeeCode;
+  const assignedAgentInActiveEmployees = employees.some((e) => e.id === draft.assignedAgentId);
+  const currentAssignedAgentLabel = draft.assignedAgentName
+    || (draft.assignedAgentId === user?.employee_id ? user?.display_name : undefined)
+    || 'Current assigned agent';
 
   const [knownCurrencies, setKnownCurrencies] = useState<string[]>([]);
   useEffect(() => {
@@ -249,8 +275,44 @@ export function BookingForm({ draft, onChange, mode, error, leadData }: BookingF
             </div>
 
             <div>
-              <h4 className={sectionTitleClass}>Created By</h4>
-              <input type="text" value={draft.createdBy || user?.username || ''} disabled className={inputClass()} />
+              <h4 className={sectionTitleClass}>Assignment</h4>
+              <div className="space-y-2">
+                <div>
+                  <label className={labelClass}>
+                    Assigned Agent
+                    {!canReassignAgent && !isViewMode && (
+                      <span className="ml-1 text-[10px] text-gray-400">(view only)</span>
+                    )}
+                  </label>
+                  <select
+                    value={draft.assignedAgentId || ''}
+                    onChange={(e) => onChange({ assignedAgentId: e.target.value || undefined })}
+                    disabled={agentFieldDisabled}
+                    className={inputClass()}
+                  >
+                    <option value="">Unassigned</option>
+                    {draft.assignedAgentId && !assignedAgentInActiveEmployees && (
+                      <option value={draft.assignedAgentId}>
+                        {currentAssignedAgentLabel}
+                      </option>
+                    )}
+                    {employees.map((emp) => (
+                      <option key={emp.id} value={emp.id}>
+                        {formatEmployeeName(emp)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>Created By</label>
+                  <input
+                    type="text"
+                    value={draft.createdBy || user?.username || ''}
+                    disabled
+                    className={inputClass()}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>

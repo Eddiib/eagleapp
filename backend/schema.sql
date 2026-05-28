@@ -263,10 +263,12 @@ CREATE TABLE IF NOT EXISTS bookings (
   created_by        VARCHAR(100),
   updated_date      DATETIME      ON UPDATE CURRENT_TIMESTAMP,
   updated_by        VARCHAR(100),
+  assigned_agent_id VARCHAR(36),
   FOREIGN KEY (client_id)    REFERENCES partners(id) ON DELETE SET NULL,
   FOREIGN KEY (carrier_id)   REFERENCES partners(id) ON DELETE SET NULL,
   FOREIGN KEY (shipper_id)   REFERENCES partners(id) ON DELETE SET NULL,
-  FOREIGN KEY (consignee_id) REFERENCES partners(id) ON DELETE SET NULL
+  FOREIGN KEY (consignee_id) REFERENCES partners(id) ON DELETE SET NULL,
+  FOREIGN KEY (assigned_agent_id) REFERENCES employees(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS booking_equipment (

@@ -6,6 +6,9 @@ const { asyncHandler, AppError } = require('../middleware/errorHandler');
 const { requireFields, requireUUID, requireDate, requireArray } = require('../middleware/validate');
 const { logAudit, snapshotRow } = require('../lib/audit');
 const { getDefaultCurrency } = require('../lib/companySettings');
+const { canAccess } = require('../lib/permissions');
+
+const REASSIGN_AGENT_PERMISSION = 'edit:booking-agent-assignment';
 
 const VALID_STATUSES = ['Draft', 'Confirmed', 'In Transit', 'Delivered', 'Cancelled'];
 const VALID_MODES = ['FCL', 'LCL', 'Air', 'Road'];
@@ -77,6 +80,9 @@ const HEADER_COLUMNS = [
   'internal_notes', 'free_text_comments',
   // Lineage (migration 013): where this booking came from.
   'source_sales_lead_id', 'source_quotation_id',
+  // Assigned agent (migration 023): defaults to the creator's linked employee,
+  // overridable only by roles that hold `edit:booking-agent-assignment`.
+  'assigned_agent_id',
 ];
 
 function formatBookingNumber(sequence) {
@@ -218,13 +224,15 @@ const BOOKING_SELECT = `
     cr.company_legal_name AS carrier_name,
     s.company_legal_name  AS shipper_name,
     co.company_legal_name AS consignee_name,
-    np.company_legal_name AS notify_party_name
+    np.company_legal_name AS notify_party_name,
+    TRIM(CONCAT_WS(' ', ag.first_name, ag.surname)) AS assigned_agent_name
   FROM bookings b
   LEFT JOIN partners c  ON b.client_id       = c.id
   LEFT JOIN partners cr ON b.carrier_id      = cr.id
   LEFT JOIN partners s  ON b.shipper_id      = s.id
   LEFT JOIN partners co ON b.consignee_id    = co.id
   LEFT JOIN partners np ON b.notify_party_id = np.id
+  LEFT JOIN employees ag ON b.assigned_agent_id = ag.id
 `;
 
 // GET all bookings (no service line items — kept light for list view)
@@ -546,6 +554,19 @@ router.post('/', asyncHandler(async (req, res) => {
   header.total_revenue = total_revenue;
   header.total_cost    = total_cost;
 
+  // Assigned agent: callers without `edit:booking-agent-assignment` can never
+  // reassign the booking to someone else. Default everyone to their own
+  // linked employee, regardless of permission.
+  const canReassignAgent = canAccess(req.user, REASSIGN_AGENT_PERMISSION);
+  if (canReassignAgent) checkOptionalUuid(header.assigned_agent_id, 'assigned_agent_id');
+  const creatorEmployeeId = req.user?.employee_id || null;
+  if (!canReassignAgent) {
+    header.assigned_agent_id = creatorEmployeeId;
+  } else if (!header.assigned_agent_id) {
+    header.assigned_agent_id = creatorEmployeeId;
+  }
+  checkOptionalUuid(header.assigned_agent_id, 'assigned_agent_id');
+
   const shipperIds = shipperIdsFromInput(shippers);
   if (!header.shipper_id && shipperIds.length) header.shipper_id = shipperIds[0];
 
@@ -646,6 +667,8 @@ router.put('/:id', asyncHandler(async (req, res) => {
   const { total_revenue, total_cost } = computeTotalsFromPayload(services, equipment);
   header.total_revenue = total_revenue;
   header.total_cost    = total_cost;
+  const canReassignAgent = canAccess(req.user, REASSIGN_AGENT_PERMISSION);
+  if (canReassignAgent) checkOptionalUuid(header.assigned_agent_id, 'assigned_agent_id');
 
   const conn = await db.getConnection();
   try {
@@ -654,6 +677,13 @@ router.put('/:id', asyncHandler(async (req, res) => {
     header.currency = header.currency || defaultCurrency;
 
     const beforeRow = await snapshotRow(conn, 'bookings', req.params.id);
+
+    // Lock the assigned agent for callers without reassign permission so an
+    // edit submitted with a stale or tampered payload can't move the booking.
+    if (!canReassignAgent) {
+      header.assigned_agent_id = beforeRow?.assigned_agent_id ?? null;
+    }
+    checkOptionalUuid(header.assigned_agent_id, 'assigned_agent_id');
 
     const shipperIds = shipperIdsFromInput(shippers);
     if (!header.shipper_id && shipperIds.length) header.shipper_id = shipperIds[0];

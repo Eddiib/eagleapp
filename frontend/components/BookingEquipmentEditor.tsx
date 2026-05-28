@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Copy, Trash2, Calculator, ChevronRight, ChevronDown } from 'lucide-react';
+import { Plus, Copy, Trash2, Calculator, ChevronRight, ChevronDown, X } from 'lucide-react';
 import { equipmentApi } from '../services/equipment';
 import { servicesApi } from '../services/services';
 import { EquipmentType } from '../types/equipment';
@@ -8,6 +8,7 @@ import { BookingEquipmentLine, EquipmentServiceLine } from '../services/bookings
 import { usePartners } from '../hooks/usePartners';
 import { tableClasses } from './ui/table';
 import { isPartnerSeller } from '../utils/partnerRoles';
+import { PartnerPicker } from './PartnerPicker';
 
 interface Props {
   value: BookingEquipmentLine[];
@@ -269,6 +270,10 @@ function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servic
   const removeService = (idx: number) => onChange(services.filter((_, i) => i !== idx));
 
   const [bulkDate, setBulkDate] = useState('');
+  // Which service row currently has the supplier picker open (null = closed).
+  const [supplierPickerForIdx, setSupplierPickerForIdx] = useState<number | null>(null);
+  // Which service row currently has the invoice party picker open (null = closed).
+  const [invoicePartyPickerForIdx, setInvoicePartyPickerForIdx] = useState<number | null>(null);
   const applyBulkDate = () => {
     if (!bulkDate) return;
     onChange(services.map((s) => ({ ...s, plannedDate: bulkDate })));
@@ -380,20 +385,33 @@ function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servic
                 </select>
               </td>
               <td className={td}>
-                <select
-                  value={svc.invoicePartyId ?? ''}
-                  onChange={e => {
-                    const p = partners.find(p => p.id === e.target.value);
-                    setService(idx, { invoicePartyId: e.target.value, invoicePartyName: p?.companyLegalName });
-                  }}
-                  disabled={disabled}
-                  className={inp()}
-                >
-                  <option value="">Select Invoice Party...</option>
-                  {activePartners.map(p => (
-                    <option key={p.id} value={p.id}>{p.tradingName || p.companyLegalName}</option>
-                  ))}
-                </select>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setInvoicePartyPickerForIdx(idx)}
+                    disabled={disabled}
+                    className={`${inp('text-left truncate')} ${
+                      svc.invoicePartyName || svc.invoicePartyId ? '' : 'text-gray-400 dark:text-gray-500'
+                    } disabled:cursor-not-allowed`}
+                  >
+                    {svc.invoicePartyName
+                      || (svc.invoicePartyId
+                        ? activePartners.find(p => p.id === svc.invoicePartyId)?.tradingName
+                          ?? activePartners.find(p => p.id === svc.invoicePartyId)?.companyLegalName
+                          ?? svc.invoicePartyId
+                        : 'Select Invoice Party...')}
+                  </button>
+                  {!disabled && svc.invoicePartyId && (
+                    <button
+                      type="button"
+                      onClick={() => setService(idx, { invoicePartyId: '', invoicePartyName: undefined })}
+                      title="Clear invoice party"
+                      className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 flex-shrink-0"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
               </td>
               <td className={td}>
                 <input
@@ -406,20 +424,33 @@ function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servic
                 />
               </td>
               <td className={td}>
-                <select
-                  value={svc.supplierId ?? ''}
-                  onChange={e => {
-                    const p = partners.find(p => p.id === e.target.value);
-                    setService(idx, { supplierId: e.target.value, supplierName: p?.companyLegalName });
-                  }}
-                  disabled={disabled}
-                  className={inp()}
-                >
-                  <option value="">Select Supplier...</option>
-                  {supplierPartners.map(p => (
-                    <option key={p.id} value={p.id}>{p.tradingName || p.companyLegalName}</option>
-                  ))}
-                </select>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setSupplierPickerForIdx(idx)}
+                    disabled={disabled}
+                    className={`${inp('text-left truncate')} ${
+                      svc.supplierName || svc.supplierId ? '' : 'text-gray-400 dark:text-gray-500'
+                    } disabled:cursor-not-allowed`}
+                  >
+                    {svc.supplierName
+                      || (svc.supplierId
+                        ? supplierPartners.find(p => p.id === svc.supplierId)?.tradingName
+                          ?? supplierPartners.find(p => p.id === svc.supplierId)?.companyLegalName
+                          ?? svc.supplierId
+                        : 'Select Supplier...')}
+                  </button>
+                  {!disabled && svc.supplierId && (
+                    <button
+                      type="button"
+                      onClick={() => setService(idx, { supplierId: '', supplierName: undefined })}
+                      title="Clear supplier"
+                      className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 flex-shrink-0"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
               </td>
               <td className={td}>
                 <input
@@ -453,6 +484,44 @@ function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servic
       >
         <Plus className="w-4 h-4" /> Add Service
       </button>
+
+      <PartnerPicker
+        open={supplierPickerForIdx !== null}
+        title="Select Supplier"
+        currentId={
+          supplierPickerForIdx !== null ? services[supplierPickerForIdx]?.supplierId || undefined : undefined
+        }
+        filter={(p) => p.status === 'Active' && isPartnerSeller(p)}
+        onClose={() => setSupplierPickerForIdx(null)}
+        onSelect={(p) => {
+          if (supplierPickerForIdx !== null) {
+            setService(supplierPickerForIdx, {
+              supplierId: p.id,
+              supplierName: p.tradingName || p.companyLegalName,
+            });
+          }
+          setSupplierPickerForIdx(null);
+        }}
+      />
+
+      <PartnerPicker
+        open={invoicePartyPickerForIdx !== null}
+        title="Select Invoice Party"
+        currentId={
+          invoicePartyPickerForIdx !== null ? services[invoicePartyPickerForIdx]?.invoicePartyId || undefined : undefined
+        }
+        filter={(p) => p.status === 'Active'}
+        onClose={() => setInvoicePartyPickerForIdx(null)}
+        onSelect={(p) => {
+          if (invoicePartyPickerForIdx !== null) {
+            setService(invoicePartyPickerForIdx, {
+              invoicePartyId: p.id,
+              invoicePartyName: p.tradingName || p.companyLegalName,
+            });
+          }
+          setInvoicePartyPickerForIdx(null);
+        }}
+      />
     </div>
   );
 }

@@ -7,6 +7,9 @@ import { countries } from '../data/countries';
 import { usePorts } from '../hooks/usePorts';
 import { PartnerPicker } from './PartnerPicker';
 import { PortPicker } from './PortPicker';
+import { employeesApi } from '../services/employees';
+import { Employee } from './EmployeesModule';
+import { useAuth } from '../context/AuthContext';
 
 type Patch = Partial<Booking>;
 
@@ -65,6 +68,26 @@ export function BookingHeader({
   const isViewMode = bookingMode === 'view';
   const isEditMode = bookingMode === 'edit';
   const isNewMode = bookingMode === 'new';
+
+  const { user, can } = useAuth();
+  const canReassignAgent = can('edit:booking-agent-assignment');
+  const agentFieldDisabled = isViewMode || !canReassignAgent;
+
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  useEffect(() => {
+    employeesApi.getAll().then((rows) => setEmployees(rows.filter((e) => e.isActive))).catch(() => {});
+  }, []);
+
+  // New bookings default the agent to the current user's linked employee so
+  // the dropdown mirrors what the backend will save when permission is absent.
+  useEffect(() => {
+    if (isNewMode && !draft.assignedAgentId && user?.employee_id) {
+      onChange({ assignedAgentId: user.employee_id });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isNewMode, user?.employee_id]);
+
+  const formatEmployeeName = (e: Employee) => `${e.firstName} ${e.surname}`.trim() || e.employeeCode;
 
   const { partners } = usePartners();
   const { ports } = usePorts();
@@ -336,6 +359,25 @@ export function BookingHeader({
                     {FREIGHT_TERMS.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
+              </div>
+              <div>
+                <label className={labelCls}>
+                  Assigned Agent
+                  {!canReassignAgent && !isViewMode && (
+                    <span className="ml-1 text-[10px] text-gray-400">(view only)</span>
+                  )}
+                </label>
+                <select
+                  className={inputCls}
+                  disabled={agentFieldDisabled}
+                  value={draft.assignedAgentId || ''}
+                  onChange={(e) => onChange({ assignedAgentId: e.target.value || undefined })}
+                >
+                  <option value="">{draft.assignedAgentName || 'Unassigned'}</option>
+                  {employees.map((emp) => (
+                    <option key={emp.id} value={emp.id}>{formatEmployeeName(emp)}</option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>

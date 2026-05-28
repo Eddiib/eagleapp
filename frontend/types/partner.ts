@@ -12,6 +12,7 @@ export type PartnerType =
   | 'Air Carrier'
   | 'Trucking Company'
   | 'Rail Operator'
+  | 'Shipper'
   | 'Overseas Agent'
   | 'Customs Broker'
   | 'Warehouse / Depot'

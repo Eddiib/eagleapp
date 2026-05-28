@@ -14,9 +14,9 @@ const { cleanText, normalizePartnerImportRows } = require('../lib/partnerImport'
 // creation from the UI.
 const VALID_PARTNER_TYPES = [
   'Client', 'Buyer', 'Shipping Line', 'Air Carrier', 'Trucking Company',
-  'Rail Operator', 'Overseas Agent', 'Customs Broker', 'Warehouse / Depot',
-  'Insurance Company', 'Surveyor / Inspector', 'Special Services Provider',
-  'Other',
+  'Rail Operator', 'Shipper', 'Overseas Agent', 'Customs Broker',
+  'Warehouse / Depot', 'Insurance Company', 'Surveyor / Inspector',
+  'Special Services Provider', 'Other',
 ];
 const VALID_STATUSES = ['Active', 'Suspended', 'Blacklisted', 'Archived'];
 const VALID_PARTNER_CLASSES = ['Carrier', 'Non Carrier'];

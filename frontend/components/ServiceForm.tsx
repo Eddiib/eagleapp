@@ -119,6 +119,7 @@ const PARTNER_TYPES: PartnerType[] = [
   'Air Carrier',
   'Trucking Company',
   'Rail Operator',
+  'Shipper',
   'Overseas Agent',
   'Customs Broker',
   'Warehouse / Depot',

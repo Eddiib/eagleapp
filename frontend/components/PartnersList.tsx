@@ -237,6 +237,7 @@ export function PartnersList({
               <SelectItem value="Air Carrier">Air Carrier</SelectItem>
               <SelectItem value="Trucking Company">Trucking Company</SelectItem>
               <SelectItem value="Rail Operator">Rail Operator</SelectItem>
+              <SelectItem value="Shipper">Shipper</SelectItem>
               <SelectItem value="Overseas Agent">Overseas Agent</SelectItem>
               <SelectItem value="Customs Broker">Customs Broker</SelectItem>
               <SelectItem value="Warehouse / Depot">Warehouse / Depot</SelectItem>

@@ -57,7 +57,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
 
   const carrierCategories = ['Shipping Line', 'Air Carrier', 'Trucking Company', 'Rail Operator'];
   const nonCarrierCategories = [
-    'Overseas Agent', 'Customs Broker', 'Warehouse / Depot', 'Insurance Company',
+    'Shipper', 'Overseas Agent', 'Customs Broker', 'Warehouse / Depot', 'Insurance Company',
     'Surveyor / Inspector', 'Special Services Provider', 'Client', 'Buyer'
   ];
 

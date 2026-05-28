@@ -147,6 +147,8 @@ export interface Booking {
   freeTextComments: string;
 
   createdBy: string;
+  assignedAgentId?: string;
+  assignedAgentName?: string;
 
   // Lineage — where this booking originated
   sourceSalesLeadId?: string;
@@ -204,6 +206,8 @@ interface BookingRow {
   source_quotation_id?: string | null;
   created_date?: string;
   created_by?: string;
+  assigned_agent_id?: string | null;
+  assigned_agent_name?: string | null;
   services?: any[];
   equipment?: any[];
   shippers?: any[];
@@ -384,6 +388,8 @@ export function toBooking(row: BookingRow): Booking {
     totalCost: toNum(row.total_cost),
     totalContainers,
     createdBy: row.created_by ?? '',
+    assignedAgentId: row.assigned_agent_id ?? undefined,
+    assignedAgentName: row.assigned_agent_name ?? undefined,
     sourceSalesLeadId: row.source_sales_lead_id ?? undefined,
     sourceQuotationId: row.source_quotation_id ?? undefined,
     services,
@@ -439,6 +445,7 @@ export interface BookingPayload {
 
   sourceSalesLeadId?: string;
   sourceQuotationId?: string;
+  assignedAgentId?: string;
 
   services: BookingServiceLine[];
   equipment: BookingEquipmentLine[];
@@ -492,6 +499,7 @@ function toApiPayload(p: BookingPayload, extra: Record<string, any> = {}) {
 
     source_sales_lead_id: p.sourceSalesLeadId || null,
     source_quotation_id: p.sourceQuotationId || null,
+    assigned_agent_id: p.assignedAgentId || null,
 
     shippers: (p.shippers || []).map(s => ({ shipper_id: s.shipperId })),
 
@@ -656,6 +664,8 @@ export function emptyBooking(initialBookingNumber?: string, currency = 'EUR'): B
     totalCost: 0,
     totalContainers: 0,
     createdBy: '',
+    assignedAgentId: undefined,
+    assignedAgentName: undefined,
     services: [],
     equipment: [],
     attachments: [],
@@ -710,6 +720,7 @@ export function bookingToPayload(
     totalCost: b.totalCost,
     sourceSalesLeadId: b.sourceSalesLeadId,
     sourceQuotationId: b.sourceQuotationId,
+    assignedAgentId: b.assignedAgentId,
     services,
     equipment,
   };
