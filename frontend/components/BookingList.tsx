@@ -1,9 +1,13 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Search, Plus, Edit, Trash2, Eye, Filter, Download, ChevronDown, ChevronUp, RefreshCw, ListFilter } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Search, Plus, Edit, Trash2, Eye, Filter, Download, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { BookingQuickView } from './BookingQuickView';
 import { bookingsApi, Booking } from '../services/bookings';
 import { useConfirm } from '../context/ConfirmDialog';
 import { PaginationBar } from './ui/PaginationBar';
+import { ColumnHeader } from './ui/ColumnHeader';
+import { useTableControls, ColumnDef } from '../hooks/useTableControls';
+import { StatusBadge } from './ui/StatusBadge';
+import { useBookingStatuses } from '../context/BookingStatusesContext';
 
 export type { Booking };
 
@@ -16,6 +20,7 @@ interface BookingListProps {
 
 export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onNewBooking }: BookingListProps) {
   const confirmDialog = useConfirm();
+  const { activeStatuses, colorFor } = useBookingStatuses();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,50 +32,31 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
-  // Excel-style per-column filters: key -> list of allowed display values (absent = all allowed)
-  const [columnFilters, setColumnFilters] = useState<Record<string, string[]>>({});
 
-  const statusOptions = ['All', 'Draft', 'Confirmed', 'In Transit', 'Delivered', 'Cancelled'];
   const serviceOptions = ['All', 'FCL', 'LCL', 'Air', 'Road'];
 
-  // Column descriptors drive both the header filter dropdowns and the filtering logic.
+  const statusOptions = useMemo(() => {
+    const ordered = activeStatuses.map((s) => s.name);
+    const extras = Array.from(new Set(bookings.map((b) => b.status).filter(Boolean)))
+      .filter((s) => !ordered.includes(s))
+      .sort((a, z) => a.localeCompare(z, undefined, { sensitivity: 'base' }));
+    return ['All', ...ordered, ...extras];
+  }, [activeStatuses, bookings]);
+
+  // Column descriptors drive the header sort/filter dropdowns and the filtering logic.
   // Each `get` returns the same display string shown in the corresponding table cell.
-  const columnDefs = useMemo(() => ([
-    { key: 'bookingNumber', label: 'Booking #', align: 'left' as const, get: (b: Booking) => b.bookingNumber || '—' },
-    { key: 'clientName', label: 'Client', align: 'left' as const, get: (b: Booking) => b.clientName || '—' },
-    { key: 'route', label: 'Route', align: 'left' as const, get: (b: Booking) => `${b.origin || '—'} → ${b.destination || '—'}` },
-    { key: 'serviceType', label: 'Service', align: 'left' as const, get: (b: Booking) => b.serviceType || '—' },
-    { key: 'status', label: 'Status', align: 'left' as const, get: (b: Booking) => b.status || '—' },
-    { key: 'bookingDate', label: 'Booking Date', align: 'left' as const, get: (b: Booking) => b.bookingDate || '—' },
-    { key: 'estimatedDeparture', label: 'ETD', align: 'left' as const, get: (b: Booking) => b.estimatedDeparture || '—' },
-    { key: 'estimatedArrival', label: 'ETA', align: 'left' as const, get: (b: Booking) => b.estimatedArrival || '—' },
-    { key: 'totalContainers', label: 'Containers', align: 'left' as const, get: (b: Booking) => b.totalContainers > 0 ? String(b.totalContainers) : '—' },
-    { key: 'createdBy', label: 'Created By', align: 'left' as const, get: (b: Booking) => b.createdBy || '—' },
+  const columnDefs = useMemo<ColumnDef<Booking>[]>(() => ([
+    { key: 'bookingNumber', label: 'Booking #', align: 'left', get: (b) => b.bookingNumber || '—' },
+    { key: 'clientName', label: 'Client', align: 'left', get: (b) => b.clientName || '—' },
+    { key: 'route', label: 'Route', align: 'left', get: (b) => `${b.origin || '—'} → ${b.destination || '—'}` },
+    { key: 'serviceType', label: 'Service', align: 'left', get: (b) => b.serviceType || '—' },
+    { key: 'status', label: 'Status', align: 'left', get: (b) => b.status || '—' },
+    { key: 'bookingDate', label: 'Booking Date', align: 'left', get: (b) => b.bookingDate || '—' },
+    { key: 'estimatedDeparture', label: 'ETD', align: 'left', get: (b) => b.estimatedDeparture || '—' },
+    { key: 'estimatedArrival', label: 'ETA', align: 'left', get: (b) => b.estimatedArrival || '—' },
+    { key: 'totalContainers', label: 'Containers', align: 'left', get: (b) => b.totalContainers > 0 ? String(b.totalContainers) : '—', sortValue: (b) => b.totalContainers || 0 },
+    { key: 'createdBy', label: 'Created By', align: 'left', get: (b) => b.createdBy || '—' },
   ]), []);
-
-  // Distinct values per column, computed from the full dataset so options stay stable.
-  const columnValues = useMemo(() => {
-    const map: Record<string, string[]> = {};
-    for (const def of columnDefs) {
-      const set = new Set<string>();
-      for (const b of bookings) set.add(def.get(b));
-      map[def.key] = Array.from(set).sort((a, z) =>
-        a.localeCompare(z, undefined, { numeric: true, sensitivity: 'base' }));
-    }
-    return map;
-  }, [bookings, columnDefs]);
-
-  const setColumnFilter = (key: string, next: string[] | undefined) => {
-    setColumnFilters(prev => {
-      const copy = { ...prev };
-      if (next === undefined) delete copy[key];
-      else copy[key] = next;
-      return copy;
-    });
-  };
-
-  const clearAllColumnFilters = () => setColumnFilters({});
-  const activeColumnFilterCount = Object.keys(columnFilters).length;
 
   const fetchBookings = useCallback(async () => {
     setLoading(true);
@@ -107,7 +93,7 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
     }
   };
 
-  const filteredBookings = bookings.filter(booking => {
+  const searchFilteredBookings = bookings.filter(booking => {
     const matchesSearch =
       booking.bookingNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       booking.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -115,12 +101,20 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
       booking.destination.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'All' || booking.status === statusFilter;
     const matchesService = serviceFilter === 'All' || booking.serviceType === serviceFilter;
-    const matchesColumns = columnDefs.every(def => {
-      const allowed = columnFilters[def.key];
-      return !allowed || allowed.includes(def.get(booking));
-    });
-    return matchesSearch && matchesStatus && matchesService && matchesColumns;
+    return matchesSearch && matchesStatus && matchesService;
   });
+
+  // Column-level Excel-style filters + AZ/ZA sorting (shared across all list tables).
+  const {
+    processed: filteredBookings,
+    columnValues,
+    columnFilters,
+    setColumnFilter,
+    clearAllColumnFilters,
+    activeColumnFilterCount,
+    sortDirFor,
+    toggleSort,
+  } = useTableControls(searchFilteredBookings, columnDefs);
 
   // Reset to page 1 whenever filters narrow the result set — keeps the current page valid.
   useEffect(() => { setPage(1); }, [searchTerm, statusFilter, serviceFilter, pageSize, columnFilters]);
@@ -139,17 +133,6 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
 
   const toggleExpand = (bookingId: string) => {
     setExpandedBookingId(expandedBookingId === bookingId ? null : bookingId);
-  };
-
-  const getStatusColor = (status: Booking['status']) => {
-    switch (status) {
-      case 'Draft':      return 'bg-gray-100 text-gray-700 border-gray-300';
-      case 'Confirmed':  return 'bg-blue-100 text-blue-700 border-blue-300';
-      case 'In Transit': return 'bg-yellow-100 text-yellow-700 border-yellow-300';
-      case 'Delivered':  return 'bg-green-100 text-green-700 border-green-300';
-      case 'Cancelled':  return 'bg-red-100 text-red-700 border-red-300';
-      default:           return 'bg-gray-100 text-gray-700 border-gray-300';
-    }
   };
 
   return (
@@ -200,7 +183,7 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             >
-              {statusOptions.map(s => <option key={s} value={s}>{s} Status</option>)}
+              {statusOptions.map(s => <option key={s} value={s}>{s === 'All' ? 'All Statuses' : s}</option>)}
             </select>
             <select
               value={serviceFilter}
@@ -250,12 +233,14 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
                 </th>
                 {columnDefs.map(def => (
                   <th key={def.key} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    <ColumnFilter
+                    <ColumnHeader
                       label={def.label}
                       align={def.align}
                       values={columnValues[def.key] || []}
                       selected={columnFilters[def.key]}
-                      onChange={(next) => setColumnFilter(def.key, next)}
+                      onFilterChange={(next) => setColumnFilter(def.key, next)}
+                      sortDir={sortDirFor(def.key)}
+                      onSortChange={(dir) => toggleSort(def.key, dir)}
                     />
                   </th>
                 ))}
@@ -279,9 +264,15 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
                   </td>
                 </tr>
               ) : (
-                pagedBookings.map((booking) => (
+                pagedBookings.map((booking) => {
+                  const statusColor = colorFor(booking.status);
+                  return (
                   <>
-                    <tr key={booking.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <tr
+                      key={booking.id}
+                      className="transition-colors hover:brightness-95 dark:hover:brightness-110"
+                      style={statusColor ? { backgroundColor: `${statusColor}1a`, boxShadow: `inset 3px 0 0 0 ${statusColor}` } : undefined}
+                    >
                       <td className="px-4 py-3">
                         <input
                           type="checkbox"
@@ -319,9 +310,7 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-1 text-xs rounded border ${getStatusColor(booking.status)}`}>
-                          {booking.status}
-                        </span>
+                        <StatusBadge status={booking.status} className="px-2 py-1 text-xs rounded" />
                       </td>
                       <td className="px-4 py-3 text-gray-600 dark:text-gray-400 text-sm">{booking.bookingDate || '—'}</td>
                       <td className="px-4 py-3 text-gray-600 dark:text-gray-400 text-sm">{booking.estimatedDeparture || '—'}</td>
@@ -365,7 +354,8 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
                       <BookingQuickView booking={booking} onEdit={onEditBooking || onViewBooking} />
                     )}
                   </>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -388,97 +378,6 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
           )}
         </div>
       </div>
-    </div>
-  );
-}
-
-interface ColumnFilterProps {
-  label: string;
-  align?: 'left' | 'right' | 'center';
-  values: string[];                 // all distinct values for this column
-  selected: string[] | undefined;   // undefined = no filter (all shown)
-  onChange: (next: string[] | undefined) => void;
-}
-
-function ColumnFilter({ label, align = 'left', values, selected, onChange }: ColumnFilterProps) {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const ref = useRef<HTMLDivElement>(null);
-
-  const active = selected !== undefined && selected.length < values.length;
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
-
-  const isChecked = (v: string) => selected === undefined || selected.includes(v);
-
-  const toggle = (v: string) => {
-    const base = selected === undefined ? [...values] : [...selected];
-    const next = base.includes(v) ? base.filter(x => x !== v) : [...base, v];
-    onChange(next.length === values.length ? undefined : next);
-  };
-
-  const visible = values.filter(v => v.toLowerCase().includes(search.toLowerCase()));
-
-  const selectAll = () => onChange(undefined);
-  const clearAll = () => onChange([]);
-
-  return (
-    <div ref={ref} className="relative inline-block">
-      <div className={`flex items-center gap-1 ${align === 'right' ? 'justify-end' : align === 'center' ? 'justify-center' : ''}`}>
-        <span>{label}</span>
-        <button
-          onClick={() => setOpen(o => !o)}
-          className={`p-0.5 rounded transition-colors ${active ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'}`}
-          title={active ? 'Filter active — click to edit' : 'Filter'}
-        >
-          <ListFilter className="w-3.5 h-3.5" />
-        </button>
-      </div>
-      {open && (
-        <div className={`absolute z-20 mt-1 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg ${align === 'right' ? 'right-0' : 'left-0'}`}>
-          <div className="p-2 border-b border-gray-100 dark:border-gray-700">
-            <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-              <input
-                type="text"
-                autoFocus
-                placeholder="Search values..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-7 pr-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 normal-case font-normal tracking-normal"
-              />
-            </div>
-          </div>
-          <div className="flex items-center justify-between px-2 py-1 text-xs border-b border-gray-100 dark:border-gray-700">
-            <button onClick={selectAll} className="text-blue-600 dark:text-blue-400 hover:underline normal-case font-normal tracking-normal">Select all</button>
-            <button onClick={clearAll} className="text-gray-500 dark:text-gray-400 hover:underline normal-case font-normal tracking-normal">Clear</button>
-          </div>
-          <div className="max-h-56 overflow-y-auto py-1">
-            {visible.length === 0 ? (
-              <div className="px-3 py-2 text-xs text-gray-400 normal-case font-normal tracking-normal">No values</div>
-            ) : (
-              visible.map(v => (
-                <label key={v} className="flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer normal-case font-normal tracking-normal text-gray-700 dark:text-gray-200">
-                  <input
-                    type="checkbox"
-                    checked={isChecked(v)}
-                    onChange={() => toggle(v)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="truncate">{v}</span>
-                </label>
-              ))
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

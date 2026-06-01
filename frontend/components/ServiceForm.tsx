@@ -28,13 +28,7 @@ import {
 import { Checkbox } from './ui/checkbox';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Badge } from './ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from './ui/collapsible';
-import { ChevronDown, ChevronUp, X, Plus } from 'lucide-react';
+import { X, Plus } from 'lucide-react';
 
 interface ServiceFormProps {
   mode: 'create' | 'edit';
@@ -131,6 +125,16 @@ const PARTNER_TYPES: PartnerType[] = [
 
 const NO_GROUP_VALUE = '__none__';
 
+type SectionId = 'basic' | 'charging' | 'pricing' | 'operational' | 'system';
+
+const SECTIONS: { id: SectionId; title: string; description: string; suffix?: string }[] = [
+  { id: 'basic', title: 'Basic Information', description: 'Service identification and classification' },
+  { id: 'charging', title: 'Charging Logic', description: 'Define how this service is charged' },
+  { id: 'pricing', title: 'Pricing Behavior', description: 'Configure pricing logic for this service', suffix: '(Advanced)' },
+  { id: 'operational', title: 'Operational Information', description: 'Service operational requirements' },
+  { id: 'system', title: 'System Fields', description: 'Visibility and status settings' },
+];
+
 export function ServiceForm({
   mode,
   initialData,
@@ -148,13 +152,7 @@ export function ServiceForm({
   );
   const [formData, setFormData] = useState<Partial<Service>>(initialFormData);
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [openSections, setOpenSections] = useState({
-    basic: true,
-    charging: true,
-    pricing: false,
-    operational: false,
-    system: false,
-  });
+  const [activeSection, setActiveSection] = useState<SectionId>('basic');
 
   const confirmDialog = useConfirm();
   const [knownCurrencies, setKnownCurrencies] = useState<string[]>([]);
@@ -199,10 +197,6 @@ export function ServiceForm({
       confirmLabel: 'Discard',
     });
     if (ok) onCancel();
-  };
-
-  const toggleSection = (section: keyof typeof openSections) => {
-    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
   const handleSubmit = async (e: FormEvent | null, saveAndNew = false) => {
@@ -253,50 +247,66 @@ export function ServiceForm({
     setFormData({ ...formData, [field]: next });
   };
 
-  const sectionHeader = (
-    title: string,
-    description: string,
-    section: keyof typeof openSections,
-    suffix?: string,
-  ) => (
-    <CollapsibleTrigger className="w-full">
-      <CardHeader className="cursor-pointer hover:bg-accent/40">
-        <div className="flex items-center justify-between">
-          <div className="text-left">
-            <CardTitle>
-              {title}
-              {suffix && <span className="ml-2 text-muted-foreground">{suffix}</span>}
-            </CardTitle>
-            <CardDescription>{description}</CardDescription>
-          </div>
-          {openSections[section] ? (
-            <ChevronUp className="h-5 w-5 text-muted-foreground" />
-          ) : (
-            <ChevronDown className="h-5 w-5 text-muted-foreground" />
-          )}
-        </div>
-      </CardHeader>
-    </CollapsibleTrigger>
-  );
+  const activeMeta = SECTIONS.find((s) => s.id === activeSection)!;
 
   return (
     <form
       onSubmit={(e) => handleSubmit(e, false)}
       className="flex max-h-[calc(100vh-8rem)] flex-col"
     >
-      <div className="flex-1 space-y-4 overflow-y-auto px-6 py-5">
-        {(validationError || error) && (
-          <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800/60 dark:bg-red-900/20 dark:text-red-300">
-            {validationError || error}
-          </div>
-        )}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left side menu */}
+        <nav className="w-60 shrink-0 overflow-y-auto border-r border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900/40">
+          <ul className="space-y-1">
+            {SECTIONS.map((s) => {
+              const active = s.id === activeSection;
+              return (
+                <li key={s.id}>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSection(s.id)}
+                    className={`w-full rounded-md px-3 py-2 text-left transition-colors ${
+                      active ? 'bg-blue-600 text-white' : 'text-foreground hover:bg-accent'
+                    }`}
+                  >
+                    <div className="text-sm font-medium">
+                      {s.title}
+                      {s.suffix && (
+                        <span className={active ? 'ml-1 text-blue-100' : 'ml-1 text-muted-foreground'}>
+                          {s.suffix}
+                        </span>
+                      )}
+                    </div>
+                    <div className={`text-xs ${active ? 'text-blue-100' : 'text-muted-foreground'}`}>
+                      {s.description}
+                    </div>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
 
-        {/* Basic Information */}
-        <Collapsible open={openSections.basic} onOpenChange={() => toggleSection('basic')}>
-          <Card>
-            {sectionHeader('Basic Information', 'Service identification and classification', 'basic')}
-            <CollapsibleContent>
-              <CardContent className="space-y-4">
+        {/* Right content */}
+        <div className="flex-1 overflow-y-auto px-6 py-5">
+          {(validationError || error) && (
+            <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800/60 dark:bg-red-900/20 dark:text-red-300">
+              {validationError || error}
+            </div>
+          )}
+
+          <div className="mb-4">
+            <h3 className="text-base font-medium text-foreground">
+              {activeMeta.title}
+              {activeMeta.suffix && (
+                <span className="ml-2 text-muted-foreground">{activeMeta.suffix}</span>
+              )}
+            </h3>
+            <p className="text-sm text-muted-foreground">{activeMeta.description}</p>
+          </div>
+
+          {/* Basic Information */}
+          <div className={activeSection === 'basic' ? 'space-y-4' : 'hidden'}>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <Label htmlFor="serviceCode">
@@ -408,17 +418,10 @@ export function ServiceForm({
                     ))}
                   </div>
                 </div>
-              </CardContent>
-            </CollapsibleContent>
-          </Card>
-        </Collapsible>
+          </div>
 
-        {/* Charging Logic */}
-        <Collapsible open={openSections.charging} onOpenChange={() => toggleSection('charging')}>
-          <Card>
-            {sectionHeader('Charging Logic', 'Define how this service is charged', 'charging')}
-            <CollapsibleContent>
-              <CardContent className="space-y-4">
+          {/* Charging Logic */}
+          <div className={activeSection === 'charging' ? 'space-y-4' : 'hidden'}>
                 <div>
                   <Label htmlFor="chargeUnit">Charge Unit</Label>
                   <Select
@@ -509,17 +512,10 @@ export function ServiceForm({
                     className="mt-1"
                   />
                 </div>
-              </CardContent>
-            </CollapsibleContent>
-          </Card>
-        </Collapsible>
+          </div>
 
-        {/* Pricing Behavior */}
-        <Collapsible open={openSections.pricing} onOpenChange={() => toggleSection('pricing')}>
-          <Card>
-            {sectionHeader('Pricing Behavior', 'Configure pricing logic for this service', 'pricing', '(Advanced)')}
-            <CollapsibleContent>
-              <CardContent className="space-y-4">
+          {/* Pricing Behavior */}
+          <div className={activeSection === 'pricing' ? 'space-y-4' : 'hidden'}>
                 <div>
                   <Label htmlFor="priceBehavior">Price Behavior</Label>
                   <Select
@@ -550,17 +546,10 @@ export function ServiceForm({
                     The behavior is saved and will resolve once pricing models go live.
                   </div>
                 )}
-              </CardContent>
-            </CollapsibleContent>
-          </Card>
-        </Collapsible>
+          </div>
 
-        {/* Operational Information */}
-        <Collapsible open={openSections.operational} onOpenChange={() => toggleSection('operational')}>
-          <Card>
-            {sectionHeader('Operational Information', 'Service operational requirements', 'operational')}
-            <CollapsibleContent>
-              <CardContent className="space-y-4">
+          {/* Operational Information */}
+          <div className={activeSection === 'operational' ? 'space-y-4' : 'hidden'}>
                 <div>
                   <Label>Related Partner Types (multi-select)</Label>
                   <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -633,17 +622,10 @@ export function ServiceForm({
                     ))}
                   </div>
                 </div>
-              </CardContent>
-            </CollapsibleContent>
-          </Card>
-        </Collapsible>
+          </div>
 
-        {/* System Fields */}
-        <Collapsible open={openSections.system} onOpenChange={() => toggleSection('system')}>
-          <Card>
-            {sectionHeader('System Fields', 'Visibility and status settings', 'system')}
-            <CollapsibleContent>
-              <CardContent className="space-y-4">
+          {/* System Fields */}
+          <div className={activeSection === 'system' ? 'space-y-4' : 'hidden'}>
                 <div className="space-y-3">
                   <label htmlFor="isActive" className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
                     <Checkbox
@@ -684,10 +666,8 @@ export function ServiceForm({
                     className="mt-1 min-h-[100px]"
                   />
                 </div>
-              </CardContent>
-            </CollapsibleContent>
-          </Card>
-        </Collapsible>
+          </div>
+        </div>
       </div>
 
       <div className="sticky bottom-0 z-10 flex justify-end gap-2 border-t border-gray-200 bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900/60">

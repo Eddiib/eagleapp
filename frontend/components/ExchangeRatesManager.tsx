@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
-import { Plus, Trash2, Loader2, AlertCircle, Save } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Plus, Trash2, Loader2, AlertCircle, Save, Filter } from 'lucide-react';
 import { exchangeRatesApi, ExchangeRateRow } from '../services/exchangeRates';
 import { useConfirm } from '../context/ConfirmDialog';
 import { useCompanySettings } from '../context/CompanySettingsContext';
+import { ColumnHeader } from './ui/ColumnHeader';
+import { useTableControls, ColumnDef } from '../hooks/useTableControls';
 
 const COMMON_CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF', 'JPY', 'CNY', 'AED', 'TRY', 'ALL'];
 
@@ -93,6 +95,28 @@ export function ExchangeRatesManager() {
   const selectClass = 'px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100';
   const inputClass  = 'px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100';
 
+  // Column descriptors drive the per-column sort/filter dropdowns.
+  // Each `get` returns the same display string shown in the corresponding table cell.
+  const columnDefs = useMemo<ColumnDef<ExchangeRateRow>[]>(() => ([
+    { key: 'from_currency', label: 'From', align: 'left', get: (r) => r.from_currency },
+    { key: 'to_currency', label: 'To', align: 'left', get: (r) => r.to_currency },
+    { key: 'rate', label: 'Rate', align: 'right', get: (r) => Number(r.rate).toLocaleString(undefined, { maximumFractionDigits: 6 }), sortValue: (r) => Number(r.rate) || 0 },
+    { key: 'effective_date', label: 'Effective Date', align: 'left', get: (r) => r.effective_date, sortValue: (r) => r.effective_date || '' },
+    { key: 'updated', label: 'Updated', align: 'left', get: (r) => r.updated_at ? String(r.updated_at).split('T')[0] : '—', sortValue: (r) => r.updated_at ? String(r.updated_at) : '' },
+  ]), []);
+
+  // Column-level Excel-style filters + AZ/ZA sorting (shared across all list tables).
+  const {
+    processed: processedRates,
+    columnValues,
+    columnFilters,
+    setColumnFilter,
+    clearAllColumnFilters,
+    activeColumnFilterCount,
+    sortDirFor,
+    toggleSort,
+  } = useTableControls(rates, columnDefs);
+
   return (
     <div className="space-y-6">
       <div>
@@ -159,6 +183,18 @@ export function ExchangeRatesManager() {
       </div>
 
       {/* Rates table */}
+      {activeColumnFilterCount > 0 && (
+        <div className="flex justify-end">
+          <button
+            onClick={clearAllColumnFilters}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md transition-colors"
+            title="Clear all column filters"
+          >
+            <Filter className="w-4 h-4" />
+            Clear filters ({activeColumnFilterCount})
+          </button>
+        </div>
+      )}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
         {loading ? (
           <div className="py-12 flex items-center justify-center text-sm text-gray-500">
@@ -178,16 +214,24 @@ export function ExchangeRatesManager() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
               <tr>
-                <th className="px-4 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">From</th>
-                <th className="px-4 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">To</th>
-                <th className="px-4 py-3 text-right text-xs text-gray-500 uppercase tracking-wider">Rate</th>
-                <th className="px-4 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">Effective Date</th>
-                <th className="px-4 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">Updated</th>
+                {columnDefs.map((def) => (
+                  <th key={def.key} className={`px-4 py-3 ${def.align === 'right' ? 'text-right' : 'text-left'} text-xs text-gray-500 uppercase tracking-wider`}>
+                    <ColumnHeader
+                      label={def.label}
+                      align={def.align}
+                      values={columnValues[def.key] || []}
+                      selected={columnFilters[def.key]}
+                      onFilterChange={(next) => setColumnFilter(def.key, next)}
+                      sortDir={sortDirFor(def.key)}
+                      onSortChange={(dir) => toggleSort(def.key, dir)}
+                    />
+                  </th>
+                ))}
                 <th className="px-4 py-3 w-20"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-              {rates.map(r => (
+              {processedRates.map(r => (
                 <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
                   <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{r.from_currency}</td>
                   <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{r.to_currency}</td>

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Plus, Search, Eye, Edit2, Trash2, Filter, CheckCircle, XCircle, Clock, Loader2, RefreshCw } from 'lucide-react';
 import { Quotation, quotationsApi } from '../services/quotations';
 import { getCountryName } from '../data/countries';
+import { ColumnHeader } from './ui/ColumnHeader';
+import { useTableControls, ColumnDef } from '../hooks/useTableControls';
 
 interface QuotationDeskProps {
   onViewQuotation?: (quotation: Quotation) => void;
@@ -58,7 +60,20 @@ export function QuotationDesk({
     [quotations]
   );
 
-  const filteredQuotations = useMemo(() => (
+  // Column descriptors drive the per-column sort/filter dropdowns.
+  // Each `get` returns the same display string shown in the corresponding table cell.
+  const columnDefs = useMemo<ColumnDef<Quotation>[]>(() => ([
+    { key: 'quoteNumber', label: 'Quote #', align: 'left', get: (q) => q.quoteNumber || '—' },
+    { key: 'clientName', label: 'Client', align: 'left', get: (q) => q.clientName || '—' },
+    { key: 'routing', label: 'Routing', align: 'left', get: (q) => { const r = routeLabel(q); return `${r.origin} → ${r.destination}`; } },
+    { key: 'modeOfTransport', label: 'Mode', align: 'left', get: (q) => q.modeOfTransport || '—' },
+    { key: 'serviceCount', label: 'Services', align: 'left', get: (q) => String(q.serviceCount), sortValue: (q) => q.serviceCount || 0 },
+    { key: 'sellTotal', label: 'Sell Total', align: 'left', get: (q) => `${q.currency} ${q.totalSell.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, sortValue: (q) => q.totalSell || 0 },
+    { key: 'validUntil', label: 'Valid Until', align: 'left', get: (q) => q.validUntil || '—', sortValue: (q) => q.validUntil || '' },
+    { key: 'status', label: 'Status', align: 'left', get: (q) => q.status || '—' },
+  ]), []);
+
+  const searchFiltered = useMemo(() => (
     quotations.filter((quotation) => {
       const { origin, destination } = routeLabel(quotation);
       const matchesSearch =
@@ -74,6 +89,18 @@ export function QuotationDesk({
       return matchesSearch && matchesStatus && matchesMode && matchesClient;
     })
   ), [quotations, searchTerm, filterStatus, filterMode, filterClient]);
+
+  // Column-level Excel-style filters + AZ/ZA sorting (shared across all list tables).
+  const {
+    processed: filteredQuotations,
+    columnValues,
+    columnFilters,
+    setColumnFilter,
+    clearAllColumnFilters,
+    activeColumnFilterCount,
+    sortDirFor,
+    toggleSort,
+  } = useTableControls(searchFiltered, columnDefs);
 
   const getStatusBadge = (status: Quotation['status']) => {
     switch (status) {
@@ -154,6 +181,17 @@ export function QuotationDesk({
               <span className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">{activeFiltersCount}</span>
             )}
           </button>
+
+          {activeColumnFilterCount > 0 && (
+            <button
+              onClick={clearAllColumnFilters}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+              title="Clear all column filters"
+            >
+              <Filter className="w-4 h-4" />
+              Clear filters ({activeColumnFilterCount})
+            </button>
+          )}
         </div>
 
         {showFilters && (
@@ -220,14 +258,19 @@ export function QuotationDesk({
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th className="px-4 py-3 text-left text-xs text-gray-700 dark:text-gray-300 uppercase tracking-wider">Quote #</th>
-                <th className="px-4 py-3 text-left text-xs text-gray-700 dark:text-gray-300 uppercase tracking-wider">Client</th>
-                <th className="px-4 py-3 text-left text-xs text-gray-700 dark:text-gray-300 uppercase tracking-wider">Routing</th>
-                <th className="px-4 py-3 text-left text-xs text-gray-700 dark:text-gray-300 uppercase tracking-wider">Mode</th>
-                <th className="px-4 py-3 text-left text-xs text-gray-700 dark:text-gray-300 uppercase tracking-wider">Services</th>
-                <th className="px-4 py-3 text-left text-xs text-gray-700 dark:text-gray-300 uppercase tracking-wider">Sell Total</th>
-                <th className="px-4 py-3 text-left text-xs text-gray-700 dark:text-gray-300 uppercase tracking-wider">Valid Until</th>
-                <th className="px-4 py-3 text-left text-xs text-gray-700 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                {columnDefs.map((def) => (
+                  <th key={def.key} className="px-4 py-3 text-left text-xs text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                    <ColumnHeader
+                      label={def.label}
+                      align={def.align}
+                      values={columnValues[def.key] || []}
+                      selected={columnFilters[def.key]}
+                      onFilterChange={(next) => setColumnFilter(def.key, next)}
+                      sortDir={sortDirFor(def.key)}
+                      onSortChange={(dir) => toggleSort(def.key, dir)}
+                    />
+                  </th>
+                ))}
                 <th className="px-4 py-3 text-left text-xs text-gray-700 dark:text-gray-300 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>

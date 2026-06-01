@@ -23,6 +23,8 @@ import { Badge } from './ui/badge';
 import { bookingsApi, Booking } from '../services/bookings';
 import { CostEntry, costControlApi } from '../services/costControl';
 import { useCompanySettings } from '../context/CompanySettingsContext';
+import { ColumnHeader } from './ui/ColumnHeader';
+import { useTableControls, ColumnDef } from '../hooks/useTableControls';
 
 export interface CostServiceLine {
   id: string;
@@ -228,7 +230,7 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
     return Array.from(grouped.values()).sort((a, b) => a.bookingReference.localeCompare(b.bookingReference));
   }, [entries, bookings, baseCurrency]);
 
-  const filteredBookings = useMemo(() => {
+  const searchFiltered = useMemo(() => {
     return costBookings.filter((booking) => {
       const matchesSearch =
         booking.bookingReference.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -246,12 +248,39 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
     });
   }, [costBookings, searchQuery, statusFilter, invoiceFilter]);
 
+  const formatBase = (amount: number, maximumFractionDigits = 2) =>
+    `${baseCurrency} ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits })}`;
+
+  // Column descriptors drive the header sort/filter dropdowns. Each `get` returns the
+  // same display string shown in the cell; money/margin/count columns sort numerically.
+  const columnDefs = useMemo<ColumnDef<CostBooking>[]>(() => ([
+    { key: 'bookingReference', label: 'Booking Reference', align: 'left', get: (b) => b.bookingReference },
+    { key: 'clientName', label: 'Client Name', align: 'left', get: (b) => b.clientName },
+    { key: 'totalBuyingEUR', label: `Total Buying (${baseCurrency})`, align: 'right', get: (b) => formatBase(b.totalBuyingEUR), sortValue: (b) => b.totalBuyingEUR ?? 0 },
+    { key: 'totalSellingEUR', label: `Total Selling (${baseCurrency})`, align: 'right', get: (b) => formatBase(b.totalSellingEUR), sortValue: (b) => b.totalSellingEUR ?? 0 },
+    { key: 'totalProfitLoss', label: `Profit/Loss (${baseCurrency})`, align: 'right', get: (b) => formatBase(b.totalProfitLoss), sortValue: (b) => b.totalProfitLoss ?? 0 },
+    { key: 'profitMargin', label: 'Margin %', align: 'right', get: (b) => `${b.profitMargin.toFixed(2)}%`, sortValue: (b) => b.profitMargin ?? 0 },
+    { key: 'numberOfServices', label: 'Services', align: 'center', get: (b) => String(b.numberOfServices), sortValue: (b) => b.numberOfServices ?? 0 },
+    { key: 'salesAgent', label: 'Owner', align: 'left', get: (b) => b.salesAgent },
+    { key: 'status', label: 'Status', align: 'left', get: (b) => b.status },
+  ]), [baseCurrency]);
+
+  // Column-level Excel-style filters + AZ/ZA sorting (shared across all list tables).
+  const {
+    processed: filteredBookings,
+    columnValues,
+    columnFilters,
+    setColumnFilter,
+    clearAllColumnFilters,
+    activeColumnFilterCount,
+    sortDirFor,
+    toggleSort,
+  } = useTableControls(searchFiltered, columnDefs);
+
   const totalBuyingEUR = filteredBookings.reduce((sum, booking) => sum + booking.totalBuyingEUR, 0);
   const totalSellingEUR = filteredBookings.reduce((sum, booking) => sum + booking.totalSellingEUR, 0);
   const totalProfit = filteredBookings.reduce((sum, booking) => sum + booking.totalProfitLoss, 0);
   const bookingsWithIssues = filteredBookings.filter((booking) => booking.hasIncompleteInvoices).length;
-  const formatBase = (amount: number, maximumFractionDigits = 2) =>
-    `${baseCurrency} ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits })}`;
 
   const toggleBookingExpansion = (bookingId: string) => {
     setExpandedBookings((prev) => ({
@@ -427,6 +456,15 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
               <option value="missing-buying">Missing Buying</option>
               <option value="missing-selling">Missing Selling</option>
             </select>
+            {activeColumnFilterCount > 0 && (
+              <button
+                onClick={clearAllColumnFilters}
+                className="px-3 py-2 text-sm text-blue-600 hover:underline whitespace-nowrap"
+                title="Clear all column filters"
+              >
+                Clear filters ({activeColumnFilterCount})
+              </button>
+            )}
           </div>
         </div>
       </Card>
@@ -437,15 +475,19 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-4 py-3 text-left text-xs text-gray-600 w-10"></th>
-                <th className="px-4 py-3 text-left text-xs text-gray-600">Booking Reference</th>
-                <th className="px-4 py-3 text-left text-xs text-gray-600">Client Name</th>
-                <th className="px-4 py-3 text-right text-xs text-gray-600">Total Buying ({baseCurrency})</th>
-                <th className="px-4 py-3 text-right text-xs text-gray-600">Total Selling ({baseCurrency})</th>
-                <th className="px-4 py-3 text-right text-xs text-gray-600">Profit/Loss ({baseCurrency})</th>
-                <th className="px-4 py-3 text-right text-xs text-gray-600">Margin %</th>
-                <th className="px-4 py-3 text-center text-xs text-gray-600">Services</th>
-                <th className="px-4 py-3 text-left text-xs text-gray-600">Owner</th>
-                <th className="px-4 py-3 text-left text-xs text-gray-600">Status</th>
+                {columnDefs.map(def => (
+                  <th key={def.key} className={`px-4 py-3 text-xs text-gray-600 ${def.align === 'right' ? 'text-right' : def.align === 'center' ? 'text-center' : 'text-left'}`}>
+                    <ColumnHeader
+                      label={def.label}
+                      align={def.align}
+                      values={columnValues[def.key] || []}
+                      selected={columnFilters[def.key]}
+                      onFilterChange={(next) => setColumnFilter(def.key, next)}
+                      sortDir={sortDirFor(def.key)}
+                      onSortChange={(dir) => toggleSort(def.key, dir)}
+                    />
+                  </th>
+                ))}
                 <th className="px-4 py-3 text-center text-xs text-gray-600">Alerts</th>
               </tr>
             </thead>

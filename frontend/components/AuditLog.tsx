@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AlertCircle, Loader2, ChevronRight, ChevronDown, FilterX } from 'lucide-react';
 import { auditLogApi, AuditEntry, AuditAction } from '../services/auditLog';
+import { ColumnHeader } from './ui/ColumnHeader';
+import { useTableControls, ColumnDef } from '../hooks/useTableControls';
 
 const AUDITED_TABLES = ['bookings', 'invoices', 'cost_control', 'partners'];
 const ACTIONS: AuditAction[] = ['INSERT', 'UPDATE', 'DELETE'];
@@ -73,6 +75,28 @@ export function AuditLog() {
   };
 
   useEffect(() => { load(); }, []); // initial load
+
+  // Column descriptors for the Excel-style header sort/filter dropdowns.
+  // Each `get` returns the same display string shown in the row.
+  const columnDefs = useMemo<ColumnDef<AuditEntry>[]>(() => ([
+    { key: 'action', label: 'Action', align: 'left', get: (e) => e.action },
+    { key: 'table_name', label: 'Table', align: 'left', get: (e) => tableLabel(e.table_name) },
+    { key: 'row_id', label: 'Row ID', align: 'left', get: (e) => e.row_id },
+    { key: 'actor_name', label: 'User', align: 'left', get: (e) => e.actor_name || 'system' },
+    { key: 'changed_at', label: 'When', align: 'right', get: (e) => new Date(e.changed_at).toLocaleString(), sortValue: (e) => e.changed_at || '' },
+  ]), []);
+
+  // Column-level Excel-style filters + AZ/ZA sorting (shared across all list tables).
+  const {
+    processed: visibleEntries,
+    columnValues,
+    columnFilters,
+    setColumnFilter,
+    clearAllColumnFilters,
+    activeColumnFilterCount,
+    sortDirFor,
+    toggleSort,
+  } = useTableControls(entries, columnDefs);
 
   const clearFilters = () => {
     setTable(''); setAction(''); setRowId(''); setFrom(''); setTo(''); setLimit(100);
@@ -162,8 +186,80 @@ export function AuditLog() {
             No audit entries match these filters.
           </div>
         ) : (
+          <>
+            {activeColumnFilterCount > 0 && (
+              <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700 flex justify-end">
+                <button
+                  onClick={clearAllColumnFilters}
+                  className="flex items-center gap-1.5 px-2 py-1 text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
+                  title="Clear all column filters"
+                >
+                  <FilterX className="w-3.5 h-3.5" />
+                  Clear filters ({activeColumnFilterCount})
+                </button>
+              </div>
+            )}
+            {/* Column header row mirrors the per-row layout below for sort/filter controls. */}
+            <div className="flex items-center gap-3 px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <div className="w-4 flex-shrink-0" />
+              <div className="flex-shrink-0 w-20">
+                <ColumnHeader
+                  label="Action" align="left"
+                  values={columnValues['action'] || []}
+                  selected={columnFilters['action']}
+                  onFilterChange={(next) => setColumnFilter('action', next)}
+                  sortDir={sortDirFor('action')}
+                  onSortChange={(dir) => toggleSort('action', dir)}
+                />
+              </div>
+              <div className="w-28">
+                <ColumnHeader
+                  label="Table" align="left"
+                  values={columnValues['table_name'] || []}
+                  selected={columnFilters['table_name']}
+                  onFilterChange={(next) => setColumnFilter('table_name', next)}
+                  sortDir={sortDirFor('table_name')}
+                  onSortChange={(dir) => toggleSort('table_name', dir)}
+                />
+              </div>
+              <div className="flex-1">
+                <ColumnHeader
+                  label="Row ID" align="left"
+                  values={columnValues['row_id'] || []}
+                  selected={columnFilters['row_id']}
+                  onFilterChange={(next) => setColumnFilter('row_id', next)}
+                  sortDir={sortDirFor('row_id')}
+                  onSortChange={(dir) => toggleSort('row_id', dir)}
+                />
+              </div>
+              <div className="w-48">
+                <ColumnHeader
+                  label="User" align="left"
+                  values={columnValues['actor_name'] || []}
+                  selected={columnFilters['actor_name']}
+                  onFilterChange={(next) => setColumnFilter('actor_name', next)}
+                  sortDir={sortDirFor('actor_name')}
+                  onSortChange={(dir) => toggleSort('actor_name', dir)}
+                />
+              </div>
+              <div className="w-40">
+                <ColumnHeader
+                  label="When" align="right"
+                  values={columnValues['changed_at'] || []}
+                  selected={columnFilters['changed_at']}
+                  onFilterChange={(next) => setColumnFilter('changed_at', next)}
+                  sortDir={sortDirFor('changed_at')}
+                  onSortChange={(dir) => toggleSort('changed_at', dir)}
+                />
+              </div>
+            </div>
+            {visibleEntries.length === 0 ? (
+              <div className="py-12 text-center text-sm text-gray-500 dark:text-gray-400">
+                No audit entries match these column filters.
+              </div>
+            ) : (
           <ul className="divide-y divide-gray-100 dark:divide-gray-700">
-            {entries.map(e => {
+            {visibleEntries.map(e => {
               const isOpen = expanded.has(e.id);
               const diff = e.action === 'UPDATE' ? diffRows(e.before_data, e.after_data) : [];
               return (
@@ -217,6 +313,8 @@ export function AuditLog() {
               );
             })}
           </ul>
+            )}
+          </>
         )}
       </div>
     </div>

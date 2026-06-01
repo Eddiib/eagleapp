@@ -1,7 +1,9 @@
 import { api, API_BASE_URL, authHeader } from './client';
 
 // ── UI model (single source of truth used by booking components) ──────────────
-export type BookingStatus = 'Draft' | 'Confirmed' | 'In Transit' | 'Delivered' | 'Cancelled';
+// Booking statuses are configured at runtime (Settings → Booking Statuses),
+// so this is an open string rather than a fixed union.
+export type BookingStatus = string;
 export type BookingServiceType = 'FCL' | 'LCL' | 'Air' | 'Road';
 
 export interface BookingServiceLine {

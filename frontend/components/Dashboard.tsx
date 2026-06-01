@@ -4,6 +4,7 @@ import { invoicesApi } from '../services/invoices';
 import { exchangeRatesApi, ExchangeRateRow } from '../services/exchangeRates';
 import { sumToBase, formatCurrency } from '../lib/fx';
 import { useCompanySettings } from '../context/CompanySettingsContext';
+import { useBookingStatuses } from '../context/BookingStatusesContext';
 import { 
   Plus, 
   FileText, 
@@ -28,6 +29,7 @@ import { Card } from './ui/card';
 import { getCountryName } from '../data/countries';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
+import { StatusBadge } from './ui/StatusBadge';
 import { 
   BarChart, 
   Bar, 
@@ -56,7 +58,7 @@ export interface DashboardBooking {
   equipmentType?: string;
   etd: string;
   eta: string;
-  status: 'Open' | 'Departed' | 'In Transit' | 'Arrived' | 'Delivered';
+  status: string;
   salesAgent: string;
   buyingPrice: number;
   sellingPrice: number;
@@ -89,15 +91,6 @@ function mapBookingMode(serviceType: string): DashboardBooking['mode'] {
   }
 }
 
-function mapBookingStatus(status: string): DashboardBooking['status'] {
-  switch (status) {
-    case 'Confirmed':  return 'Departed';
-    case 'In Transit': return 'In Transit';
-    case 'Delivered':  return 'Delivered';
-    default:           return 'Open';
-  }
-}
-
 function bookingToDashboard(b: Booking, invoicedBookingIds: Set<string>, baseCurrency: string): DashboardBooking {
   const cost = b.totalCost || 0;
   const sell = b.totalRevenue || 0;
@@ -118,7 +111,7 @@ function bookingToDashboard(b: Booking, invoicedBookingIds: Set<string>, baseCur
     equipmentType: firstEq?.typeSize || firstEq?.equipmentCode || undefined,
     etd: b.estimatedDeparture || '',
     eta: b.estimatedArrival || '',
-    status: mapBookingStatus(b.status),
+    status: b.status || '—',
     salesAgent: b.createdBy || 'Unassigned',
     buyingPrice: cost,
     sellingPrice: sell,
@@ -136,6 +129,7 @@ function bookingToDashboard(b: Booking, invoicedBookingIds: Set<string>, baseCur
 
 export function Dashboard({ onNewBooking, onViewAllBookings, onViewBooking }: DashboardProps) {
   const { baseCurrency: BASE_CURRENCY } = useCompanySettings();
+  const { activeStatuses } = useBookingStatuses();
   const [bookings, setBookings] = useState<DashboardBooking[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [rates, setRates] = useState<ExchangeRateRow[]>([]);
@@ -362,6 +356,21 @@ export function Dashboard({ onNewBooking, onViewAllBookings, onViewBooking }: Da
       }));
   }, [bookings, BASE_CURRENCY, rates]);
 
+  const statusOptions = useMemo(() => {
+    const ordered = activeStatuses.map((s) => s.name);
+    const extras = Array.from(new Set(bookings.map((b) => b.status).filter(Boolean)))
+      .filter((s) => !ordered.includes(s))
+      .sort((a, z) => a.localeCompare(z, undefined, { sensitivity: 'base' }));
+    return [...ordered, ...extras];
+  }, [activeStatuses, bookings]);
+
+  const terminalStatusNames = useMemo(() => {
+    const names = new Set<string>(['Delivered', 'Cancelled', 'Canceled', 'Void']);
+    const finalActive = activeStatuses[activeStatuses.length - 1]?.name;
+    if (finalActive) names.add(finalActive);
+    return names;
+  }, [activeStatuses]);
+
   // Tables Data
   const recentBookings = useMemo(() => {
     return filteredBookings
@@ -377,10 +386,10 @@ export function Dashboard({ onNewBooking, onViewAllBookings, onViewBooking }: Da
 
   const upcomingShipments = useMemo(() => {
     return filteredBookings
-      .filter(b => b.status === 'Open' || b.status === 'Departed')
+      .filter(b => !terminalStatusNames.has(b.status))
       .sort((a, b) => new Date(a.eta).getTime() - new Date(b.eta).getTime())
       .slice(0, 5);
-  }, [filteredBookings]);
+  }, [filteredBookings, terminalStatusNames]);
 
   // Get unique values for filters
   const uniqueClients = Array.from(new Set(bookings.map(b => b.clientName))).sort();
@@ -403,17 +412,9 @@ export function Dashboard({ onNewBooking, onViewAllBookings, onViewBooking }: Da
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-      'Open': 'outline',
-      'Departed': 'secondary',
-      'In Transit': 'default',
-      'Arrived': 'secondary',
-      'Delivered': 'default'
-    };
-    
-    return <Badge variant={variants[status] || 'default'}>{status}</Badge>;
-  };
+  const getStatusBadge = (status: string) => (
+    <StatusBadge status={status} className="px-2.5 py-1 text-xs rounded-full" />
+  );
 
   if (loadingData) {
     return (
@@ -538,11 +539,9 @@ export function Dashboard({ onNewBooking, onViewAllBookings, onViewBooking }: Da
             className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
           >
             <option value="all">All Statuses</option>
-            <option value="Open">Open</option>
-            <option value="Departed">Departed</option>
-            <option value="In Transit">In Transit</option>
-            <option value="Arrived">Arrived</option>
-            <option value="Delivered">Delivered</option>
+            {statusOptions.map((status) => (
+              <option key={status} value={status}>{status}</option>
+            ))}
           </select>
         </div>
       </Card>

@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
-import { Loader2, AlertCircle, TrendingUp, Clock, CheckCircle } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Loader2, AlertCircle, TrendingUp, Clock, CheckCircle, Filter } from 'lucide-react';
 import { Invoice, InvoiceStatus, invoicesApi } from '../services/invoices';
+import { ColumnHeader } from './ui/ColumnHeader';
+import { useTableControls, ColumnDef } from '../hooks/useTableControls';
 
 const STATUS_COLORS: Record<InvoiceStatus, string> = {
   Draft:     'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
@@ -31,6 +33,30 @@ export function Receivables() {
   const totalOverdue     = overdue.reduce((s, i) => s + i.balanceDue, 0);
   const totalPaid        = paid.reduce((s, i) => s + i.totalAmount, 0);
 
+  // Column descriptors drive the header sort/filter dropdowns; each `get` mirrors the cell text.
+  const columnDefs = useMemo<ColumnDef<Invoice>[]>(() => ([
+    { key: 'invoiceNumber', label: 'Invoice #', align: 'left', get: (i) => i.invoiceNumber || '—' },
+    { key: 'clientName', label: 'Client', align: 'left', get: (i) => i.clientName || '—' },
+    { key: 'bookingNumber', label: 'Booking', align: 'left', get: (i) => i.bookingNumber || '—' },
+    { key: 'invoiceDate', label: 'Date', align: 'left', get: (i) => i.invoiceDate || '—', sortValue: (i) => i.invoiceDate || '' },
+    { key: 'dueDate', label: 'Due', align: 'left', get: (i) => i.dueDate || '—', sortValue: (i) => i.dueDate || '' },
+    { key: 'totalAmount', label: 'Total', align: 'right', get: (i) => `${i.currency} ${i.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, sortValue: (i) => i.totalAmount },
+    { key: 'balanceDue', label: 'Balance Due', align: 'right', get: (i) => `${i.currency} ${i.balanceDue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, sortValue: (i) => i.balanceDue },
+    { key: 'status', label: 'Status', align: 'left', get: (i) => i.status || '—' },
+  ]), []);
+
+  // Column-level Excel-style filters + AZ/ZA sorting (shared across all list tables).
+  const {
+    processed,
+    columnValues,
+    columnFilters,
+    setColumnFilter,
+    clearAllColumnFilters,
+    activeColumnFilterCount,
+    sortDirFor,
+    toggleSort,
+  } = useTableControls(invoices, columnDefs);
+
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -44,9 +70,21 @@ export function Receivables() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl text-gray-900 dark:text-gray-100">Receivables</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Outstanding client invoices (Sales type)</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl text-gray-900 dark:text-gray-100">Receivables</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Outstanding client invoices (Sales type)</p>
+        </div>
+        {activeColumnFilterCount > 0 && (
+          <button
+            onClick={clearAllColumnFilters}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+            title="Clear all column filters"
+          >
+            <Filter className="w-4 h-4" />
+            Clear filters ({activeColumnFilterCount})
+          </button>
+        )}
       </div>
 
       {error && (
@@ -107,18 +145,23 @@ export function Receivables() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
               <tr>
-                <th className="px-4 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Invoice #</th>
-                <th className="px-4 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Client</th>
-                <th className="px-4 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Booking</th>
-                <th className="px-4 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
-                <th className="px-4 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Due</th>
-                <th className="px-4 py-3 text-right text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total</th>
-                <th className="px-4 py-3 text-right text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Balance Due</th>
-                <th className="px-4 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                {columnDefs.map((def) => (
+                  <th key={def.key} className={`px-4 py-3 ${def.align === 'right' ? 'text-right' : 'text-left'} text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider`}>
+                    <ColumnHeader
+                      label={def.label}
+                      align={def.align}
+                      values={columnValues[def.key] || []}
+                      selected={columnFilters[def.key]}
+                      onFilterChange={(next) => setColumnFilter(def.key, next)}
+                      sortDir={sortDirFor(def.key)}
+                      onSortChange={(dir) => toggleSort(def.key, dir)}
+                    />
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-              {invoices.map((inv) => (
+              {processed.map((inv) => (
                 <tr key={inv.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700/30 ${inv.status === 'Overdue' ? 'bg-red-50/30 dark:bg-red-900/10' : ''}`}>
                   <td className="px-4 py-3 font-medium text-blue-600 dark:text-blue-400">{inv.invoiceNumber}</td>
                   <td className="px-4 py-3 text-gray-900 dark:text-gray-100">{inv.clientName || <span className="text-gray-400">—</span>}</td>

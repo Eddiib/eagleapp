@@ -52,7 +52,7 @@ export function ServiceFormModal({
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4 sm:p-8">
       <div
-        className="relative my-auto flex w-full max-w-3xl flex-col rounded-lg bg-white shadow-xl dark:bg-gray-800"
+        className="relative my-auto flex w-full max-w-4xl flex-col rounded-lg bg-white shadow-xl dark:bg-gray-800"
         role="dialog"
         aria-modal="true"
       >

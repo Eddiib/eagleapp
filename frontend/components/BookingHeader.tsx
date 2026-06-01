@@ -10,6 +10,8 @@ import { PortPicker } from './PortPicker';
 import { employeesApi } from '../services/employees';
 import { Employee } from './EmployeesModule';
 import { useAuth } from '../context/AuthContext';
+import { useBookingStatuses } from '../context/BookingStatusesContext';
+import { FALLBACK_COLOR, readableTextColor } from './ui/StatusBadge';
 
 type Patch = Partial<Booking>;
 
@@ -27,7 +29,6 @@ interface BookingHeaderProps {
   onGenerateInvoice?: () => void;
 }
 
-const STATUSES: BookingStatus[] = ['Draft', 'Confirmed', 'In Transit', 'Delivered', 'Cancelled'];
 const BL_TYPES = ['Bill of Lading', 'Telex Release', 'Seaway bill'];
 const BL_STATUSES = ['Pending', 'Confirmed'];
 const INCOTERMS = ['EXW', 'FCA', 'FAS', 'FOB', 'CFR', 'CIF', 'CPT', 'CIP', 'DAP', 'DPU', 'DDP'];
@@ -39,17 +40,6 @@ const BL_RE  = /^[A-Z0-9-]{3,30}$/i;
 const REF_RE = /^[A-Za-z0-9_\-./ ]{2,40}$/;
 function flagInvalid(value: string | undefined, re: RegExp) {
   return value && value.trim() && !re.test(value.trim()) ? 'border-red-500' : '';
-}
-
-function getStatusColor(status: string) {
-  switch (status) {
-    case 'Draft':      return 'bg-gray-900 text-white';
-    case 'Confirmed':  return 'bg-blue-600 text-white';
-    case 'In Transit': return 'bg-yellow-500 text-gray-900';
-    case 'Delivered':  return 'bg-green-600 text-white';
-    case 'Cancelled':  return 'bg-red-600 text-white';
-    default:           return 'bg-gray-900 text-white';
-  }
 }
 
 export function BookingHeader({
@@ -70,8 +60,11 @@ export function BookingHeader({
   const isNewMode = bookingMode === 'new';
 
   const { user, can } = useAuth();
+  const { activeStatuses, colorFor } = useBookingStatuses();
   const canReassignAgent = can('edit:booking-agent-assignment');
   const agentFieldDisabled = isViewMode || !canReassignAgent;
+  const statusMissingFromActive =
+    !isNewMode && draft.status && !activeStatuses.some((s) => s.name === draft.status);
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   useEffect(() => {
@@ -178,7 +171,13 @@ export function BookingHeader({
                   className="px-2 py-0.5 w-32 rounded text-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               ) : (
-                <span className={`px-2 py-0.5 rounded text-xs ${getStatusColor(draft.status)}`}>
+                <span
+                  className="px-2 py-0.5 rounded text-xs"
+                  style={{
+                    backgroundColor: colorFor(draft.status) || FALLBACK_COLOR,
+                    color: readableTextColor(colorFor(draft.status) || FALLBACK_COLOR),
+                  }}
+                >
                   {displayBookingNumber}
                 </span>
               )}
@@ -240,13 +239,18 @@ export function BookingHeader({
                   <select
                     className={inputCls}
                     disabled={isViewMode || isNewMode}
-                    value={isNewMode ? 'Draft' : draft.status}
+                    value={isNewMode ? (activeStatuses[0]?.name ?? '') : draft.status}
                     onChange={(e) => onChange({ status: e.target.value as BookingStatus })}
                   >
-                    {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                    {statusMissingFromActive && (
+                      <option value={draft.status}>{draft.status} (inactive)</option>
+                    )}
+                    {activeStatuses.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
                   </select>
                   {isNewMode && (
-                    <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">Locked to Draft until first save.</p>
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
+                      Locked to {activeStatuses[0]?.name ?? 'the first status'} until first save.
+                    </p>
                   )}
                 </div>
                 <div>

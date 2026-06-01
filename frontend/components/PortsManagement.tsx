@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Edit2, Trash2, Loader2, RefreshCw, Search, X, Save } from 'lucide-react';
+import { Plus, Edit2, Trash2, Loader2, RefreshCw, Search, X, Save, Filter } from 'lucide-react';
 import { Port, PortPayload, portsApi } from '../services/ports';
 import { invalidatePortsCache, usePorts } from '../hooks/usePorts';
 import { countries, getCountryName } from '../data/countries';
 import { useConfirm } from '../context/ConfirmDialog';
 import { useAuth } from '../context/AuthContext';
 import { modulePermission } from '../lib/modulePermissions';
+import { ColumnHeader } from './ui/ColumnHeader';
+import { useTableControls, ColumnDef } from '../hooks/useTableControls';
 
 const CODE_RE = /^[A-Z0-9]{2,10}$/;
 const COUNTRY_RE = /^[A-Z]{2}$/;
@@ -51,7 +53,7 @@ export function PortsManagement() {
     return () => window.removeEventListener('keydown', onKey);
   }, [modalOpen]);
 
-  const filteredPorts = useMemo(() => {
+  const searchFiltered = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
     if (!q) return ports;
     return ports.filter((p) =>
@@ -61,6 +63,27 @@ export function PortsManagement() {
       getCountryName(p.country).toLowerCase().includes(q),
     );
   }, [ports, searchTerm]);
+
+  // Column descriptors drive the per-column sort/filter dropdowns.
+  // Each `get` returns the same display string shown in the corresponding table cell.
+  const columnDefs = useMemo<ColumnDef<Port>[]>(() => ([
+    { key: 'code', label: 'Code', align: 'left', get: (p) => p.code },
+    { key: 'name', label: 'Name', align: 'left', get: (p) => p.name },
+    { key: 'country', label: 'Country', align: 'left', get: (p) => `${getCountryName(p.country) || p.country} ${p.country}` },
+    { key: 'sortOrder', label: 'Sort', align: 'right', get: (p) => String(p.sortOrder ?? ''), sortValue: (p) => p.sortOrder ?? 0 },
+  ]), []);
+
+  // Column-level Excel-style filters + AZ/ZA sorting (shared across all list tables).
+  const {
+    processed: filteredPorts,
+    columnValues,
+    columnFilters,
+    setColumnFilter,
+    clearAllColumnFilters,
+    activeColumnFilterCount,
+    sortDirFor,
+    toggleSort,
+  } = useTableControls(searchFiltered, columnDefs);
 
   function openCreate() {
     if (!canEditPorts) return;
@@ -187,15 +210,27 @@ export function PortsManagement() {
       </div>
 
       {/* Search */}
-      <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search by code, name or country…"
-          className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-        />
+      <div className="mb-4 flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search by code, name or country…"
+            className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+          />
+        </div>
+        {activeColumnFilterCount > 0 && (
+          <button
+            onClick={clearAllColumnFilters}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md transition-colors whitespace-nowrap"
+            title="Clear all column filters"
+          >
+            <Filter className="w-4 h-4" />
+            Clear filters ({activeColumnFilterCount})
+          </button>
+        )}
       </div>
 
       {error && (
@@ -209,10 +244,19 @@ export function PortsManagement() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
             <tr>
-              <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Code</th>
-              <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Name</th>
-              <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Country</th>
-              <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sort</th>
+              {columnDefs.map((def) => (
+                <th key={def.key} className={`px-4 py-2.5 ${def.align === 'right' ? 'text-right' : 'text-left'} text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider`}>
+                  <ColumnHeader
+                    label={def.label}
+                    align={def.align}
+                    values={columnValues[def.key] || []}
+                    selected={columnFilters[def.key]}
+                    onFilterChange={(next) => setColumnFilter(def.key, next)}
+                    sortDir={sortDirFor(def.key)}
+                    onSortChange={(dir) => toggleSort(def.key, dir)}
+                  />
+                </th>
+              ))}
               {canEditPorts && (
                 <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
               )}

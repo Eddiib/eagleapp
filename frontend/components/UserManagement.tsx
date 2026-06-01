@@ -8,6 +8,8 @@ import { authAdminApi, AppModule, AppRole, EmployeeOption } from '../services/au
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../context/ConfirmDialog';
 import { Permission } from '../lib/modulePermissions';
+import { ColumnHeader } from './ui/ColumnHeader';
+import { useTableControls, ColumnDef } from '../hooks/useTableControls';
 
 type UserRole = string;
 
@@ -476,6 +478,28 @@ export function UserManagement() {
   const canEditUsers = can('edit:user-management');
   const roleByKey = useMemo(() => new Map(roles.map((role) => [role.key, role])), [roles]);
 
+  // Column descriptors for the Users table — each `get` returns the displayed cell text.
+  const userColumnDefs = useMemo<ColumnDef<AppUser>[]>(() => ([
+    { key: 'username', label: 'User', align: 'left', get: (u) => u.username },
+    { key: 'email', label: 'Email', align: 'left', get: (u) => u.email },
+    { key: 'role', label: 'Role', align: 'left', get: (u) => roleByKey.get(u.role)?.name || u.role_name || u.role },
+    { key: 'status', label: 'Status', align: 'left', get: (u) => (Boolean(u.is_active) ? 'Active' : 'Inactive') },
+    { key: 'last_login', label: 'Last Login', align: 'left', get: (u) => (u.last_login ? new Date(u.last_login).toLocaleDateString() : '-'), sortValue: (u) => u.last_login || '' },
+    { key: 'created_at', label: 'Created', align: 'left', get: (u) => (u.created_at ? new Date(u.created_at).toLocaleDateString() : '-'), sortValue: (u) => u.created_at || '' },
+  ]), [roleByKey]);
+
+  // Column-level Excel-style filters + AZ/ZA sorting (shared across all list tables).
+  const {
+    processed: processedUsers,
+    columnValues,
+    columnFilters,
+    setColumnFilter,
+    clearAllColumnFilters,
+    activeColumnFilterCount,
+    sortDirFor,
+    toggleSort,
+  } = useTableControls(users, userColumnDefs);
+
   const load = () => {
     setLoading(true);
     setError(null);
@@ -655,23 +679,39 @@ export function UserManagement() {
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+        <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <h2 className="text-base text-gray-900 dark:text-gray-100">Users</h2>
+          {activeColumnFilterCount > 0 && (
+            <button
+              onClick={clearAllColumnFilters}
+              className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+              title="Clear all column filters"
+            >
+              Clear filters ({activeColumnFilterCount})
+            </button>
+          )}
         </div>
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
             <tr>
-              <th className="px-4 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">User</th>
-              <th className="px-4 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email</th>
-              <th className="px-4 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Role</th>
-              <th className="px-4 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-              <th className="px-4 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Last Login</th>
-              <th className="px-4 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Created</th>
+              {userColumnDefs.map((def) => (
+                <th key={def.key} className="px-4 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <ColumnHeader
+                    label={def.label}
+                    align={def.align}
+                    values={columnValues[def.key] || []}
+                    selected={columnFilters[def.key]}
+                    onFilterChange={(next) => setColumnFilter(def.key, next)}
+                    sortDir={sortDirFor(def.key)}
+                    onSortChange={(dir) => toggleSort(def.key, dir)}
+                  />
+                </th>
+              ))}
               <th className="px-4 py-3 w-20"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-            {users.map((u) => {
+            {processedUsers.map((u) => {
               const role = roleByKey.get(u.role);
               const roleLabel = role?.name || u.role_name || u.role;
               return (

@@ -5,6 +5,8 @@ import { costControlApi, CostEntry } from '../services/costControl';
 import { exchangeRatesApi, ExchangeRateRow } from '../services/exchangeRates';
 import { sumToBase, formatCurrency } from '../lib/fx';
 import { useCompanySettings } from '../context/CompanySettingsContext';
+import { ColumnHeader } from './ui/ColumnHeader';
+import { useTableControls, ColumnDef } from '../hooks/useTableControls';
 
 // Revenue comes from Sales invoices that are no longer drafts and haven't been
 // cancelled/voided. Cost comes from every cost_control entry (accrual basis —
@@ -168,7 +170,30 @@ export function PnL() {
     };
   }, [invoices, costs, rates, from, to, BASE_CURRENCY]);
 
-  const displayedRows = bookingOnly ? perBooking.filter(r => r.revenue > 0 || r.cost > 0) : perBooking;
+  const searchFiltered = bookingOnly ? perBooking.filter(r => r.revenue > 0 || r.cost > 0) : perBooking;
+
+  // Column descriptors drive the header sort/filter dropdowns. Each `get` returns the
+  // same display string shown in the cell; money/margin columns sort on raw numbers.
+  const columnDefs = useMemo<ColumnDef<PerBooking>[]>(() => ([
+    { key: 'bookingNumber', label: 'Booking', align: 'left', get: (r) => r.bookingNumber, filterable: false },
+    { key: 'clientName', label: 'Client', align: 'left', get: (r) => r.clientName || '—' },
+    { key: 'revenue', label: 'Revenue', align: 'right', get: (r) => formatCurrency(r.revenue, BASE_CURRENCY), sortValue: (r) => r.revenue ?? 0 },
+    { key: 'cost', label: 'Cost', align: 'right', get: (r) => formatCurrency(r.cost, BASE_CURRENCY), sortValue: (r) => r.cost ?? 0 },
+    { key: 'profit', label: 'Profit', align: 'right', get: (r) => formatCurrency(r.profit, BASE_CURRENCY), sortValue: (r) => r.profit ?? 0 },
+    { key: 'margin', label: 'Margin', align: 'right', get: (r) => r.revenue > 0 ? `${r.margin.toFixed(1)}%` : '—', sortValue: (r) => r.margin ?? 0 },
+  ]), [BASE_CURRENCY]);
+
+  // Column-level Excel-style filters + AZ/ZA sorting (shared across all list tables).
+  const {
+    processed: displayedRows,
+    columnValues,
+    columnFilters,
+    setColumnFilter,
+    clearAllColumnFilters,
+    activeColumnFilterCount,
+    sortDirFor,
+    toggleSort,
+  } = useTableControls(searchFiltered, columnDefs);
 
   const kpiCard = (label: string, value: string, Icon: any, tone: 'neutral' | 'good' | 'bad' = 'neutral') => {
     const toneClass =
@@ -208,11 +233,20 @@ export function PnL() {
             <input type="date" value={to} onChange={e => setTo(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100" />
           </div>
-          <div className="flex items-end">
+          <div className="flex items-end gap-4">
             <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
               <input type="checkbox" checked={bookingOnly} onChange={e => setBookingOnly(e.target.checked)} />
               Hide zero-activity bookings
             </label>
+            {activeColumnFilterCount > 0 && (
+              <button
+                onClick={clearAllColumnFilters}
+                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                title="Clear all column filters"
+              >
+                Clear filters ({activeColumnFilterCount})
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -267,12 +301,20 @@ export function PnL() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">Booking</th>
-                    <th className="px-4 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">Client</th>
-                    <th className="px-4 py-3 text-right text-xs text-gray-500 uppercase tracking-wider">Revenue</th>
-                    <th className="px-4 py-3 text-right text-xs text-gray-500 uppercase tracking-wider">Cost</th>
-                    <th className="px-4 py-3 text-right text-xs text-gray-500 uppercase tracking-wider">Profit</th>
-                    <th className="px-4 py-3 text-right text-xs text-gray-500 uppercase tracking-wider">Margin</th>
+                    {columnDefs.map(def => (
+                      <th key={def.key} className={`px-4 py-3 text-xs text-gray-500 uppercase tracking-wider ${def.align === 'right' ? 'text-right' : 'text-left'}`}>
+                        <ColumnHeader
+                          label={def.label}
+                          align={def.align}
+                          values={columnValues[def.key] || []}
+                          selected={columnFilters[def.key]}
+                          onFilterChange={(next) => setColumnFilter(def.key, next)}
+                          sortDir={sortDirFor(def.key)}
+                          onSortChange={(dir) => toggleSort(def.key, dir)}
+                          filterable={def.filterable}
+                        />
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">

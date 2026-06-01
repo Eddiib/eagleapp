@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Plus, Search, FileText, Loader2, AlertCircle,
-  CheckCircle, Clock, Ban, RefreshCw, Edit2, Trash2,
+  CheckCircle, Clock, Ban, RefreshCw, Edit2, Trash2, Filter,
 } from 'lucide-react';
 import { Invoice, InvoiceStatus, invoicesApi } from '../services/invoices';
 import { useConfirm } from '../context/ConfirmDialog';
 import { PaginationBar } from './ui/PaginationBar';
 import { useCompanySettings } from '../context/CompanySettingsContext';
+import { ColumnHeader } from './ui/ColumnHeader';
+import { useTableControls, ColumnDef } from '../hooks/useTableControls';
 
 interface InvoiceListProps {
   onNew: () => void;
@@ -45,7 +47,17 @@ export function InvoiceList({ onNew, onEdit, listKey }: InvoiceListProps) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
 
-  useEffect(() => { setPage(1); }, [search, statusFilter, pageSize]);
+  // Column descriptors drive the header sort/filter dropdowns; each `get` mirrors the cell text.
+  const columnDefs = useMemo<ColumnDef<Invoice>[]>(() => ([
+    { key: 'invoiceNumber', label: 'Invoice #', align: 'left', get: (i) => i.invoiceNumber || '—' },
+    { key: 'clientName', label: 'Client', align: 'left', get: (i) => i.clientName || '—' },
+    { key: 'bookingNumber', label: 'Booking', align: 'left', get: (i) => i.bookingNumber || '—' },
+    { key: 'invoiceDate', label: 'Date', align: 'left', get: (i) => i.invoiceDate || '—', sortValue: (i) => i.invoiceDate || '' },
+    { key: 'dueDate', label: 'Due', align: 'left', get: (i) => i.dueDate || '—', sortValue: (i) => i.dueDate || '' },
+    { key: 'totalAmount', label: 'Total', align: 'right', get: (i) => `${i.currency} ${i.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, sortValue: (i) => i.totalAmount },
+    { key: 'balanceDue', label: 'Balance Due', align: 'right', get: (i) => `${i.currency} ${i.balanceDue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, sortValue: (i) => i.balanceDue },
+    { key: 'status', label: 'Status', align: 'left', get: (i) => i.status || '—' },
+  ]), []);
 
   const load = () => {
     setLoading(true);
@@ -77,7 +89,7 @@ export function InvoiceList({ onNew, onEdit, listKey }: InvoiceListProps) {
     }
   };
 
-  const filtered = invoices.filter((inv) => {
+  const searchFiltered = invoices.filter((inv) => {
     const q = search.toLowerCase();
     const matchSearch =
       inv.invoiceNumber.toLowerCase().includes(q) ||
@@ -86,6 +98,20 @@ export function InvoiceList({ onNew, onEdit, listKey }: InvoiceListProps) {
     const matchStatus = statusFilter === 'all' || inv.status === statusFilter;
     return matchSearch && matchStatus;
   });
+
+  // Column-level Excel-style filters + AZ/ZA sorting (shared across all list tables).
+  const {
+    processed: filtered,
+    columnValues,
+    columnFilters,
+    setColumnFilter,
+    clearAllColumnFilters,
+    activeColumnFilterCount,
+    sortDirFor,
+    toggleSort,
+  } = useTableControls(searchFiltered, columnDefs);
+
+  useEffect(() => { setPage(1); }, [search, statusFilter, pageSize, columnFilters]);
 
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
 
@@ -181,6 +207,16 @@ export function InvoiceList({ onNew, onEdit, listKey }: InvoiceListProps) {
             <option key={s} value={s}>{s}</option>
           ))}
         </select>
+        {activeColumnFilterCount > 0 && (
+          <button
+            onClick={clearAllColumnFilters}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+            title="Clear all column filters"
+          >
+            <Filter className="w-4 h-4" />
+            Clear filters ({activeColumnFilterCount})
+          </button>
+        )}
       </div>
 
       {/* Table */}
@@ -196,14 +232,19 @@ export function InvoiceList({ onNew, onEdit, listKey }: InvoiceListProps) {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
               <tr>
-                <th className="px-4 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Invoice #</th>
-                <th className="px-4 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Client</th>
-                <th className="px-4 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Booking</th>
-                <th className="px-4 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
-                <th className="px-4 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Due</th>
-                <th className="px-4 py-3 text-right text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total</th>
-                <th className="px-4 py-3 text-right text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Balance Due</th>
-                <th className="px-4 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                {columnDefs.map((def) => (
+                  <th key={def.key} className={`px-4 py-3 ${def.align === 'right' ? 'text-right' : 'text-left'} text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider`}>
+                    <ColumnHeader
+                      label={def.label}
+                      align={def.align}
+                      values={columnValues[def.key] || []}
+                      selected={columnFilters[def.key]}
+                      onFilterChange={(next) => setColumnFilter(def.key, next)}
+                      sortDir={sortDirFor(def.key)}
+                      onSortChange={(dir) => toggleSort(def.key, dir)}
+                    />
+                  </th>
+                ))}
                 <th className="px-4 py-3 w-20"></th>
               </tr>
             </thead>

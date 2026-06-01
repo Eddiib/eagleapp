@@ -10,7 +10,15 @@ const { canAccess } = require('../lib/permissions');
 
 const REASSIGN_AGENT_PERMISSION = 'edit:booking-agent-assignment';
 
-const VALID_STATUSES = ['Draft', 'Confirmed', 'In Transit', 'Delivered', 'Cancelled'];
+// Booking statuses are configurable (see booking_statuses table / Settings),
+// so the allowed set is read from the DB rather than a hardcoded list.
+async function loadActiveStatusNames(conn = db) {
+  const [rows] = await conn.query(
+    'SELECT name FROM booking_statuses WHERE is_active = 1 ORDER BY sort_order, name',
+  );
+  return rows.map((r) => r.name);
+}
+
 const VALID_MODES = ['FCL', 'LCL', 'Air', 'Road'];
 const VALID_INCOTERMS = ['EXW', 'FCA', 'FAS', 'FOB', 'CFR', 'CIF', 'CPT', 'CIP', 'DAP', 'DPU', 'DDP'];
 const VALID_BL_TYPES = ['Bill of Lading', 'Telex Release', 'Seaway bill'];
@@ -519,9 +527,10 @@ router.post('/', asyncHandler(async (req, res) => {
   const { services = [], equipment = [], shippers = [] } = req.body;
 
   const header = pickHeaderValues(req.body);
-  // New bookings always start as Draft — clients can transition through the
-  // status workflow only after the row exists.
-  header.status = 'Draft';
+  // New bookings start in the first configured status (lowest sort order).
+  // Clients transition through the rest of the workflow once the row exists.
+  const initialStatusNames = await loadActiveStatusNames();
+  header.status = initialStatusNames[0] || 'Pending';
 
   checkOptionalEnum(header.mode_of_transport, VALID_MODES,         'mode_of_transport');
   checkOptionalEnum(header.incoterm,          VALID_INCOTERMS,     'incoterm');
@@ -634,9 +643,6 @@ router.put('/:id', asyncHandler(async (req, res) => {
   const { services = [], equipment = [], shippers = [] } = req.body;
 
   const header = pickHeaderValues(req.body);
-  if (header.status && !VALID_STATUSES.includes(header.status)) {
-    throw new AppError(400, `Invalid status: ${header.status}`, 'INVALID_STATUS');
-  }
   checkOptionalEnum(header.mode_of_transport, VALID_MODES,         'mode_of_transport');
   checkOptionalEnum(header.incoterm,          VALID_INCOTERMS,     'incoterm');
   checkOptionalEnum(header.bl_type,           VALID_BL_TYPES,      'bl_type');
@@ -677,6 +683,18 @@ router.put('/:id', asyncHandler(async (req, res) => {
     header.currency = header.currency || defaultCurrency;
 
     const beforeRow = await snapshotRow(conn, 'bookings', req.params.id);
+    if (!beforeRow) {
+      await conn.rollback();
+      throw new AppError(404, 'Booking not found', 'NOT_FOUND');
+    }
+
+    if (header.status) {
+      const allowedStatuses = await loadActiveStatusNames(conn);
+      const statusUnchanged = header.status === beforeRow.status;
+      if (!statusUnchanged && allowedStatuses.length && !allowedStatuses.includes(header.status)) {
+        throw new AppError(400, `Invalid status: ${header.status}`, 'INVALID_STATUS');
+      }
+    }
 
     // Lock the assigned agent for callers without reassign permission so an
     // edit submitted with a stale or tampered payload can't move the booking.

@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { EquipmentType, EquipmentFilters } from '../types/equipment';
 import { Plus, Search, Filter, Eye, Edit2, ToggleLeft, ToggleRight, Package } from 'lucide-react';
+import { ColumnHeader } from './ui/ColumnHeader';
+import { useTableControls, ColumnDef } from '../hooks/useTableControls';
 
 interface EquipmentListProps {
   equipment: EquipmentType[];
@@ -24,8 +26,20 @@ export function EquipmentList({
 
   const [showFilters, setShowFilters] = useState(false);
 
-  // Filter equipment
-  const filteredEquipment = equipment.filter(item => {
+  // Column descriptors drive the header sort/filter dropdowns and the filtering logic.
+  // Each `get` returns the same display string shown in the corresponding table cell.
+  const columnDefs = useMemo<ColumnDef<EquipmentType>[]>(() => ([
+    { key: 'equipmentCode', label: 'Code', align: 'left', get: (e) => e.equipmentCode },
+    { key: 'equipmentName', label: 'Equipment Name', align: 'left', get: (e) => e.equipmentName },
+    { key: 'category', label: 'Category', align: 'left', get: (e) => e.category },
+    { key: 'size', label: 'Size', align: 'left', get: (e) => e.size || '-' },
+    { key: 'teuEquivalent', label: 'TEU', align: 'left', get: (e) => e.teuEquivalent !== undefined ? String(e.teuEquivalent) : '-', sortValue: (e) => e.teuEquivalent ?? -1 },
+    { key: 'usedInBookings', label: 'Used in Bookings', align: 'left', get: (e) => String(e.usedInBookings), sortValue: (e) => e.usedInBookings },
+    { key: 'status', label: 'Status', align: 'left', get: (e) => e.isActive ? 'Active' : 'Inactive' },
+  ]), []);
+
+  // Existing search + category filters.
+  const searchFiltered = equipment.filter(item => {
     const matchesSearch =
       item.equipmentName.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
       item.equipmentCode.toLowerCase().includes(filters.searchTerm.toLowerCase());
@@ -34,6 +48,18 @@ export function EquipmentList({
 
     return matchesSearch && matchesCategory;
   });
+
+  // Column-level Excel-style filters + AZ/ZA sorting (shared across all list tables).
+  const {
+    processed: filteredEquipment,
+    columnValues,
+    columnFilters,
+    setColumnFilter,
+    clearAllColumnFilters,
+    activeColumnFilterCount,
+    sortDirFor,
+    toggleSort,
+  } = useTableControls(searchFiltered, columnDefs);
 
   return (
     <div className="space-y-6">
@@ -83,6 +109,16 @@ export function EquipmentList({
             <Filter className="w-4 h-4" />
             Filters
           </button>
+          {activeColumnFilterCount > 0 && (
+            <button
+              onClick={clearAllColumnFilters}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+              title="Clear all column filters"
+            >
+              <Filter className="w-4 h-4" />
+              Clear filters ({activeColumnFilterCount})
+            </button>
+          )}
         </div>
 
         {showFilters && (
@@ -115,27 +151,19 @@ export function EquipmentList({
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Code
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Equipment Name
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Category
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Size
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  TEU
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Used in Bookings
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Status
-                </th>
+                {columnDefs.map(def => (
+                  <th key={def.key} className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <ColumnHeader
+                      label={def.label}
+                      align={def.align}
+                      values={columnValues[def.key] || []}
+                      selected={columnFilters[def.key]}
+                      onFilterChange={(next) => setColumnFilter(def.key, next)}
+                      sortDir={sortDirFor(def.key)}
+                      onSortChange={(dir) => toggleSort(def.key, dir)}
+                    />
+                  </th>
+                ))}
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Actions
                 </th>

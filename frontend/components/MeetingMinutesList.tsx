@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Search, Filter, Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { SalesLeadMeetingMinute } from '../services/salesLeads';
 import { useConfirm } from '../context/ConfirmDialog';
 import { PaginationBar } from './ui/PaginationBar';
+import { ColumnHeader } from './ui/ColumnHeader';
+import { useTableControls, ColumnDef } from '../hooks/useTableControls';
 
 interface MeetingMinutesListProps {
   meetingMinutes: SalesLeadMeetingMinute[];
@@ -23,9 +25,34 @@ export function MeetingMinutesList({ onCreateNew, onView, onEdit, onDelete, meet
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
 
-  useEffect(() => { setPage(1); }, [searchTerm, filterType, filterStatus, dateFrom, dateTo, pageSize]);
+  const statusLabels: Record<SalesLeadMeetingMinute['status'], string> = {
+    draft: 'Draft',
+    completed: 'Completed',
+    'follow-up-pending': 'Follow-up Pending',
+  };
 
-  const filtered = meetingMinutes.filter(m => {
+  // Cell-display helpers shared by the column descriptors and the rendered cells.
+  const fmtDate = (d?: string | null) =>
+    d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+  const fmtNextAction = (d?: string | null) =>
+    d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—';
+  const fmtWeek = (d?: string | null) =>
+    d ? `W${Math.ceil((new Date(d).getTime() - new Date(new Date(d).getFullYear(), 0, 1).getTime()) / 86400000 / 7) + 1}` : '—';
+  const fmtDuration = (n?: number | null) => (n != null ? `${n} min` : '—');
+
+  const columnDefs = useMemo<ColumnDef<SalesLeadMeetingMinute>[]>(() => ([
+    { key: 'meetingDate', label: 'Date', align: 'left', get: (m) => fmtDate(m.meetingDate), sortValue: (m) => m.meetingDate || '' },
+    { key: 'week', label: 'Week', align: 'left', get: (m) => fmtWeek(m.meetingDate), sortValue: (m) => m.meetingDate || '' },
+    { key: 'partnerName', label: 'Client', align: 'left', get: (m) => m.partnerName ?? '—' },
+    { key: 'contactPerson', label: 'Contact Person', align: 'left', get: (m) => m.contactPerson ?? '—' },
+    { key: 'type', label: 'Type', align: 'left', get: (m) => m.meetingType ?? m.contactType },
+    { key: 'salesAgent', label: 'Sales Person', align: 'left', get: (m) => m.salesAgent },
+    { key: 'duration', label: 'Duration', align: 'left', get: (m) => fmtDuration(m.durationMinutes), sortValue: (m) => m.durationMinutes ?? -1 },
+    { key: 'status', label: 'Status', align: 'left', get: (m) => statusLabels[m.status] },
+    { key: 'nextAction', label: 'Next Action', align: 'left', get: (m) => fmtNextAction(m.nextActionDate), sortValue: (m) => m.nextActionDate || '' },
+  ]), []);
+
+  const searchFiltered = meetingMinutes.filter(m => {
     const text = `${m.partnerName ?? ''} ${m.salesAgent} ${m.purpose ?? ''} ${m.summary}`.toLowerCase();
     const matchesSearch = !searchTerm || text.includes(searchTerm.toLowerCase());
     const matchesType = filterType === 'all' || m.meetingType === filterType;
@@ -33,6 +60,20 @@ export function MeetingMinutesList({ onCreateNew, onView, onEdit, onDelete, meet
     const matchesDate = (!dateFrom || m.meetingDate >= dateFrom) && (!dateTo || m.meetingDate <= dateTo);
     return matchesSearch && matchesType && matchesStatus && matchesDate;
   });
+
+  // Column-level Excel-style filters + AZ/ZA sorting (shared across all list tables).
+  const {
+    processed: filtered,
+    columnValues,
+    columnFilters,
+    setColumnFilter,
+    clearAllColumnFilters,
+    activeColumnFilterCount,
+    sortDirFor,
+    toggleSort,
+  } = useTableControls(searchFiltered, columnDefs);
+
+  useEffect(() => { setPage(1); }, [searchTerm, filterType, filterStatus, dateFrom, dateTo, pageSize, columnFilters]);
 
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
 
@@ -42,14 +83,9 @@ export function MeetingMinutesList({ onCreateNew, onView, onEdit, onDelete, meet
       completed: 'bg-green-100 text-green-700 border-green-300',
       'follow-up-pending': 'bg-yellow-100 text-yellow-700 border-yellow-300',
     };
-    const labels = {
-      draft: 'Draft',
-      completed: 'Completed',
-      'follow-up-pending': 'Follow-up Pending',
-    };
     return (
       <span className={`px-2 py-1 rounded text-xs border ${cfg[status]}`}>
-        {labels[status]}
+        {statusLabels[status]}
       </span>
     );
   };
@@ -80,6 +116,16 @@ export function MeetingMinutesList({ onCreateNew, onView, onEdit, onDelete, meet
             <Filter className="w-4 h-4" />
             Filters
           </button>
+          {activeColumnFilterCount > 0 && (
+            <button
+              onClick={clearAllColumnFilters}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+              title="Clear all column filters"
+            >
+              <Filter className="w-4 h-4" />
+              Clear filters ({activeColumnFilterCount})
+            </button>
+          )}
         </div>
 
         {showFilters && (
@@ -131,15 +177,19 @@ export function MeetingMinutesList({ onCreateNew, onView, onEdit, onDelete, meet
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Week</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Client</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact Person</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Sales Person</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Duration</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Next Action</th>
+              {columnDefs.map(def => (
+                <th key={def.key} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <ColumnHeader
+                    label={def.label}
+                    align={def.align}
+                    values={columnValues[def.key] || []}
+                    selected={columnFilters[def.key]}
+                    onFilterChange={(next) => setColumnFilter(def.key, next)}
+                    sortDir={sortDirFor(def.key)}
+                    onSortChange={(dir) => toggleSort(def.key, dir)}
+                  />
+                </th>
+              ))}
               <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
@@ -152,15 +202,12 @@ export function MeetingMinutesList({ onCreateNew, onView, onEdit, onDelete, meet
               </tr>
             ) : (
               paged.map(m => {
-                const weekNum = m.meetingDate
-                  ? Math.ceil((new Date(m.meetingDate).getTime() - new Date(new Date(m.meetingDate).getFullYear(), 0, 1).getTime()) / 86400000 / 7) + 1
-                  : '—';
                 return (
                   <tr key={m.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                      {m.meetingDate ? new Date(m.meetingDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                      {fmtDate(m.meetingDate)}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">W{weekNum}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{fmtWeek(m.meetingDate)}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">{m.partnerName ?? '—'}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">{m.contactPerson ?? '—'}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm">
@@ -170,13 +217,11 @@ export function MeetingMinutesList({ onCreateNew, onView, onEdit, onDelete, meet
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">{m.salesAgent}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
-                      {m.durationMinutes != null ? `${m.durationMinutes} min` : '—'}
+                      {fmtDuration(m.durationMinutes)}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm">{getStatusBadge(m.status)}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
-                      {m.nextActionDate
-                        ? new Date(m.nextActionDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                        : '—'}
+                      {fmtNextAction(m.nextActionDate)}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-right text-sm">
                       <div className="flex items-center justify-end gap-2">

@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { SalesLead, LeadRanking, SalesLeadMeetingMinute } from './SalesLeads';
 import { Employee } from './EmployeesModule';
 import { SalesLeadMeetingPanel } from './SalesLeadMeetingPanel';
+import { ColumnHeader } from './ui/ColumnHeader';
+import { useTableControls, ColumnDef } from '../hooks/useTableControls';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
@@ -50,8 +52,20 @@ export function SalesLeadsList({
   const uniqueCities = Array.from(new Set(salesLeads.map(l => l.city))).filter(Boolean).sort();
   const uniqueTrades = Array.from(new Set(salesLeads.flatMap(l => l.preferredTrades))).filter(Boolean).sort();
 
+  // Column descriptors drive the header sort/filter dropdowns; each `get` returns the displayed cell text.
+  const columnDefs = useMemo<ColumnDef<SalesLead>[]>(() => ([
+    { key: 'leadId', label: 'Lead ID', align: 'left', get: (l) => l.leadId },
+    { key: 'clientName', label: 'Client Name', align: 'left', get: (l) => l.clientName },
+    { key: 'assignedSalesAgent', label: 'Sales Agent', align: 'left', get: (l) => l.assignedSalesAgent },
+    { key: 'preferredTrades', label: 'Preferred Trades', align: 'left', get: (l) => l.preferredTrades.join(', ') },
+    { key: 'city', label: 'City', align: 'left', get: (l) => l.city },
+    { key: 'lastContactDate', label: 'Last Contacted', align: 'left', get: (l) => l.lastContactDate || '-', sortValue: (l) => l.lastContactDate || '' },
+    { key: 'leadRanking', label: 'Ranking', align: 'left', get: (l) => l.leadRanking },
+    { key: 'partnerStatus', label: 'Status', align: 'left', get: (l) => l.partnerStatus },
+  ]), []);
+
   // Filter sales leads
-  const filteredLeads = salesLeads.filter(lead => {
+  const searchFiltered = salesLeads.filter(lead => {
     const matchesSearch = 
       lead.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.leadId.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -67,7 +81,19 @@ export function SalesLeadsList({
     return matchesSearch && matchesAgent && matchesCity && matchesTrade && matchesStatus && matchesRanking;
   });
 
-  const activeFiltersCount = 
+  // Column-level Excel-style filters + AZ/ZA sorting (shared across all list tables).
+  const {
+    processed: filteredLeads,
+    columnValues,
+    columnFilters,
+    setColumnFilter,
+    clearAllColumnFilters,
+    activeColumnFilterCount,
+    sortDirFor,
+    toggleSort,
+  } = useTableControls(searchFiltered, columnDefs);
+
+  const activeFiltersCount =
     (filterAgent !== 'all' ? 1 : 0) +
     (filterCity !== 'all' ? 1 : 0) +
     (filterTrade !== 'all' ? 1 : 0) +
@@ -216,6 +242,16 @@ export function SalesLeadsList({
               </span>
             )}
           </button>
+          {activeColumnFilterCount > 0 && (
+            <button
+              onClick={clearAllColumnFilters}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+              title="Clear all column filters"
+            >
+              <Filter className="w-4 h-4" />
+              Clear filters ({activeColumnFilterCount})
+            </button>
+          )}
         </div>
 
         {/* Filter Panel */}
@@ -324,30 +360,19 @@ export function SalesLeadsList({
         <table className="w-full">
           <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 z-10">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Lead ID
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Client Name
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Sales Agent
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Preferred Trades
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                City
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Last Contacted
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Ranking
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Status
-              </th>
+              {columnDefs.map(def => (
+                <th key={def.key} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <ColumnHeader
+                    label={def.label}
+                    align={def.align}
+                    values={columnValues[def.key] || []}
+                    selected={columnFilters[def.key]}
+                    onFilterChange={(next) => setColumnFilter(def.key, next)}
+                    sortDir={sortDirFor(def.key)}
+                    onSortChange={(dir) => toggleSort(def.key, dir)}
+                  />
+                </th>
+              ))}
               <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Actions
               </th>

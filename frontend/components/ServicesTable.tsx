@@ -1,6 +1,8 @@
-import { useState } from 'react';
-import { Search, Eye, Edit2, Copy, ToggleLeft, ToggleRight } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Search, Filter, Eye, Edit2, Copy, ToggleLeft, ToggleRight } from 'lucide-react';
 import { Service } from '../types/service';
+import { ColumnHeader } from './ui/ColumnHeader';
+import { useTableControls, ColumnDef } from '../hooks/useTableControls';
 
 interface ServicesTableProps {
   services: Service[];
@@ -21,37 +23,82 @@ export function ServicesTable({
 }: ServicesTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
-  const groupNameById = new Map(serviceGroups.map((g) => [g.id, g.groupName]));
+  const groupNameById = useMemo(
+    () => new Map(serviceGroups.map((g) => [g.id, g.groupName])),
+    [serviceGroups],
+  );
 
-  const filteredServices = services.filter((service) =>
+  // Column descriptors drive the header sort/filter dropdowns and the filtering logic.
+  // Each `get` returns the same display string shown in the corresponding table cell.
+  const columnDefs = useMemo<ColumnDef<Service>[]>(() => ([
+    { key: 'serviceCode', label: 'Code', align: 'left', get: (s) => s.serviceCode },
+    { key: 'serviceName', label: 'Name', align: 'left', get: (s) => s.serviceName },
+    { key: 'group', label: 'Group', align: 'left', get: (s) => (s.serviceGroupId ? groupNameById.get(s.serviceGroupId) || '—' : '—') },
+    { key: 'category', label: 'Category', align: 'left', get: (s) => s.category },
+    { key: 'modes', label: 'Modes', align: 'left', get: (s) => s.transportModes.join(', ') },
+    { key: 'chargeUnit', label: 'Charge Unit', align: 'left', get: (s) => s.chargeUnit },
+    { key: 'status', label: 'Status', align: 'left', get: (s) => (s.isActive ? 'Active' : 'Inactive') },
+  ]), [groupNameById]);
+
+  const searchFiltered = services.filter((service) =>
     service.serviceName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     service.serviceCode.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Column-level Excel-style filters + AZ/ZA sorting (shared across all list tables).
+  const {
+    processed: filteredServices,
+    columnValues,
+    columnFilters,
+    setColumnFilter,
+    clearAllColumnFilters,
+    activeColumnFilterCount,
+    sortDirFor,
+    toggleSort,
+  } = useTableControls(searchFiltered, columnDefs);
+
   return (
     <div className="space-y-4">
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Search by code or name..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full rounded border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-400 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-500"
-        />
+      <div className="flex items-center gap-3">
+        <div className="relative max-w-md flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search by code or name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full rounded border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-400 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-500"
+          />
+        </div>
+        {activeColumnFilterCount > 0 && (
+          <button
+            onClick={clearAllColumnFilters}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
+            title="Clear all column filters"
+          >
+            <Filter className="h-4 w-4" />
+            Clear filters ({activeColumnFilterCount})
+          </button>
+        )}
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
         <table className="min-w-full">
           <thead>
             <tr className="border-b border-gray-200 dark:border-gray-700">
-              <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">Code</th>
-              <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">Name</th>
-              <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">Group</th>
-              <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">Category</th>
-              <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">Modes</th>
-              <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">Charge Unit</th>
-              <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">Status</th>
+              {columnDefs.map((def) => (
+                <th key={def.key} className="px-4 py-3 text-left text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">
+                  <ColumnHeader
+                    label={def.label}
+                    align={def.align}
+                    values={columnValues[def.key] || []}
+                    selected={columnFilters[def.key]}
+                    onFilterChange={(next) => setColumnFilter(def.key, next)}
+                    sortDir={sortDirFor(def.key)}
+                    onSortChange={(dir) => toggleSort(def.key, dir)}
+                  />
+                </th>
+              ))}
               <th className="px-4 py-3 text-right text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">Actions</th>
             </tr>
           </thead>

@@ -1,5 +1,7 @@
 import { Booking } from '../services/bookings';
 import { Package, MapPin, Truck, Ship, Plane, ChevronRight, Edit, DollarSign, FileText } from 'lucide-react';
+import { StatusBadge } from './ui/StatusBadge';
+import { useBookingStatuses } from '../context/BookingStatusesContext';
 
 interface BookingQuickViewProps {
   booking: Booking;
@@ -7,22 +9,7 @@ interface BookingQuickViewProps {
 }
 
 export function BookingQuickView({ booking, onEdit }: BookingQuickViewProps) {
-  const getStatusColor = (status: Booking['status']) => {
-    switch (status) {
-      case 'Draft':
-        return 'bg-gray-100 text-gray-700 border-gray-300';
-      case 'Confirmed':
-        return 'bg-blue-100 text-blue-700 border-blue-300';
-      case 'In Transit':
-        return 'bg-yellow-100 text-yellow-700 border-yellow-300';
-      case 'Delivered':
-        return 'bg-green-100 text-green-700 border-green-300';
-      case 'Cancelled':
-        return 'bg-red-100 text-red-700 border-red-300';
-      default:
-        return 'bg-gray-100 text-gray-700 border-gray-300';
-    }
-  };
+  const { activeStatuses, colorFor } = useBookingStatuses();
 
   const getServiceIcon = (serviceType: Booking['serviceType']) => {
     switch (serviceType) {
@@ -38,25 +25,15 @@ export function BookingQuickView({ booking, onEdit }: BookingQuickViewProps) {
     }
   };
 
-  // Progress calculation based on status
-  const getProgressPercentage = (status: Booking['status']) => {
-    switch (status) {
-      case 'Draft':
-        return 10;
-      case 'Confirmed':
-        return 30;
-      case 'In Transit':
-        return 70;
-      case 'Delivered':
-        return 100;
-      case 'Cancelled':
-        return 0;
-      default:
-        return 0;
-    }
-  };
-
-  const progressPercentage = getProgressPercentage(booking.status);
+  // Progress reflects how far the booking has advanced through the configured
+  // status workflow (first status = 0%, last = 100%).
+  const statusIndex = activeStatuses.findIndex((s) => s.name === booking.status);
+  const progressPercentage =
+    statusIndex >= 0 && activeStatuses.length > 1
+      ? Math.round((statusIndex / (activeStatuses.length - 1)) * 100)
+      : 0;
+  const progressColor = colorFor(booking.status) || '#6b7280';
+  const workflowLabels = activeStatuses.length ? activeStatuses.map((s) => s.name) : [booking.status];
 
   return (
     <tr className="bg-gray-50 dark:bg-gray-800/50">
@@ -68,9 +45,7 @@ export function BookingQuickView({ booking, onEdit }: BookingQuickViewProps) {
               <h3 className="text-lg text-gray-900 dark:text-gray-100">
                 {booking.bookingNumber}
               </h3>
-              <span className={`px-3 py-1 text-sm rounded-full border ${getStatusColor(booking.status)}`}>
-                {booking.status}
-              </span>
+              <StatusBadge status={booking.status} className="px-3 py-1 text-sm rounded-full" />
             </div>
             <button
               onClick={() => onEdit(booking)}
@@ -89,29 +64,27 @@ export function BookingQuickView({ booking, onEdit }: BookingQuickViewProps) {
             </div>
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
               <div
-                className={`h-2 rounded-full transition-all ${
-                  booking.status === 'Delivered' ? 'bg-green-500' :
-                  booking.status === 'In Transit' ? 'bg-yellow-500' :
-                  booking.status === 'Confirmed' ? 'bg-blue-500' :
-                  booking.status === 'Cancelled' ? 'bg-red-500' :
-                  'bg-gray-400'
-                }`}
-                style={{ width: `${progressPercentage}%` }}
+                className="h-2 rounded-full transition-all"
+                style={{ width: `${progressPercentage}%`, backgroundColor: progressColor }}
               />
             </div>
-            <div className="flex items-center justify-between mt-2">
-              <div className="flex flex-col items-start">
-                <span className="text-xs text-gray-500 dark:text-gray-500">Draft</span>
-              </div>
-              <div className="flex flex-col items-center">
-                <span className="text-xs text-gray-500 dark:text-gray-500">Confirmed</span>
-              </div>
-              <div className="flex flex-col items-center">
-                <span className="text-xs text-gray-500 dark:text-gray-500">In Transit</span>
-              </div>
-              <div className="flex flex-col items-end">
-                <span className="text-xs text-gray-500 dark:text-gray-500">Delivered</span>
-              </div>
+            <div className="flex items-start justify-between gap-2 mt-2">
+              {workflowLabels.map((label, index) => (
+                <div
+                  key={`${label}-${index}`}
+                  className={`min-w-0 flex-1 ${
+                    index === 0
+                      ? 'text-left'
+                      : index === workflowLabels.length - 1
+                        ? 'text-right'
+                        : 'text-center'
+                  }`}
+                >
+                  <span className="block truncate text-xs text-gray-500 dark:text-gray-500" title={label}>
+                    {label}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
 

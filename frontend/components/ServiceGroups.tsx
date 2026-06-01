@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Eye, Edit2, Trash2, X, Search } from 'lucide-react';
+import { Eye, Edit2, Trash2, X, Search, Filter } from 'lucide-react';
 import { ServiceGroup, TransportMode, WhereUsed } from '../types/service';
 import { useConfirm } from '../context/ConfirmDialog';
+import { ColumnHeader } from './ui/ColumnHeader';
+import { useTableControls, ColumnDef } from '../hooks/useTableControls';
 
 interface ServiceGroupsProps {
   groups: ServiceGroup[];
@@ -71,7 +73,20 @@ export function ServiceGroups({
   const [searchTerm, setSearchTerm] = useState('');
   const [showInactive, setShowInactive] = useState(true);
 
-  const filteredGroups = useMemo(() => {
+  // Column descriptors drive the header sort/filter dropdowns and the filtering logic.
+  // Each `get` returns the same display string shown in the corresponding table cell.
+  const columnDefs = useMemo<ColumnDef<ServiceGroup>[]>(() => ([
+    { key: 'status', label: 'Active', align: 'left', get: (g) => (g.isActive ? 'Active' : 'Inactive') },
+    { key: 'groupCode', label: 'Group Code', align: 'left', get: (g) => g.groupCode },
+    { key: 'groupName', label: 'Group Name', align: 'left', get: (g) => g.groupName },
+    { key: 'description', label: 'Description', align: 'left', get: (g) => g.description || '—' },
+    { key: 'defaultWhereUsed', label: 'Default Where Used', align: 'left', get: (g) => g.defaultWhereUsed.join(', ') },
+    { key: 'defaultModes', label: 'Default Modes', align: 'left', get: (g) => g.defaultModes.join(', ') },
+    { key: 'usedInServices', label: 'Used by', align: 'right', get: (g) => String(g.usedInServices ?? 0), sortValue: (g) => g.usedInServices ?? 0 },
+  ]), []);
+
+  // Existing search + show-inactive filters; keep groupCode as the default order.
+  const searchFiltered = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
     return groups
       .filter((g) => (showInactive ? true : g.isActive))
@@ -84,6 +99,18 @@ export function ServiceGroups({
       )
       .sort((a, b) => a.groupCode.localeCompare(b.groupCode));
   }, [groups, searchTerm, showInactive]);
+
+  // Column-level Excel-style filters + AZ/ZA sorting (shared across all list tables).
+  const {
+    processed: filteredGroups,
+    columnValues,
+    columnFilters,
+    setColumnFilter,
+    clearAllColumnFilters,
+    activeColumnFilterCount,
+    sortDirFor,
+    toggleSort,
+  } = useTableControls(searchFiltered, columnDefs);
 
   const isDirty = useMemo(() => {
     if (!editingGroup) return false;
@@ -247,19 +274,40 @@ export function ServiceGroups({
           />
           Show inactive
         </label>
+        {activeColumnFilterCount > 0 && (
+          <button
+            onClick={clearAllColumnFilters}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
+            title="Clear all column filters"
+          >
+            <Filter className="h-4 w-4" />
+            Clear filters ({activeColumnFilterCount})
+          </button>
+        )}
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
         <table className="min-w-full">
           <thead>
             <tr className="border-b border-gray-200 dark:border-gray-700">
-              <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">Active</th>
-              <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">Group Code</th>
-              <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">Group Name</th>
-              <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">Description</th>
-              <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">Default Where Used</th>
-              <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">Default Modes</th>
-              <th className="px-4 py-3 text-right text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">Used by</th>
+              {columnDefs.map((def) => (
+                <th
+                  key={def.key}
+                  className={`px-4 py-3 text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400 ${
+                    def.align === 'right' ? 'text-right' : 'text-left'
+                  }`}
+                >
+                  <ColumnHeader
+                    label={def.label}
+                    align={def.align}
+                    values={columnValues[def.key] || []}
+                    selected={columnFilters[def.key]}
+                    onFilterChange={(next) => setColumnFilter(def.key, next)}
+                    sortDir={sortDirFor(def.key)}
+                    onSortChange={(dir) => toggleSort(def.key, dir)}
+                  />
+                </th>
+              ))}
               <th className="px-4 py-3 text-right text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">Actions</th>
             </tr>
           </thead>

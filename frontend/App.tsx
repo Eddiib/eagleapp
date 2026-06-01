@@ -22,6 +22,7 @@ import { ExchangeRatesManager } from './components/ExchangeRatesManager';
 import { PnL } from './components/PnL';
 import { AuditLog } from './components/AuditLog';
 import { CompanySettings } from './components/CompanySettings';
+import { BookingStatusSettings } from './components/BookingStatusSettings';
 import { PortsManagement } from './components/PortsManagement';
 import { MeetingMinutes } from './components/MeetingMinutes';
 import { QuotationDeskManager } from './components/QuotationDeskManager';
@@ -774,7 +775,10 @@ function AppShell() {
         ) : isAuditLogModule ? (
           <div className="p-6"><AuditLog /></div>
         ) : isCompanySettingsModule ? (
-          <div className="p-6"><CompanySettings /></div>
+          <div className="p-6 space-y-6">
+            <CompanySettings />
+            <div className="max-w-4xl"><BookingStatusSettings /></div>
+          </div>
         ) : isPortsManagementModule ? (
           <PortsManagement />
         ) : isExchangeRatesModule ? (

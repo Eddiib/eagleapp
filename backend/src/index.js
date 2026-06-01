@@ -21,6 +21,7 @@ const auditLogRouter          = require('./routes/auditLog');
 const companySettingsRouter   = require('./routes/companySettings');
 const brandingRouter          = require('./routes/branding');
 const portsRouter             = require('./routes/ports');
+const bookingStatusesRouter   = require('./routes/bookingStatuses');
 
 const PORT = Number(process.env.PORT) || 3001;
 
@@ -63,6 +64,7 @@ function createApp() {
   // Ports: GET is open to any signed-in user (powers booking POL/POD pickers);
   // mutations enforce admin-only inside the router.
   app.use('/api/ports',            verifyToken, portsRouter);
+  app.use('/api/booking-statuses', verifyToken, bookingStatusesRouter);
 
   // 404 + central error handler (must be last)
   app.use('/api', notFoundHandler);

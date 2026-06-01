@@ -6,6 +6,7 @@ import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { ConfirmDialogProvider } from './context/ConfirmDialog';
 import { CompanySettingsProvider } from './context/CompanySettingsContext';
+import { BookingStatusesProvider } from './context/BookingStatusesContext';
 import { TabsProvider } from './context/TabsContext';
 import './styles/globals.css';
 
@@ -14,11 +15,13 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <BrowserRouter>
       <AuthProvider>
         <CompanySettingsProvider>
-          <ConfirmDialogProvider>
-            <TabsProvider>
-              <App />
-            </TabsProvider>
-          </ConfirmDialogProvider>
+          <BookingStatusesProvider>
+            <ConfirmDialogProvider>
+              <TabsProvider>
+                <App />
+              </TabsProvider>
+            </ConfirmDialogProvider>
+          </BookingStatusesProvider>
         </CompanySettingsProvider>
       </AuthProvider>
       <Toaster position="top-right" richColors closeButton />
