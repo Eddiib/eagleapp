@@ -22,6 +22,8 @@ interface SalesLeadRow {
   city?: string | null;
   country?: string | null;
   partner_status?: string | null;
+  partner_assigned_agent_id?: string | null;
+  effective_assigned_sales_agent_id?: string | null;
   assigned_sales_agent?: string | null;
   contact_person?: string | null;
   contact_email?: string | null;
@@ -197,6 +199,9 @@ function toMinute(row: SalesLeadMeetingMinuteRow): SalesLeadMeetingMinute {
 }
 
 function toLead(row: SalesLeadRow): SalesLead {
+  const assignedSalesAgentId =
+    row.effective_assigned_sales_agent_id ?? row.assigned_sales_agent_id ?? row.partner_assigned_agent_id ?? '';
+
   return {
     id: row.id,
     leadId: row.lead_id,
@@ -209,7 +214,7 @@ function toLead(row: SalesLeadRow): SalesLead {
     email: row.contact_email ?? '',
     phone: row.contact_phone ?? '',
     assignedSalesAgent: row.assigned_sales_agent ?? 'Unassigned',
-    assignedSalesAgentId: row.assigned_sales_agent_id ?? '',
+    assignedSalesAgentId: assignedSalesAgentId,
     partnerStatus: row.partner_status === 'Active' ? 'Active' : 'Passive',
     leadStatus: row.lead_status ?? 'New',
     leadRanking: row.lead_ranking ?? 'Medium',
@@ -221,7 +226,7 @@ function toLead(row: SalesLeadRow): SalesLead {
     bookingCount: 0,
     contactPerson: row.contact_person ?? undefined,
     assignedSalesPerson: row.assigned_sales_agent ?? undefined,
-    assignedSalesPersonId: row.assigned_sales_agent_id ?? undefined,
+    assignedSalesPersonId: assignedSalesAgentId || undefined,
     status: row.lead_status ?? 'New',
   };
 }

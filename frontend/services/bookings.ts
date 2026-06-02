@@ -622,7 +622,7 @@ export function emptyBooking(initialBookingNumber?: string, currency = 'EUR'): B
   return {
     id: '',
     bookingNumber: initialBookingNumber || '',
-    status: 'Draft',
+    status: 'Pending',
     serviceType: 'FCL',
     clientId: '',
     clientName: '',

@@ -169,6 +169,7 @@ test('MVP API smoke flow covers auth, master data, bookings, CRM, services, and 
       zip_code: '11000',
       tax_number: `TAX-${suffix}-CLIENT`,
       registration_number: `REG-${suffix}-CLIENT`,
+      assigned_agent_id: employeeCreate.body.id,
       payment_terms: '30 Days',
       currency: 'EUR',
       default_service_type: 'Sea',
@@ -298,6 +299,26 @@ test('MVP API smoke flow covers auth, master data, bookings, CRM, services, and 
       },
     });
     assert.equal(partnerUpdate.status, 200);
+
+    const syncedLeadCreate = await jsonRequest(`/api/sales-leads/upsert-from-partner/${clientCreate.body.id}`, {
+      method: 'POST',
+      token,
+    });
+    assert.equal(syncedLeadCreate.status, 201);
+    tracker.salesLeadIds.push(syncedLeadCreate.body.id);
+
+    const syncedLeadDetail = await jsonRequest(`/api/sales-leads/${syncedLeadCreate.body.id}`, { token });
+    assert.equal(syncedLeadDetail.status, 200);
+    assert.equal(syncedLeadDetail.body.assigned_sales_agent_id, employeeCreate.body.id);
+    assert.equal(syncedLeadDetail.body.effective_assigned_sales_agent_id, employeeCreate.body.id);
+    assert.equal(syncedLeadDetail.body.assigned_sales_agent, 'Phase Updated Seven');
+
+    const syncedLeadDelete = await jsonRequest(`/api/sales-leads/${syncedLeadCreate.body.id}`, {
+      method: 'DELETE',
+      token,
+    });
+    assert.equal(syncedLeadDelete.status, 200);
+    tracker.salesLeadIds = tracker.salesLeadIds.filter((id) => id !== syncedLeadCreate.body.id);
 
     const serviceGroupPayload = {
       group_code: `PH7SG${short}`,

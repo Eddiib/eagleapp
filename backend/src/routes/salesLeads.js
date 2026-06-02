@@ -32,6 +32,8 @@ router.get('/', asyncHandler(async (_req, res) => {
       p.country,
       p.main_trades        AS preferred_trades,
       p.status             AS partner_status,
+      p.assigned_agent_id  AS partner_assigned_agent_id,
+      COALESCE(sl.assigned_sales_agent_id, p.assigned_agent_id) AS effective_assigned_sales_agent_id,
       CONCAT(e.first_name, ' ', e.surname) AS assigned_sales_agent,
       pc.name              AS contact_person,
       pc.email             AS contact_email,
@@ -43,7 +45,7 @@ router.get('/', asyncHandler(async (_req, res) => {
       ) AS meeting_minutes_count
     FROM sales_leads sl
     LEFT JOIN partners  p ON sl.partner_id              = p.id
-    LEFT JOIN employees e ON sl.assigned_sales_agent_id = e.id
+    LEFT JOIN employees e ON COALESCE(sl.assigned_sales_agent_id, p.assigned_agent_id) = e.id
     LEFT JOIN partner_contacts pc ON pc.partner_id = p.id AND pc.is_primary = 1
     ORDER BY sl.created_at DESC
   `);
@@ -145,6 +147,8 @@ router.get('/:id', asyncHandler(async (req, res) => {
       p.country,
       p.main_trades        AS preferred_trades,
       p.status             AS partner_status,
+      p.assigned_agent_id  AS partner_assigned_agent_id,
+      COALESCE(sl.assigned_sales_agent_id, p.assigned_agent_id) AS effective_assigned_sales_agent_id,
       CONCAT(e.first_name, ' ', e.surname) AS assigned_sales_agent,
       pc.name              AS contact_person,
       pc.email             AS contact_email,
@@ -156,7 +160,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
       ) AS meeting_minutes_count
     FROM sales_leads sl
     LEFT JOIN partners  p ON sl.partner_id              = p.id
-    LEFT JOIN employees e ON sl.assigned_sales_agent_id = e.id
+    LEFT JOIN employees e ON COALESCE(sl.assigned_sales_agent_id, p.assigned_agent_id) = e.id
     LEFT JOIN partner_contacts pc ON pc.partner_id = p.id AND pc.is_primary = 1
     WHERE sl.id = ?
   `, [req.params.id]);
@@ -198,18 +202,33 @@ router.post('/', asyncHandler(async (req, res) => {
 // gets a backing lead row so meeting minutes and status changes persist.
 router.post('/upsert-from-partner/:partnerId', asyncHandler(async (req, res) => {
   const { partnerId } = req.params;
-  const [existing] = await db.query('SELECT id FROM sales_leads WHERE partner_id = ? LIMIT 1', [partnerId]);
-  if (existing.length) return res.json({ id: existing[0].id, created: false });
+  const [existing] = await db.query(`
+    SELECT sl.id, sl.assigned_sales_agent_id, p.assigned_agent_id
+    FROM sales_leads sl
+    LEFT JOIN partners p ON p.id = sl.partner_id
+    WHERE sl.partner_id = ?
+    LIMIT 1
+  `, [partnerId]);
+  if (existing.length) {
+    const lead = existing[0];
+    if (!lead.assigned_sales_agent_id && lead.assigned_agent_id) {
+      await db.query(
+        'UPDATE sales_leads SET assigned_sales_agent_id = ? WHERE id = ?',
+        [lead.assigned_agent_id, lead.id]
+      );
+    }
+    return res.json({ id: lead.id, created: false });
+  }
 
-  const [partner] = await db.query('SELECT id FROM partners WHERE id = ?', [partnerId]);
+  const [partner] = await db.query('SELECT id, assigned_agent_id FROM partners WHERE id = ?', [partnerId]);
   if (!partner.length) throw new AppError(404, 'Partner not found', 'NOT_FOUND');
 
   const id = uuidv4();
   const resolvedLeadId = await nextLeadId();
   await db.query(
-    `INSERT INTO sales_leads (id, lead_id, partner_id, lead_status, lead_ranking)
-     VALUES (?,?,?,?,?)`,
-    [id, resolvedLeadId, partnerId, 'New', 'Medium']
+    `INSERT INTO sales_leads (id, lead_id, partner_id, assigned_sales_agent_id, lead_status, lead_ranking)
+     VALUES (?,?,?,?,?,?)`,
+    [id, resolvedLeadId, partnerId, partner[0].assigned_agent_id ?? null, 'New', 'Medium']
   );
   res.status(201).json({ id, lead_id: resolvedLeadId, created: true });
 }));

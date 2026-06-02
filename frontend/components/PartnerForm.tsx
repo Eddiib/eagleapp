@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, type KeyboardEvent } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Partner, PartnerType, PartnerCategory, PartnerStatus, PaymentTerms, DefaultServiceType, PartnerContact, DeliveryAddress, PartnerBankDetails, PartnerDocument, TradeMarketInfo, PartnerRole } from '../types/partner';
 import { Employee } from './EmployeesModule';
@@ -344,6 +344,10 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
   // ============= CONTACT CRUD OPERATIONS =============
   const handleContactChange = (index: number, field: keyof PartnerContact, value: string | boolean) => {
     let updatedContacts = [...(formData.contacts || [])];
+    const contactId = updatedContacts[index]?.id;
+    if (contactId && editingContactId !== contactId) {
+      setEditingContactId(contactId);
+    }
     updatedContacts[index] = {
       ...updatedContacts[index],
       [field]: value,
@@ -355,6 +359,12 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
       );
     }
     setFormData({ ...formData, contacts: updatedContacts });
+  };
+
+  const handleContactEditorKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+    }
   };
 
   const addContact = () => {
@@ -1050,7 +1060,11 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
 
                         {/* Contact Edit Mode */}
                         {isEditing && (
-                          <div className="px-3 py-2">
+                          <div
+                            className="px-3 py-2"
+                            onFocus={() => startEditingContact(contact.id)}
+                            onKeyDown={handleContactEditorKeyDown}
+                          >
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex items-center gap-2">
                                 {contact.isPrimary && (
