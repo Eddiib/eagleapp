@@ -9,6 +9,7 @@ import { usePartners } from '../hooks/usePartners';
 import { tableClasses } from './ui/table';
 import { isPartnerSeller } from '../utils/partnerRoles';
 import { PartnerPicker } from './PartnerPicker';
+import { CatalogPicker } from './CatalogPicker';
 
 interface Props {
   value: BookingEquipmentLine[];
@@ -274,6 +275,12 @@ function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servic
   const [supplierPickerForIdx, setSupplierPickerForIdx] = useState<number | null>(null);
   // Which service row currently has the invoice party picker open (null = closed).
   const [invoicePartyPickerForIdx, setInvoicePartyPickerForIdx] = useState<number | null>(null);
+  // Service-type and equipment pickers reuse the same searchable-modal UX.
+  const [serviceTypePickerForIdx, setServiceTypePickerForIdx] = useState<number | null>(null);
+  const [equipmentPickerForIdx, setEquipmentPickerForIdx] = useState<number | null>(null);
+
+  const serviceTypeItems = servicesCatalog.map(s => ({ id: s.id, label: s.serviceName, sublabel: s.serviceCode }));
+  const equipmentItems = catalog.map(c => ({ id: c.id, label: c.equipmentName, sublabel: c.equipmentCode }));
   const applyBulkDate = () => {
     if (!bulkDate) return;
     onChange(services.map((s) => ({ ...s, plannedDate: bulkDate })));
@@ -345,44 +352,58 @@ function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servic
                 />
               </td>
               <td className={td}>
-                <select
-                  value={svc.serviceId ?? ''}
-                  onChange={e => {
-                    const svcObj = servicesCatalog.find(s => s.id === e.target.value);
-                    setService(idx, {
-                      serviceId: e.target.value,
-                      serviceName: svcObj?.serviceName,
-                      serviceCode: svcObj?.serviceCode,
-                    });
-                  }}
-                  disabled={disabled}
-                  className={inp()}
-                >
-                  <option value="">Select Service Type...</option>
-                  {servicesCatalog.map(s => (
-                    <option key={s.id} value={s.id}>{s.serviceName}</option>
-                  ))}
-                </select>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setServiceTypePickerForIdx(idx)}
+                    disabled={disabled}
+                    className={`${inp('text-left truncate')} ${
+                      svc.serviceName || svc.serviceId ? '' : 'text-gray-400 dark:text-gray-500'
+                    } disabled:cursor-not-allowed`}
+                  >
+                    {svc.serviceName
+                      || (svc.serviceId
+                        ? servicesCatalog.find(s => s.id === svc.serviceId)?.serviceName ?? svc.serviceId
+                        : 'Select Service Type...')}
+                  </button>
+                  {!disabled && svc.serviceId && (
+                    <button
+                      type="button"
+                      onClick={() => setService(idx, { serviceId: '', serviceName: undefined, serviceCode: undefined })}
+                      title="Clear service type"
+                      className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 flex-shrink-0"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
               </td>
               <td className={td}>
-                <select
-                  value={svc.equipmentId ?? ''}
-                  onChange={e => {
-                    const eq = catalog.find(c => c.id === e.target.value);
-                    setService(idx, {
-                      equipmentId: e.target.value,
-                      equipmentName: eq?.equipmentName,
-                      equipmentCode: eq?.equipmentCode,
-                    });
-                  }}
-                  disabled={disabled}
-                  className={inp()}
-                >
-                  <option value="">—</option>
-                  {catalog.map(c => (
-                    <option key={c.id} value={c.id}>{c.equipmentName} ({c.equipmentCode})</option>
-                  ))}
-                </select>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setEquipmentPickerForIdx(idx)}
+                    disabled={disabled}
+                    className={`${inp('text-left truncate')} ${
+                      svc.equipmentName || svc.equipmentId ? '' : 'text-gray-400 dark:text-gray-500'
+                    } disabled:cursor-not-allowed`}
+                  >
+                    {svc.equipmentName
+                      || (svc.equipmentId
+                        ? catalog.find(c => c.id === svc.equipmentId)?.equipmentName ?? svc.equipmentId
+                        : 'Select Equipment...')}
+                  </button>
+                  {!disabled && svc.equipmentId && (
+                    <button
+                      type="button"
+                      onClick={() => setService(idx, { equipmentId: '', equipmentName: undefined, equipmentCode: undefined })}
+                      title="Clear equipment"
+                      className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 flex-shrink-0"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
               </td>
               <td className={td}>
                 <div className="flex items-center gap-1">
@@ -520,6 +541,48 @@ function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servic
             });
           }
           setInvoicePartyPickerForIdx(null);
+        }}
+      />
+
+      <CatalogPicker
+        open={serviceTypePickerForIdx !== null}
+        title="Select Service Type"
+        searchPlaceholder="Search by name or code…"
+        items={serviceTypeItems}
+        currentId={
+          serviceTypePickerForIdx !== null ? services[serviceTypePickerForIdx]?.serviceId || undefined : undefined
+        }
+        onClose={() => setServiceTypePickerForIdx(null)}
+        onSelect={(item) => {
+          if (serviceTypePickerForIdx !== null) {
+            setService(serviceTypePickerForIdx, {
+              serviceId: item.id,
+              serviceName: item.label,
+              serviceCode: item.sublabel,
+            });
+          }
+          setServiceTypePickerForIdx(null);
+        }}
+      />
+
+      <CatalogPicker
+        open={equipmentPickerForIdx !== null}
+        title="Select Equipment"
+        searchPlaceholder="Search by name or code…"
+        items={equipmentItems}
+        currentId={
+          equipmentPickerForIdx !== null ? services[equipmentPickerForIdx]?.equipmentId || undefined : undefined
+        }
+        onClose={() => setEquipmentPickerForIdx(null)}
+        onSelect={(item) => {
+          if (equipmentPickerForIdx !== null) {
+            setService(equipmentPickerForIdx, {
+              equipmentId: item.id,
+              equipmentName: item.label,
+              equipmentCode: item.sublabel,
+            });
+          }
+          setEquipmentPickerForIdx(null);
         }}
       />
     </div>
