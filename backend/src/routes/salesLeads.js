@@ -38,15 +38,17 @@ router.get('/', asyncHandler(async (_req, res) => {
       pc.name              AS contact_person,
       pc.email             AS contact_email,
       pc.phone             AS contact_phone,
-      (
-        SELECT COUNT(*)
-        FROM meeting_minutes mm
-        WHERE mm.sales_lead_id = sl.id
-      ) AS meeting_minutes_count
+      COALESCE(mmc.cnt, 0) AS meeting_minutes_count
     FROM sales_leads sl
     LEFT JOIN partners  p ON sl.partner_id              = p.id
     LEFT JOIN employees e ON COALESCE(sl.assigned_sales_agent_id, p.assigned_agent_id) = e.id
     LEFT JOIN partner_contacts pc ON pc.partner_id = p.id AND pc.is_primary = 1
+    LEFT JOIN (
+      SELECT sales_lead_id, COUNT(*) AS cnt
+      FROM meeting_minutes
+      WHERE sales_lead_id IS NOT NULL
+      GROUP BY sales_lead_id
+    ) mmc ON mmc.sales_lead_id = sl.id
     ORDER BY sl.created_at DESC
   `);
   res.json(rows);
@@ -231,6 +233,61 @@ router.post('/upsert-from-partner/:partnerId', asyncHandler(async (req, res) => 
     [id, resolvedLeadId, partnerId, partner[0].assigned_agent_id ?? null, 'New', 'Medium']
   );
   res.status(201).json({ id, lead_id: resolvedLeadId, created: true });
+}));
+
+// POST sync-from-partners: the bulk version of upsert-from-partner. Ensures every
+// given partner (or all partners when no list is sent) has a backing sales_leads
+// row, using one SELECT + one multi-row INSERT instead of a request per partner.
+router.post('/sync-from-partners', asyncHandler(async (req, res) => {
+  const partnerIds = Array.isArray(req.body?.partnerIds)
+    ? [...new Set(req.body.partnerIds.filter((x) => typeof x === 'string' && x))]
+    : null;
+  if (partnerIds && partnerIds.length === 0) return res.json({ created: 0 });
+
+  const partnerFilterSql = partnerIds
+    ? ` AND p.id IN (${partnerIds.map(() => '?').join(',')})`
+    : '';
+
+  // Backfill the sales agent on existing leads that don't have one yet.
+  await db.query(`
+    UPDATE sales_leads sl
+    JOIN partners p ON p.id = sl.partner_id
+    SET sl.assigned_sales_agent_id = p.assigned_agent_id
+    WHERE sl.assigned_sales_agent_id IS NULL AND p.assigned_agent_id IS NOT NULL
+    ${partnerFilterSql}
+  `, partnerIds ?? []);
+
+  // Partners (optionally restricted to the provided set) that have no lead yet.
+  const sql = `
+    SELECT p.id, p.assigned_agent_id
+    FROM partners p
+    LEFT JOIN sales_leads sl ON sl.partner_id = p.id
+    WHERE sl.id IS NULL
+    ${partnerFilterSql}
+  `;
+  const [missing] = await db.query(sql, partnerIds ?? []);
+  if (!missing.length) return res.json({ created: 0 });
+
+  // Establish the next LEAD-NNNN base once, then number the new rows in sequence.
+  const [existing] = await db.query(`SELECT lead_id FROM sales_leads WHERE lead_id LIKE 'LEAD-%'`);
+  let max = existing.reduce((m, r) => {
+    const n = parseInt(String(r.lead_id).split('-')[1], 10);
+    return Number.isFinite(n) && n > m ? n : m;
+  }, 0);
+
+  const placeholders = [];
+  const values = [];
+  for (const p of missing) {
+    max += 1;
+    placeholders.push('(?,?,?,?,?,?)');
+    values.push(uuidv4(), `LEAD-${String(max).padStart(4, '0')}`, p.id, p.assigned_agent_id ?? null, 'New', 'Medium');
+  }
+  await db.query(
+    `INSERT INTO sales_leads (id, lead_id, partner_id, assigned_sales_agent_id, lead_status, lead_ranking)
+     VALUES ${placeholders.join(',')}`,
+    values,
+  );
+  res.status(201).json({ created: missing.length });
 }));
 
 router.put('/:id', asyncHandler(async (req, res) => {

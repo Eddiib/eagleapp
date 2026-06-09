@@ -320,6 +320,67 @@ test('MVP API smoke flow covers auth, master data, bookings, CRM, services, and 
     assert.equal(syncedLeadDelete.status, 200);
     tracker.salesLeadIds = tracker.salesLeadIds.filter((id) => id !== syncedLeadCreate.body.id);
 
+    const carrierAssignAgent = await jsonRequest(`/api/partners/${carrierCreate.body.id}`, {
+      method: 'PUT',
+      token,
+      body: {
+        ...partnerCarrierPayload,
+        assigned_agent_id: employeeCreate.body.id,
+      },
+    });
+    assert.equal(carrierAssignAgent.status, 200);
+
+    const scopedCarrierLead = await jsonRequest('/api/sales-leads', {
+      method: 'POST',
+      token,
+      body: {
+        lead_id: `PH7CS${short}`,
+        partner_id: carrierCreate.body.id,
+        assigned_sales_agent_id: null,
+        lead_status: 'New',
+        lead_ranking: 'Medium',
+      },
+    });
+    assert.equal(scopedCarrierLead.status, 201);
+    tracker.salesLeadIds.push(scopedCarrierLead.body.id);
+
+    const bulkClientSync = await jsonRequest('/api/sales-leads/sync-from-partners', {
+      method: 'POST',
+      token,
+      body: { partnerIds: [clientCreate.body.id] },
+    });
+    assert.equal(bulkClientSync.status, 201);
+    assert.equal(bulkClientSync.body.created, 1);
+
+    const leadsAfterClientSync = await jsonRequest('/api/sales-leads', { token });
+    assert.equal(leadsAfterClientSync.status, 200);
+    const bulkClientLead = leadsAfterClientSync.body.find((lead) => lead.partner_id === clientCreate.body.id);
+    assert.ok(bulkClientLead);
+    tracker.salesLeadIds.push(bulkClientLead.id);
+    const carrierLeadAfterClientSync = leadsAfterClientSync.body.find((lead) => lead.id === scopedCarrierLead.body.id);
+    assert.equal(carrierLeadAfterClientSync.assigned_sales_agent_id, null);
+
+    const bulkCarrierSync = await jsonRequest('/api/sales-leads/sync-from-partners', {
+      method: 'POST',
+      token,
+      body: { partnerIds: [carrierCreate.body.id] },
+    });
+    assert.equal(bulkCarrierSync.status, 200);
+    assert.equal(bulkCarrierSync.body.created, 0);
+
+    const carrierLeadAfterCarrierSync = await jsonRequest(`/api/sales-leads/${scopedCarrierLead.body.id}`, { token });
+    assert.equal(carrierLeadAfterCarrierSync.status, 200);
+    assert.equal(carrierLeadAfterCarrierSync.body.assigned_sales_agent_id, employeeCreate.body.id);
+
+    for (const leadId of [scopedCarrierLead.body.id, bulkClientLead.id]) {
+      const deleteScopedLead = await jsonRequest(`/api/sales-leads/${leadId}`, {
+        method: 'DELETE',
+        token,
+      });
+      assert.equal(deleteScopedLead.status, 200);
+      tracker.salesLeadIds = tracker.salesLeadIds.filter((id) => id !== leadId);
+    }
+
     const serviceGroupPayload = {
       group_code: `PH7SG${short}`,
       group_name: 'Phase 7 Service Group',

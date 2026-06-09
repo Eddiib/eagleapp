@@ -291,6 +291,10 @@ export const salesLeadsApi = {
     api.delete<{ message: string }>(`/sales-leads/${id}`),
   upsertFromPartner: (partnerId: string) =>
     api.post<{ id: string; lead_id: string; created: boolean }>(`/sales-leads/upsert-from-partner/${partnerId}`),
+  // Bulk equivalent of upsertFromPartner — one request ensures every given
+  // partner has a backing lead row (avoids one HTTP call per partner on load).
+  syncFromPartners: (partnerIds: string[]) =>
+    api.post<{ created: number }>(`/sales-leads/sync-from-partners`, { partnerIds }),
   getMinutes: async (leadId: string): Promise<SalesLeadMeetingMinute[]> => {
     const rows = await api.get<SalesLeadMeetingMinuteRow[]>(`/sales-leads/${leadId}/minutes`);
     return rows.map(toMinute);

@@ -90,22 +90,14 @@ export function SalesLeads({ onCreateBookingFromLead }: SalesLeadsProps) {
       setError(null);
 
       try {
-        await Promise.allSettled(
-          clientPartnerIds.map((partnerId) => salesLeadsApi.upsertFromPartner(partnerId))
-        );
+        // One bulk request ensures every client partner has a backing lead row,
+        // instead of firing an upsert request per partner on every load.
+        await salesLeadsApi.syncFromPartners(clientPartnerIds);
 
         const leads = (await salesLeadsApi.getAll()).filter((lead) => clientPartnerIds.includes(lead.partnerId));
         if (ignore) return;
 
         setSalesLeads(leads);
-
-        if (selectedLeadId) {
-          const selectedStillExists = leads.some((lead) => lead.id === selectedLeadId);
-          if (!selectedStillExists) {
-            setSelectedLeadId(null);
-            setViewMode('list');
-          }
-        }
       } catch (err: any) {
         if (!ignore) {
           setError(err.message || 'Failed to load sales leads');
@@ -122,7 +114,17 @@ export function SalesLeads({ onCreateBookingFromLead }: SalesLeadsProps) {
     return () => {
       ignore = true;
     };
-  }, [partnersLoading, clientPartnerIds, selectedLeadId]);
+  }, [partnersLoading, clientPartnerIds]);
+
+  // If the currently-open lead disappears from the list, fall back to list view.
+  // Kept separate so selecting a lead never re-triggers the heavy sync/load above.
+  useEffect(() => {
+    if (!selectedLeadId) return;
+    if (!salesLeads.some((lead) => lead.id === selectedLeadId)) {
+      setSelectedLeadId(null);
+      setViewMode('list');
+    }
+  }, [selectedLeadId, salesLeads]);
 
   const handleViewDetail = async (leadId: string) => {
     setSelectedLeadId(leadId);

@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { SalesLead, LeadRanking, SalesLeadMeetingMinute } from './SalesLeads';
+import { PaginationBar } from './ui/PaginationBar';
 import { Employee } from './EmployeesModule';
 import { SalesLeadMeetingPanel } from './SalesLeadMeetingPanel';
 import { ColumnHeader } from './ui/ColumnHeader';
@@ -92,6 +93,19 @@ export function SalesLeadsList({
     sortDirFor,
     toggleSort,
   } = useTableControls(searchFiltered, columnDefs);
+
+  // Client-side pagination — keeps the DOM small even with many leads.
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, filterAgent, filterCity, filterTrade, filterStatus, filterRanking, pageSize, columnFilters]);
+  const totalPages = Math.max(1, Math.ceil(filteredLeads.length / pageSize));
+  const safePage = Math.min(Math.max(1, page), totalPages);
+  useEffect(() => {
+    if (page !== safePage) setPage(safePage);
+  }, [page, safePage]);
+  const pagedLeads = filteredLeads.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   const activeFiltersCount =
     (filterAgent !== 'all' ? 1 : 0) +
@@ -379,7 +393,7 @@ export function SalesLeadsList({
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-            {filteredLeads.map((lead) => (
+            {pagedLeads.map((lead) => (
               <tr
                 key={lead.id}
                 className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
@@ -499,6 +513,19 @@ export function SalesLeadsList({
                 ? 'Try adjusting your search or filter criteria'
                 : 'No synced client or buyer leads are available yet'}
             </p>
+          </div>
+        )}
+
+        {filteredLeads.length > 0 && (
+          <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+            <PaginationBar
+              page={page}
+              pageSize={pageSize}
+              total={filteredLeads.length}
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
+              label="leads"
+            />
           </div>
         )}
       </div>
