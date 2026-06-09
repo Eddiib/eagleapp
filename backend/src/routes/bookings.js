@@ -282,6 +282,43 @@ router.get('/next-number', asyncHandler(async (_req, res) => {
   res.json({ booking_number: bookingNumber });
 }));
 
+// GET all bookings WITH equipment + per-equipment services, all batched.
+// Powers the flattened Booking Details grid in a single round-trip instead of
+// one getById call per booking. Skips booking-level services/attachments which
+// the grid doesn't use.
+router.get('/detail-grid', asyncHandler(async (_req, res) => {
+  const [rows] = await db.query(`${BOOKING_SELECT} ORDER BY b.created_date DESC`);
+  if (rows.length === 0) return res.json([]);
+
+  const ids = rows.map(r => r.id);
+  const [equipment] = await db.query(`
+    SELECT be.*, e.equipment_name, e.equipment_code, e.category,
+           p.company_legal_name AS carrier_name
+    FROM booking_equipment be
+    LEFT JOIN equipment e ON be.equipment_id = e.id
+    LEFT JOIN partners p  ON be.carrier_id   = p.id
+    WHERE be.booking_id IN (?)
+  `, [ids]);
+
+  const equipmentMap = equipment.reduce((acc, r) => {
+    (acc[r.booking_id] = acc[r.booking_id] || []).push(r);
+    return acc;
+  }, {});
+
+  // One batched query for the services of every equipment row across all bookings.
+  const eqServicesMap = await loadEquipmentServicesFor(db, equipment.map(e => e.id));
+
+  for (const r of rows) {
+    normalizeBookingDates(r);
+    r.equipment = (equipmentMap[r.id] || []).map(e => ({ ...e, equipmentServices: eqServicesMap[e.id] || [] }));
+    r.services = [];
+    r.shippers = [];
+    r.attachments = [];
+  }
+
+  res.json(rows);
+}));
+
 // GET single booking with services, equipment, shippers, attachments
 router.get('/:id', asyncHandler(async (req, res) => {
   const [rows] = await db.query(`${BOOKING_SELECT} WHERE b.id = ?`, [req.params.id]);

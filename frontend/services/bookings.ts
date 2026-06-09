@@ -556,6 +556,12 @@ export const bookingsApi = {
     const rows = await api.get<BookingRow[]>('/bookings');
     return rows.map(toBooking);
   },
+  // All bookings with equipment + per-equipment services, in one batched call —
+  // used by the Booking Details grid instead of getById per booking.
+  getAllDetailed: async (): Promise<Booking[]> => {
+    const rows = await api.get<BookingRow[]>('/bookings/detail-grid');
+    return rows.map(toBooking);
+  },
   getNextNumber: async (): Promise<string> => {
     const row = await api.get<NextBookingNumberRow>('/bookings/next-number');
     return row.booking_number;

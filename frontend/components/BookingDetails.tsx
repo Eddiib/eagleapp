@@ -142,8 +142,7 @@ export function BookingDetails({ onNavigateToBooking }: BookingDetailsProps) {
     setLoading(true);
     setError(null);
     try {
-      const list = await bookingsApi.getAll();
-      const detailed = await Promise.all(list.map(b => bookingsApi.getById(b.id)));
+      const detailed = await bookingsApi.getAllDetailed();
       setBookings(detailed);
     } catch (err: any) {
       setError(err.message || 'Failed to load bookings');
