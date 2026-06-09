@@ -212,7 +212,7 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
 
       {/* Error */}
       {error && (
-        <div className="mb-4 px-4 py-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-400 rounded-md text-sm">
+        <div className="mb-4 px-2 py-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-400 rounded-md text-sm">
           {error} — <button onClick={fetchBookings} className="underline">Retry</button>
         </div>
       )}
@@ -220,10 +220,10 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
       {/* Table */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full text-xs">
             <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
               <tr>
-                <th className="px-4 py-3 text-left">
+                <th className="px-2 py-1.5 text-left">
                   <input
                     type="checkbox"
                     checked={selectedBookings.size === filteredBookings.length && filteredBookings.length > 0}
@@ -232,7 +232,7 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
                   />
                 </th>
                 {columnDefs.map(def => (
-                  <th key={def.key} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th key={def.key} className="px-2 py-1.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     <ColumnHeader
                       label={def.label}
                       align={def.align}
@@ -244,7 +244,7 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
                     />
                   </th>
                 ))}
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                <th className="px-2 py-1.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -273,7 +273,7 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
                       className="transition-colors hover:brightness-95 dark:hover:brightness-110"
                       style={statusColor ? { backgroundColor: `${statusColor}1a`, boxShadow: `inset 3px 0 0 0 ${statusColor}` } : undefined}
                     >
-                      <td className="px-4 py-3">
+                      <td className="px-2 py-1.5">
                         <input
                           type="checkbox"
                           checked={selectedBookings.has(booking.id)}
@@ -281,7 +281,7 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-2 py-1.5">
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => toggleExpand(booking.id)}
@@ -299,31 +299,31 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
                           </button>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-gray-900 dark:text-gray-100">{booking.clientName || '—'}</td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400 text-sm">
+                      <td className="px-2 py-1.5 text-gray-900 dark:text-gray-100">{booking.clientName || '—'}</td>
+                      <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400">
                         <div>{booking.origin || '—'}</div>
                         <div className="text-gray-400 dark:text-gray-500">→ {booking.destination || '—'}</div>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded">
+                      <td className="px-2 py-1.5">
+                        <span className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded">
                           {booking.serviceType}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
-                        <StatusBadge status={booking.status} className="px-2 py-1 text-xs rounded" />
+                      <td className="px-2 py-1.5">
+                        <StatusBadge status={booking.status} className="px-1.5 py-0.5 text-xs rounded" />
                       </td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400 text-sm">{booking.bookingDate || '—'}</td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400 text-sm">{booking.estimatedDeparture || '—'}</td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400 text-sm">{booking.estimatedArrival || '—'}</td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400 text-sm text-center">
+                      <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400">{booking.bookingDate || '—'}</td>
+                      <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400">{booking.estimatedDeparture || '—'}</td>
+                      <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400">{booking.estimatedArrival || '—'}</td>
+                      <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400 text-center">
                         {booking.totalContainers > 0 ? booking.totalContainers : '—'}
                       </td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400 text-sm">{booking.createdBy || '—'}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400">{booking.createdBy || '—'}</td>
+                      <td className="px-2 py-1.5">
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => onViewBooking(booking)}
-                            className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 rounded transition-colors"
+                            className="p-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 rounded transition-colors"
                             title="View"
                           >
                             <Eye className="w-4 h-4" />
@@ -331,7 +331,7 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
                           {onEditBooking && (
                             <button
                               onClick={() => onEditBooking(booking)}
-                              className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 rounded transition-colors"
+                              className="p-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 rounded transition-colors"
                               title="Edit"
                             >
                               <Edit className="w-4 h-4" />
@@ -341,7 +341,7 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
                             <button
                               onClick={() => handleDelete(booking.id)}
                               disabled={deletingId === booking.id}
-                              className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 rounded transition-colors disabled:opacity-50"
+                              className="p-1 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 rounded transition-colors disabled:opacity-50"
                               title="Delete"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -362,7 +362,7 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600">
+        <div className="px-2 py-1.5 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600">
           <PaginationBar
             page={page}
             pageSize={pageSize}

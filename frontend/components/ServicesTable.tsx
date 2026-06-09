@@ -83,11 +83,11 @@ export function ServicesTable({
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-        <table className="min-w-full">
+        <table className="min-w-full text-xs">
           <thead>
             <tr className="border-b border-gray-200 dark:border-gray-700">
               {columnDefs.map((def) => (
-                <th key={def.key} className="px-4 py-3 text-left text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">
+                <th key={def.key} className="px-2 py-1.5 text-left text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">
                   <ColumnHeader
                     label={def.label}
                     align={def.align}
@@ -99,7 +99,7 @@ export function ServicesTable({
                   />
                 </th>
               ))}
-              <th className="px-4 py-3 text-right text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">Actions</th>
+              <th className="px-2 py-1.5 text-right text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -118,27 +118,27 @@ export function ServicesTable({
                   index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50/50 dark:bg-gray-800/50'
                 } hover:bg-gray-50 dark:hover:bg-gray-700`}
               >
-                <td className="px-4 py-3 font-mono text-xs text-gray-900 dark:text-gray-300">{s.serviceCode}</td>
-                <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">{s.serviceName}</td>
-                <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-400">
+                <td className="px-2 py-1.5 font-mono text-xs text-gray-900 dark:text-gray-300">{s.serviceCode}</td>
+                <td className="px-2 py-1.5 text-gray-900 dark:text-gray-300">{s.serviceName}</td>
+                <td className="px-2 py-1.5 text-gray-700 dark:text-gray-400">
                   {s.serviceGroupId ? groupNameById.get(s.serviceGroupId) || '—' : <span className="text-muted-foreground">—</span>}
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-400">{s.category}</td>
-                <td className="px-4 py-3">
+                <td className="px-2 py-1.5 text-gray-700 dark:text-gray-400">{s.category}</td>
+                <td className="px-2 py-1.5">
                   <div className="flex flex-wrap gap-1">
                     {s.transportModes.map((m) => (
                       <span
                         key={m}
-                        className="rounded bg-purple-100 px-2 py-0.5 text-xs text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
+                        className="rounded bg-purple-100 px-1.5 py-0.5 text-xs text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
                       >
                         {m}
                       </span>
                     ))}
                   </div>
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-400">{s.chargeUnit}</td>
-                <td className="px-4 py-3">
-                  <span className={`inline-flex rounded-full px-2 py-1 text-xs ${
+                <td className="px-2 py-1.5 text-gray-700 dark:text-gray-400">{s.chargeUnit}</td>
+                <td className="px-2 py-1.5">
+                  <span className={`inline-flex rounded-full px-1.5 py-0.5 text-xs ${
                     s.isActive
                       ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
                       : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
@@ -146,7 +146,7 @@ export function ServicesTable({
                     {s.isActive ? 'Active' : 'Inactive'}
                   </span>
                 </td>
-                <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
                   <div className="flex justify-end gap-2">
                     <button
                       onClick={() => onView(s)}

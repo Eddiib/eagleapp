@@ -287,13 +287,13 @@ export function ServiceGroups({
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-        <table className="min-w-full">
+        <table className="min-w-full text-xs">
           <thead>
             <tr className="border-b border-gray-200 dark:border-gray-700">
               {columnDefs.map((def) => (
                 <th
                   key={def.key}
-                  className={`px-4 py-3 text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400 ${
+                  className={`px-2 py-1.5 text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400 ${
                     def.align === 'right' ? 'text-right' : 'text-left'
                   }`}
                 >
@@ -308,7 +308,7 @@ export function ServiceGroups({
                   />
                 </th>
               ))}
-              <th className="px-4 py-3 text-right text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">Actions</th>
+              <th className="px-2 py-1.5 text-right text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -336,8 +336,8 @@ export function ServiceGroups({
                 } hover:bg-gray-50 dark:hover:bg-gray-700`}
                 onClick={() => handleView(group)}
               >
-                <td className="px-4 py-3">
-                  <span className={`inline-flex rounded-full px-2 py-1 text-xs ${
+                <td className="px-2 py-1.5">
+                  <span className={`inline-flex rounded-full px-1.5 py-0.5 text-xs ${
                     group.isActive
                       ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
                       : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
@@ -345,46 +345,46 @@ export function ServiceGroups({
                     {group.isActive ? 'Active' : 'Inactive'}
                   </span>
                 </td>
-                <td className="px-4 py-3 font-mono text-xs text-gray-900 dark:text-gray-300">{group.groupCode}</td>
-                <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">{group.groupName}</td>
-                <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                <td className="px-2 py-1.5 font-mono text-xs text-gray-900 dark:text-gray-300">{group.groupCode}</td>
+                <td className="px-2 py-1.5 text-gray-900 dark:text-gray-300">{group.groupName}</td>
+                <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400">
                   <span className="block max-w-xs truncate" title={group.description || ''}>
                     {group.description || <span className="text-muted-foreground">—</span>}
                   </span>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-2 py-1.5">
                   <div className="flex flex-wrap gap-1">
                     {group.defaultWhereUsed.slice(0, 2).map((item) => (
                       <span
                         key={item}
-                        className="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                        className="rounded bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
                       >
                         {item}
                       </span>
                     ))}
                     {group.defaultWhereUsed.length > 2 && (
-                      <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-400">
+                      <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-400">
                         +{group.defaultWhereUsed.length - 2}
                       </span>
                     )}
                   </div>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-2 py-1.5">
                   <div className="flex flex-wrap gap-1">
                     {group.defaultModes.map((mode) => (
                       <span
                         key={mode}
-                        className="rounded bg-purple-100 px-2 py-0.5 text-xs text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
+                        className="rounded bg-purple-100 px-1.5 py-0.5 text-xs text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
                       >
                         {mode}
                       </span>
                     ))}
                   </div>
                 </td>
-                <td className="px-4 py-3 text-right text-sm tabular-nums text-gray-700 dark:text-gray-300">
+                <td className="px-2 py-1.5 text-right tabular-nums text-gray-700 dark:text-gray-300">
                   {group.usedInServices ?? 0}
                 </td>
-                <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                <td className="px-2 py-1.5 text-right" onClick={(e) => e.stopPropagation()}>
                   <div className="flex justify-end gap-2">
                     <button
                       onClick={() => handleView(group)}

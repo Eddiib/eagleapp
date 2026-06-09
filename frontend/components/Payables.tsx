@@ -155,11 +155,11 @@ export function Payables() {
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <table className="w-full text-sm">
+          <table className="w-full text-xs">
             <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
               <tr>
                 {columnDefs.map((def) => (
-                  <th key={def.key} className={`px-4 py-3 ${def.align === 'right' ? 'text-right' : 'text-left'} text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider`}>
+                  <th key={def.key} className={`px-2 py-1.5 ${def.align === 'right' ? 'text-right' : 'text-left'} text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider`}>
                     <ColumnHeader
                       label={def.label}
                       align={def.align}
@@ -178,19 +178,19 @@ export function Payables() {
                 const isOverdue = e.dueDate && e.dueDate < today && e.status !== 'Paid';
                 return (
                   <tr key={e.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700/30 ${isOverdue ? 'bg-red-50/30 dark:bg-red-900/10' : ''}`}>
-                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{e.bookingNumber || <span className="text-gray-400">—</span>}</td>
-                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{e.serviceName || <span className="text-gray-400">—</span>}</td>
-                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{e.supplierName || <span className="text-gray-400">—</span>}</td>
-                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{e.invoiceNumber || <span className="text-gray-300 dark:text-gray-600">Missing</span>}</td>
-                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{e.invoiceDate || '—'}</td>
-                    <td className={`px-4 py-3 ${isOverdue ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                    <td className="px-2 py-1.5 text-gray-700 dark:text-gray-300">{e.bookingNumber || <span className="text-gray-400">—</span>}</td>
+                    <td className="px-2 py-1.5 text-gray-700 dark:text-gray-300">{e.serviceName || <span className="text-gray-400">—</span>}</td>
+                    <td className="px-2 py-1.5 text-gray-700 dark:text-gray-300">{e.supplierName || <span className="text-gray-400">—</span>}</td>
+                    <td className="px-2 py-1.5 text-gray-500 dark:text-gray-400">{e.invoiceNumber || <span className="text-gray-300 dark:text-gray-600">Missing</span>}</td>
+                    <td className="px-2 py-1.5 text-gray-500 dark:text-gray-400">{e.invoiceDate || '—'}</td>
+                    <td className={`px-2 py-1.5 ${isOverdue ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}>
                       {e.dueDate || '—'}
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-gray-900 dark:text-gray-100">
+                    <td className="px-2 py-1.5 text-right tabular-nums text-gray-900 dark:text-gray-100">
                       {e.currency} {e.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${STATUS_COLORS[e.status]}`}>
+                    <td className="px-2 py-1.5">
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs ${STATUS_COLORS[e.status]}`}>
                         {e.status}
                       </span>
                     </td>

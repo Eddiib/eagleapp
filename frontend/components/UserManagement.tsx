@@ -691,11 +691,11 @@ export function UserManagement() {
             </button>
           )}
         </div>
-        <table className="w-full text-sm">
+        <table className="w-full text-xs">
           <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
             <tr>
               {userColumnDefs.map((def) => (
-                <th key={def.key} className="px-4 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th key={def.key} className="px-2 py-1.5 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   <ColumnHeader
                     label={def.label}
                     align={def.align}
@@ -707,7 +707,7 @@ export function UserManagement() {
                   />
                 </th>
               ))}
-              <th className="px-4 py-3 w-20"></th>
+              <th className="px-2 py-1.5 w-20"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -716,7 +716,7 @@ export function UserManagement() {
               const roleLabel = role?.name || u.role_name || u.role;
               return (
                 <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 group">
-                  <td className="px-4 py-3">
+                  <td className="px-2 py-1.5">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-700 dark:text-blue-300 text-xs shrink-0">
                         {(u.first_name?.[0] || u.username[0]).toUpperCase()}
@@ -732,14 +732,14 @@ export function UserManagement() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{u.email}</td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${SYSTEM_ROLE_COLORS[u.role] || 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200'}`}>
+                  <td className="px-2 py-1.5 text-gray-500 dark:text-gray-400">{u.email}</td>
+                  <td className="px-2 py-1.5">
+                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs ${SYSTEM_ROLE_COLORS[u.role] || 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200'}`}>
                       {u.role === 'admin' && <Shield className="w-3 h-3" />}
                       {roleLabel}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-2 py-1.5">
                     {Boolean(u.is_active) ? (
                       <span className="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
                         <CheckCircle className="w-3.5 h-3.5" /> Active
@@ -750,13 +750,13 @@ export function UserManagement() {
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-gray-400 dark:text-gray-500 text-xs">
+                  <td className="px-2 py-1.5 text-gray-400 dark:text-gray-500">
                     {u.last_login ? new Date(u.last_login).toLocaleDateString() : '-'}
                   </td>
-                  <td className="px-4 py-3 text-gray-400 dark:text-gray-500 text-xs">
+                  <td className="px-2 py-1.5 text-gray-400 dark:text-gray-500">
                     {u.created_at ? new Date(u.created_at).toLocaleDateString() : '-'}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-2 py-1.5">
                     {canEditUsers && (
                       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button

@@ -371,11 +371,11 @@ export function SalesLeadsList({
 
       {/* Table */}
       <div className="flex-1 overflow-auto">
-        <table className="w-full">
+        <table className="w-full text-xs">
           <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 z-10">
             <tr>
               {columnDefs.map(def => (
-                <th key={def.key} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th key={def.key} className="px-2 py-1.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   <ColumnHeader
                     label={def.label}
                     align={def.align}
@@ -387,7 +387,7 @@ export function SalesLeadsList({
                   />
                 </th>
               ))}
-              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-2 py-1.5 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -398,41 +398,41 @@ export function SalesLeadsList({
                 key={lead.id}
                 className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
-                <td className="px-4 py-3 whitespace-nowrap">
-                  <div className="text-sm text-gray-900 dark:text-white">{lead.leadId}</div>
+                <td className="px-2 py-1.5 whitespace-nowrap">
+                  <div className="text-gray-900 dark:text-white">{lead.leadId}</div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">{lead.partnerCode}</div>
                 </td>
-                <td className="px-4 py-3">
-                  <div className="text-sm text-gray-900 dark:text-white">{lead.clientName}</div>
+                <td className="px-2 py-1.5">
+                  <div className="text-gray-900 dark:text-white">{lead.clientName}</div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">{getCountryName(lead.country)}</div>
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap">
+                <td className="px-2 py-1.5 whitespace-nowrap">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 flex items-center justify-center text-xs">
                       {getAgentInitials(lead.assignedSalesAgent)}
                     </div>
-                    <span className="text-sm text-gray-900 dark:text-white">{lead.assignedSalesAgent}</span>
+                    <span className="text-gray-900 dark:text-white">{lead.assignedSalesAgent}</span>
                   </div>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-2 py-1.5">
                   <div className="flex flex-wrap gap-1">
                     {lead.preferredTrades.slice(0, 3).map(trade => (
-                      <Badge key={trade} className="bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 text-xs">
+                      <Badge key={trade} className="bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 text-xs px-1.5 py-0.5">
                         {trade}
                       </Badge>
                     ))}
                     {lead.preferredTrades.length > 3 && (
-                      <Badge className="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-400 text-xs">
+                      <Badge className="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-400 text-xs px-1.5 py-0.5">
                         +{lead.preferredTrades.length - 3}
                       </Badge>
                     )}
                   </div>
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap">
-                  <div className="text-sm text-gray-900 dark:text-white">{lead.city}</div>
+                <td className="px-2 py-1.5 whitespace-nowrap">
+                  <div className="text-gray-900 dark:text-white">{lead.city}</div>
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap">
-                  <div className="text-sm text-gray-900 dark:text-white">
+                <td className="px-2 py-1.5 whitespace-nowrap">
+                  <div className="text-gray-900 dark:text-white">
                     {lead.lastContactDate || '-'}
                   </div>
                   {lead.meetingMinutesCount > 0 && (
@@ -441,18 +441,18 @@ export function SalesLeadsList({
                     </div>
                   )}
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap">
-                  <Badge className={`${getRankingColor(lead.leadRanking)} flex items-center gap-1 w-fit`}>
+                <td className="px-2 py-1.5 whitespace-nowrap">
+                  <Badge className={`${getRankingColor(lead.leadRanking)} flex items-center gap-1 w-fit px-1.5 py-0.5`}>
                     {getRankingIcon(lead.leadRanking)}
                     {lead.leadRanking}
                   </Badge>
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap">
-                  <Badge className={getStatusColor(lead.partnerStatus)}>
+                <td className="px-2 py-1.5 whitespace-nowrap">
+                  <Badge className={`${getStatusColor(lead.partnerStatus)} px-1.5 py-0.5`}>
                     {lead.partnerStatus}
                   </Badge>
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap">
+                <td className="px-2 py-1.5 whitespace-nowrap">
                   <div className="flex items-center justify-center gap-1">
                     {/* Contact Button - Opens Meeting Minutes */}
                     <Button

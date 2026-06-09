@@ -84,7 +84,7 @@ export function MeetingMinutesList({ onCreateNew, onView, onEdit, onDelete, meet
       'follow-up-pending': 'bg-yellow-100 text-yellow-700 border-yellow-300',
     };
     return (
-      <span className={`px-2 py-1 rounded text-xs border ${cfg[status]}`}>
+      <span className={`px-1.5 py-0.5 rounded text-xs border ${cfg[status]}`}>
         {statusLabels[status]}
       </span>
     );
@@ -174,11 +174,11 @@ export function MeetingMinutesList({ onCreateNew, onView, onEdit, onDelete, meet
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full text-xs">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               {columnDefs.map(def => (
-                <th key={def.key} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th key={def.key} className="px-2 py-1.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   <ColumnHeader
                     label={def.label}
                     align={def.align}
@@ -190,7 +190,7 @@ export function MeetingMinutesList({ onCreateNew, onView, onEdit, onDelete, meet
                   />
                 </th>
               ))}
-              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+              <th className="px-2 py-1.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -204,26 +204,26 @@ export function MeetingMinutesList({ onCreateNew, onView, onEdit, onDelete, meet
               paged.map(m => {
                 return (
                   <tr key={m.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-2 py-1.5 whitespace-nowrap text-gray-900">
                       {fmtDate(m.meetingDate)}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{fmtWeek(m.meetingDate)}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{m.partnerName ?? '—'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{m.contactPerson ?? '—'}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm">
-                      <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs border border-blue-200">
+                    <td className="px-2 py-1.5 whitespace-nowrap text-gray-600">{fmtWeek(m.meetingDate)}</td>
+                    <td className="px-2 py-1.5 text-gray-900">{m.partnerName ?? '—'}</td>
+                    <td className="px-2 py-1.5 text-gray-600">{m.contactPerson ?? '—'}</td>
+                    <td className="px-2 py-1.5 whitespace-nowrap">
+                      <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-xs border border-blue-200">
                         {m.meetingType ?? m.contactType}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{m.salesAgent}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                    <td className="px-2 py-1.5 text-gray-600">{m.salesAgent}</td>
+                    <td className="px-2 py-1.5 whitespace-nowrap text-gray-600">
                       {fmtDuration(m.durationMinutes)}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm">{getStatusBadge(m.status)}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                    <td className="px-2 py-1.5 whitespace-nowrap">{getStatusBadge(m.status)}</td>
+                    <td className="px-2 py-1.5 whitespace-nowrap text-gray-600">
                       {fmtNextAction(m.nextActionDate)}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-right text-sm">
+                    <td className="px-2 py-1.5 whitespace-nowrap text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button onClick={() => onView(m.id)} className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="View">
                           <Eye className="w-4 h-4" />

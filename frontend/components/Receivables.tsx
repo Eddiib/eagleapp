@@ -142,11 +142,11 @@ export function Receivables() {
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <table className="w-full text-sm">
+          <table className="w-full text-xs">
             <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
               <tr>
                 {columnDefs.map((def) => (
-                  <th key={def.key} className={`px-4 py-3 ${def.align === 'right' ? 'text-right' : 'text-left'} text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider`}>
+                  <th key={def.key} className={`px-2 py-1.5 ${def.align === 'right' ? 'text-right' : 'text-left'} text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider`}>
                     <ColumnHeader
                       label={def.label}
                       align={def.align}
@@ -163,21 +163,21 @@ export function Receivables() {
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
               {processed.map((inv) => (
                 <tr key={inv.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700/30 ${inv.status === 'Overdue' ? 'bg-red-50/30 dark:bg-red-900/10' : ''}`}>
-                  <td className="px-4 py-3 font-medium text-blue-600 dark:text-blue-400">{inv.invoiceNumber}</td>
-                  <td className="px-4 py-3 text-gray-900 dark:text-gray-100">{inv.clientName || <span className="text-gray-400">—</span>}</td>
-                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{inv.bookingNumber || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
-                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{inv.invoiceDate}</td>
-                  <td className={`px-4 py-3 ${inv.status === 'Overdue' ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                  <td className="px-2 py-1.5 font-medium text-blue-600 dark:text-blue-400">{inv.invoiceNumber}</td>
+                  <td className="px-2 py-1.5 text-gray-900 dark:text-gray-100">{inv.clientName || <span className="text-gray-400">—</span>}</td>
+                  <td className="px-2 py-1.5 text-gray-500 dark:text-gray-400">{inv.bookingNumber || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
+                  <td className="px-2 py-1.5 text-gray-500 dark:text-gray-400">{inv.invoiceDate}</td>
+                  <td className={`px-2 py-1.5 ${inv.status === 'Overdue' ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}>
                     {inv.dueDate || '—'}
                   </td>
-                  <td className="px-4 py-3 text-right text-gray-900 dark:text-gray-100 tabular-nums">
+                  <td className="px-2 py-1.5 text-right text-gray-900 dark:text-gray-100 tabular-nums">
                     {inv.currency} {inv.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </td>
-                  <td className={`px-4 py-3 text-right tabular-nums ${inv.balanceDue > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'}`}>
+                  <td className={`px-2 py-1.5 text-right tabular-nums ${inv.balanceDue > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'}`}>
                     {inv.currency} {inv.balanceDue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${STATUS_COLORS[inv.status]}`}>
+                  <td className="px-2 py-1.5">
+                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs ${STATUS_COLORS[inv.status]}`}>
                       {inv.status}
                     </span>
                   </td>

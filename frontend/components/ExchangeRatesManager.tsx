@@ -211,11 +211,11 @@ export function ExchangeRatesManager() {
             No rates configured yet. Add one above.
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <table className="w-full text-xs">
             <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
               <tr>
                 {columnDefs.map((def) => (
-                  <th key={def.key} className={`px-4 py-3 ${def.align === 'right' ? 'text-right' : 'text-left'} text-xs text-gray-500 uppercase tracking-wider`}>
+                  <th key={def.key} className={`px-2 py-1.5 ${def.align === 'right' ? 'text-right' : 'text-left'} text-xs text-gray-500 uppercase tracking-wider`}>
                     <ColumnHeader
                       label={def.label}
                       align={def.align}
@@ -227,18 +227,18 @@ export function ExchangeRatesManager() {
                     />
                   </th>
                 ))}
-                <th className="px-4 py-3 w-20"></th>
+                <th className="px-2 py-1.5 w-20"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
               {processedRates.map(r => (
                 <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                  <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{r.from_currency}</td>
-                  <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{r.to_currency}</td>
-                  <td className="px-4 py-3 text-right tabular-nums text-gray-900 dark:text-gray-100">{Number(r.rate).toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
-                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{r.effective_date}</td>
-                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{r.updated_at ? String(r.updated_at).split('T')[0] : '—'}</td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-2 py-1.5 font-medium text-gray-900 dark:text-gray-100">{r.from_currency}</td>
+                  <td className="px-2 py-1.5 font-medium text-gray-900 dark:text-gray-100">{r.to_currency}</td>
+                  <td className="px-2 py-1.5 text-right tabular-nums text-gray-900 dark:text-gray-100">{Number(r.rate).toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
+                  <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400">{r.effective_date}</td>
+                  <td className="px-2 py-1.5 text-gray-500 dark:text-gray-400">{r.updated_at ? String(r.updated_at).split('T')[0] : '—'}</td>
+                  <td className="px-2 py-1.5 text-right">
                     <button onClick={() => handleDelete(r)}
                       className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded">
                       <Trash2 className="w-3.5 h-3.5" />

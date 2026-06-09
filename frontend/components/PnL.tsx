@@ -298,11 +298,11 @@ export function PnL() {
                 No bookings with activity in the selected period.
               </div>
             ) : (
-              <table className="w-full text-sm">
+              <table className="w-full text-xs">
                 <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
                   <tr>
                     {columnDefs.map(def => (
-                      <th key={def.key} className={`px-4 py-3 text-xs text-gray-500 uppercase tracking-wider ${def.align === 'right' ? 'text-right' : 'text-left'}`}>
+                      <th key={def.key} className={`px-2 py-1.5 text-xs text-gray-500 uppercase tracking-wider ${def.align === 'right' ? 'text-right' : 'text-left'}`}>
                         <ColumnHeader
                           label={def.label}
                           align={def.align}
@@ -320,7 +320,7 @@ export function PnL() {
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                   {displayedRows.map(r => (
                     <tr key={r.bookingId} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                      <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">
+                      <td className="px-2 py-1.5 font-medium text-gray-900 dark:text-gray-100">
                         {r.bookingNumber}
                         {r.missing.length > 0 && (
                           <span className="ml-2 inline-flex items-center text-xs text-yellow-700 dark:text-yellow-400" title={`Missing FX to ${BASE_CURRENCY}: ${r.missing.join(', ')}`}>
@@ -329,13 +329,13 @@ export function PnL() {
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{r.clientName || '—'}</td>
-                      <td className="px-4 py-3 text-right tabular-nums text-gray-900 dark:text-gray-100">{formatCurrency(r.revenue, BASE_CURRENCY)}</td>
-                      <td className="px-4 py-3 text-right tabular-nums text-gray-900 dark:text-gray-100">{formatCurrency(r.cost, BASE_CURRENCY)}</td>
-                      <td className={`px-4 py-3 text-right tabular-nums ${r.profit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                      <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400">{r.clientName || '—'}</td>
+                      <td className="px-2 py-1.5 text-right tabular-nums text-gray-900 dark:text-gray-100">{formatCurrency(r.revenue, BASE_CURRENCY)}</td>
+                      <td className="px-2 py-1.5 text-right tabular-nums text-gray-900 dark:text-gray-100">{formatCurrency(r.cost, BASE_CURRENCY)}</td>
+                      <td className={`px-2 py-1.5 text-right tabular-nums ${r.profit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
                         {formatCurrency(r.profit, BASE_CURRENCY)}
                       </td>
-                      <td className={`px-4 py-3 text-right tabular-nums ${r.margin >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                      <td className={`px-2 py-1.5 text-right tabular-nums ${r.margin >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
                         {r.revenue > 0 ? `${r.margin.toFixed(1)}%` : '—'}
                       </td>
                     </tr>

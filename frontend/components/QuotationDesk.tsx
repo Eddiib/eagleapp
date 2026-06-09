@@ -255,11 +255,11 @@ export function QuotationDesk({
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full text-xs">
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
                 {columnDefs.map((def) => (
-                  <th key={def.key} className="px-4 py-3 text-left text-xs text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                  <th key={def.key} className="px-2 py-1.5 text-left text-xs text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                     <ColumnHeader
                       label={def.label}
                       align={def.align}
@@ -271,7 +271,7 @@ export function QuotationDesk({
                     />
                   </th>
                 ))}
-                <th className="px-4 py-3 text-left text-xs text-gray-700 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                <th className="px-2 py-1.5 text-left text-xs text-gray-700 dark:text-gray-300 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -295,28 +295,28 @@ export function QuotationDesk({
                   const route = routeLabel(quotation);
                   return (
                     <tr key={quotation.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                      <td className="px-4 py-3 text-sm text-blue-600 dark:text-blue-400">{quotation.quoteNumber}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{quotation.clientName || '—'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                      <td className="px-2 py-1.5 text-blue-600 dark:text-blue-400">{quotation.quoteNumber}</td>
+                      <td className="px-2 py-1.5 text-gray-900 dark:text-gray-100">{quotation.clientName || '—'}</td>
+                      <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400">
                         <div className="flex items-center gap-1">
                           <span>{route.origin}</span>
                           <span>→</span>
                           <span>{route.destination}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{quotation.modeOfTransport || '—'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{quotation.serviceCount}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                      <td className="px-2 py-1.5 text-gray-900 dark:text-gray-100">{quotation.modeOfTransport || '—'}</td>
+                      <td className="px-2 py-1.5 text-gray-900 dark:text-gray-100">{quotation.serviceCount}</td>
+                      <td className="px-2 py-1.5 text-gray-900 dark:text-gray-100">
                         {quotation.currency} {quotation.totalSell.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{quotation.validUntil || '—'}</td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs ${getStatusBadge(quotation.status)}`}>
+                      <td className="px-2 py-1.5 text-gray-900 dark:text-gray-100">{quotation.validUntil || '—'}</td>
+                      <td className="px-2 py-1.5">
+                        <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs ${getStatusBadge(quotation.status)}`}>
                           {getStatusIcon(quotation.status)}
                           {quotation.status}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-2 py-1.5">
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => onViewQuotation?.(quotation)}

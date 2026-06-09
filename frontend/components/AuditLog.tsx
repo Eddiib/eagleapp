@@ -38,7 +38,7 @@ function actionBadge(action: AuditAction) {
     action === 'INSERT' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' :
     action === 'UPDATE' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
                           'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300';
-  return <span className={`inline-block text-xs uppercase tracking-wide px-2 py-0.5 rounded ${colorClass}`}>{action}</span>;
+  return <span className={`inline-block text-xs uppercase tracking-wide px-1.5 py-0.5 rounded ${colorClass}`}>{action}</span>;
 }
 
 function tableLabel(t: string): string {
@@ -200,7 +200,7 @@ export function AuditLog() {
               </div>
             )}
             {/* Column header row mirrors the per-row layout below for sort/filter controls. */}
-            <div className="flex items-center gap-3 px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            <div className="flex items-center gap-3 px-2 py-1.5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
               <div className="w-4 flex-shrink-0" />
               <div className="flex-shrink-0 w-20">
                 <ColumnHeader
@@ -263,9 +263,9 @@ export function AuditLog() {
               const isOpen = expanded.has(e.id);
               const diff = e.action === 'UPDATE' ? diffRows(e.before_data, e.after_data) : [];
               return (
-                <li key={e.id} className="text-sm">
+                <li key={e.id} className="text-xs">
                   <button onClick={() => toggle(e.id)}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                    className="w-full flex items-center gap-3 px-2 py-1.5 text-left hover:bg-gray-50 dark:hover:bg-gray-700/30">
                     {isOpen
                       ? <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
                       : <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />}

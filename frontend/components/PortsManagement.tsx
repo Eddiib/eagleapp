@@ -241,11 +241,11 @@ export function PortsManagement() {
 
       {/* Table */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <table className="w-full text-sm">
+        <table className="w-full text-xs">
           <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
             <tr>
               {columnDefs.map((def) => (
-                <th key={def.key} className={`px-4 py-2.5 ${def.align === 'right' ? 'text-right' : 'text-left'} text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider`}>
+                <th key={def.key} className={`px-2 py-1.5 ${def.align === 'right' ? 'text-right' : 'text-left'} text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider`}>
                   <ColumnHeader
                     label={def.label}
                     align={def.align}
@@ -258,7 +258,7 @@ export function PortsManagement() {
                 </th>
               ))}
               {canEditPorts && (
-                <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                <th className="px-2 py-1.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
               )}
             </tr>
           </thead>
@@ -275,15 +275,15 @@ export function PortsManagement() {
               </td></tr>
             ) : filteredPorts.map((port) => (
               <tr key={port.code} className="hover:bg-gray-50 dark:hover:bg-gray-700/40">
-                <td className="px-4 py-2 text-blue-600 dark:text-blue-400 font-medium tabular-nums">{port.code}</td>
-                <td className="px-4 py-2 text-gray-900 dark:text-gray-100">{port.name}</td>
-                <td className="px-4 py-2 text-gray-700 dark:text-gray-300">
+                <td className="px-2 py-1.5 text-blue-600 dark:text-blue-400 font-medium tabular-nums">{port.code}</td>
+                <td className="px-2 py-1.5 text-gray-900 dark:text-gray-100">{port.name}</td>
+                <td className="px-2 py-1.5 text-gray-700 dark:text-gray-300">
                   {getCountryName(port.country) || port.country}
                   <span className="ml-2 text-xs text-gray-400">{port.country}</span>
                 </td>
-                <td className="px-4 py-2 text-right text-gray-500 dark:text-gray-400 tabular-nums">{port.sortOrder}</td>
+                <td className="px-2 py-1.5 text-right text-gray-500 dark:text-gray-400 tabular-nums">{port.sortOrder}</td>
                 {canEditPorts && (
-                  <td className="px-4 py-2">
+                  <td className="px-2 py-1.5">
                     <div className="flex items-center justify-end gap-1">
                       <button
                         onClick={() => openEdit(port)}
