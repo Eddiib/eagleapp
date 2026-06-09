@@ -48,7 +48,12 @@ export function TabsProvider({ children }: { children: ReactNode }) {
   const [tabs, setTabs] = useState<BrowserTab[]>(() => [
     { id: newTabId(), path: location.pathname, title: pathToTitle(location.pathname) },
   ]);
+  const tabsRef = useRef<BrowserTab[]>(tabs);
   const [activeTabId, setActiveTabId] = useState<string | null>(tabs[0].id);
+
+  useEffect(() => {
+    tabsRef.current = tabs;
+  }, [tabs]);
 
   const setNavigationGuard = useCallback((guard: NavigationGuard | null) => {
     guardRef.current = guard;
@@ -106,8 +111,20 @@ export function TabsProvider({ children }: { children: ReactNode }) {
   }, [activeTabId, location.pathname, location.state, navigationType]);
 
   const openTab = useCallback(async (path: string, title?: string) => {
+    // If a tab for this path is already open, switch to it instead of
+    // opening a duplicate.
+    const existing = tabsRef.current.find((t) => t.path === path);
+    if (existing) {
+      setActiveTabId(existing.id);
+      navigateToTab(existing.path, existing.id, location.pathname === existing.path);
+      return true;
+    }
+
     const id = newTabId();
-    setTabs((prev) => [...prev, { id, path, title: title ?? pathToTitle(path) }]);
+    const tab = { id, path, title: title ?? pathToTitle(path) };
+    const nextTabs = [...tabsRef.current, tab];
+    tabsRef.current = nextTabs;
+    setTabs(nextTabs);
     setActiveTabId(id);
     navigateToTab(path, id, location.pathname === path);
     return true;
