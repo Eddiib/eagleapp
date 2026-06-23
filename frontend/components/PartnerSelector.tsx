@@ -68,7 +68,7 @@ export function PartnerSelector({
           <Star
             key={star}
             className={`w-3 h-3 ${
-              star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+              star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300 dark:text-gray-600'
             }`}
           />
         ))}
@@ -94,7 +94,7 @@ export function PartnerSelector({
         </SelectTrigger>
         <SelectContent>
           {partners.length === 0 ? (
-            <div className="p-4 text-center text-gray-500">
+            <div className="p-4 text-center text-gray-500 dark:text-gray-400">
               No active {partnerType.toLowerCase()}s available
             </div>
           ) : (
@@ -105,7 +105,7 @@ export function PartnerSelector({
                   <div className="flex items-center justify-between w-full gap-4">
                     <div className="flex items-center gap-2">
                       <span>{partner.tradingName}</span>
-                      <span className="text-gray-500">({partner.partnerCode})</span>
+                      <span className="text-gray-500 dark:text-gray-400">({partner.partnerCode})</span>
                     </div>
                     <div className="flex items-center gap-2">
                       {renderStars(partner.rating)}
@@ -122,23 +122,23 @@ export function PartnerSelector({
 
       {/* Partner Details */}
       {selectedPartner && (
-        <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="p-3 bg-gray-50 dark:bg-[#262626] rounded-lg border border-gray-200 dark:border-gray-700">
           <div className="grid grid-cols-2 gap-2 text-sm">
             <div>
-              <span className="text-gray-600">Country:</span>{' '}
-              <span className="text-gray-900">{getCountryName(selectedPartner.country)}</span>
+              <span className="text-gray-600 dark:text-gray-400">Country:</span>{' '}
+              <span className="text-gray-900 dark:text-gray-100">{getCountryName(selectedPartner.country)}</span>
             </div>
             <div>
-              <span className="text-gray-600">Payment Terms:</span>{' '}
-              <span className="text-gray-900">{selectedPartner.paymentTerms}</span>
+              <span className="text-gray-600 dark:text-gray-400">Payment Terms:</span>{' '}
+              <span className="text-gray-900 dark:text-gray-100">{selectedPartner.paymentTerms}</span>
             </div>
             <div>
-              <span className="text-gray-600">Rating:</span>{' '}
-              <span className="text-gray-900">{renderStars(selectedPartner.rating)}</span>
+              <span className="text-gray-600 dark:text-gray-400">Rating:</span>{' '}
+              <span className="text-gray-900 dark:text-gray-100">{renderStars(selectedPartner.rating)}</span>
             </div>
             <div>
-              <span className="text-gray-600">Service:</span>{' '}
-              <span className="text-gray-900">{selectedPartner.defaultServiceType}</span>
+              <span className="text-gray-600 dark:text-gray-400">Service:</span>{' '}
+              <span className="text-gray-900 dark:text-gray-100">{selectedPartner.defaultServiceType}</span>
             </div>
           </div>
         </div>
@@ -160,9 +160,9 @@ export function PartnerSelector({
       )}
 
       {validation && validation.valid && !validation.reason && selectedPartner && (
-        <Alert className="border-green-200 bg-green-50">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">
+        <Alert className="border-green-200 dark:border-green-700 bg-green-50 dark:bg-green-900/30">
+          <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-300" />
+          <AlertDescription className="text-green-800 dark:text-green-300">
             Partner validated for {serviceType} service
           </AlertDescription>
         </Alert>

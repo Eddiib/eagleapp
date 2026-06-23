@@ -171,7 +171,7 @@ export function PartnersList({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-lg shadow">
+    <div className="bg-white dark:bg-[#1E1E1E] rounded-lg shadow">
       {/* Header */}
       <div className="border-b border-gray-200 dark:border-gray-700 p-6">
         <div className="flex items-center justify-between mb-4">
@@ -233,6 +233,7 @@ export function PartnersList({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="All">All Types</SelectItem>
+              <SelectItem value="Client">Client</SelectItem>
               <SelectItem value="Shipping Line">Shipping Line</SelectItem>
               <SelectItem value="Air Carrier">Air Carrier</SelectItem>
               <SelectItem value="Trucking Company">Trucking Company</SelectItem>
@@ -337,8 +338,8 @@ export function PartnersList({
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow className="bg-gray-50 dark:bg-gray-700">
-              <TableHead className="sticky left-0 bg-gray-50 dark:bg-gray-700 dark:text-gray-300 z-10">Partner Code</TableHead>
+            <TableRow className="bg-gray-50 dark:bg-gray-800">
+              <TableHead className="sticky left-0 bg-gray-50 dark:bg-gray-800 dark:text-gray-300 z-10">Partner Code</TableHead>
               <TableHead className="dark:text-gray-300">Company Name</TableHead>
               <TableHead className="dark:text-gray-300">Partner Type</TableHead>
               <TableHead className="dark:text-gray-300">Role</TableHead>
@@ -353,7 +354,7 @@ export function PartnersList({
               <TableHead className="dark:text-gray-300">Status</TableHead>
               <TableHead className="text-right dark:text-gray-300">Open Balance</TableHead>
               <TableHead className="dark:text-gray-300">Rating</TableHead>
-              <TableHead className="text-right sticky right-0 bg-gray-50 dark:bg-gray-700 dark:text-gray-300 z-10">Actions</TableHead>
+              <TableHead className="text-right sticky right-0 bg-gray-50 dark:bg-gray-800 dark:text-gray-300 z-10">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -375,8 +376,8 @@ export function PartnersList({
               partners.map((partner) => {
                 const primaryContact = partner.contacts.find(c => c.isPrimary) || partner.contacts[0];
                 return (
-                  <TableRow key={partner.id} className="hover:bg-gray-50">
-                    <TableCell className="sticky left-0 bg-white group-hover:bg-gray-50 z-10">
+                  <TableRow key={partner.id} className="group hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <TableCell className="sticky left-0 bg-white dark:bg-[#1E1E1E] group-hover:bg-gray-50 dark:group-hover:bg-gray-800 z-10">
                       {partner.partnerCode}
                     </TableCell>
                     <TableCell>
@@ -466,7 +467,7 @@ export function PartnersList({
                     <TableCell>
                       <StarRating rating={partner.rating ?? 0} />
                     </TableCell>
-                    <TableCell className="text-right sticky right-0 bg-white group-hover:bg-gray-50 z-10">
+                    <TableCell className="text-right sticky right-0 bg-white dark:bg-[#1E1E1E] group-hover:bg-gray-50 dark:group-hover:bg-gray-800 z-10">
                       <div className="flex items-center justify-end gap-2">
                         <Button
                           variant="ghost"

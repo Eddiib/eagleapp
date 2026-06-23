@@ -56,73 +56,73 @@ function ModelForm({ initial, onSaved, onCancel }: ModelFormProps) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow">
-      <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+    <div className="bg-white dark:bg-[#1E1E1E] rounded-lg shadow">
+      <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button onClick={onCancel} className="p-2 text-gray-500 hover:bg-gray-100 rounded-md"><ArrowLeft className="w-5 h-5" /></button>
+          <button onClick={onCancel} className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"><ArrowLeft className="w-5 h-5" /></button>
           <div>
-            <h2 className="text-gray-900">{initial ? 'Edit Pricing Model' : 'New Pricing Model'}</h2>
-            <p className="text-sm text-gray-500">Define a calculation template for a transport mode</p>
+            <h2 className="text-gray-900 dark:text-gray-100">{initial ? 'Edit Pricing Model' : 'New Pricing Model'}</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Define a calculation template for a transport mode</p>
           </div>
         </div>
         <div className="flex gap-2">
-          <button type="button" onClick={onCancel} className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">Cancel</button>
+          <button type="button" onClick={onCancel} className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800">Cancel</button>
           <button onClick={handleSubmit} disabled={saving} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-60">
             <Save className="w-4 h-4" />{saving ? 'Saving…' : 'Save'}
           </button>
         </div>
       </div>
-      {error && <div className="mx-6 mt-4 px-4 py-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">{error}</div>}
+      {error && <div className="mx-6 mt-4 px-4 py-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded text-sm text-red-700 dark:text-red-300">{error}</div>}
       <form onSubmit={handleSubmit} className="p-6 space-y-5">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm text-gray-700 mb-1">Model Name *</label>
+            <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Model Name *</label>
             <input value={modelName} onChange={e => setModelName(e.target.value)} required placeholder="e.g. FCL Standard Pricing"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100" />
           </div>
           <div>
-            <label className="block text-sm text-gray-700 mb-1">Transport Mode *</label>
+            <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Transport Mode *</label>
             <select value={mode} onChange={e => setMode(e.target.value as TransportMode)} required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100">
               {MODES.map(m => <option key={m} value={m}>{m}</option>)}
             </select>
           </div>
         </div>
         <div>
-          <label className="block text-sm text-gray-700 mb-1">Description</label>
+          <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Description</label>
           <textarea value={description} onChange={e => setDescription(e.target.value)} rows={2}
             placeholder="Describe how this model calculates rates…"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100" />
         </div>
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm text-gray-700 mb-1">Calculation Type *</label>
+            <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Calculation Type *</label>
             <select value={calculationType} onChange={e => setCalculationType(e.target.value as PricingModel['calculationType'])} required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100">
               {CALC_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-sm text-gray-700 mb-1">Base Unit</label>
+            <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Base Unit</label>
             <input value={baseUnit} onChange={e => setBaseUnit(e.target.value)} placeholder="container, kg, cbm…"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100" />
           </div>
           <div>
-            <label className="block text-sm text-gray-700 mb-1">Minimum Charge</label>
+            <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Minimum Charge</label>
             <input type="number" value={minimumCharge} onChange={e => setMinimumCharge(e.target.value)} step="0.01" min={0}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100" />
           </div>
         </div>
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm text-gray-700 mb-1">Default Validity (days) *</label>
+            <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Default Validity (days) *</label>
             <input type="number" value={defaultValidityDays} onChange={e => setDefaultValidityDays(Number(e.target.value))} min={1} required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100" />
           </div>
           <div>
-            <label className="block text-sm text-gray-700 mb-1">Rounding Rule</label>
+            <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Rounding Rule</label>
             <select value={roundingRule} onChange={e => setRoundingRule(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100">
               <option value="">None</option>
               <option value="up">Round Up</option>
               <option value="down">Round Down</option>
@@ -132,8 +132,8 @@ function ModelForm({ initial, onSaved, onCancel }: ModelFormProps) {
           <div className="flex items-end pb-1">
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={isActive} onChange={e => setIsActive(e.target.checked)}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded" />
-              <span className="text-sm text-gray-700">Active</span>
+                className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded" />
+              <span className="text-sm text-gray-700 dark:text-gray-300">Active</span>
             </label>
           </div>
         </div>
@@ -192,8 +192,8 @@ export function PricingModels() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl text-gray-900">Pricing Models</h1>
-          <p className="text-sm text-gray-500 mt-1">Calculation templates for different transport modes</p>
+          <h1 className="text-2xl text-gray-900 dark:text-gray-100">Pricing Models</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Calculation templates for different transport modes</p>
         </div>
         <button onClick={() => setView('create')} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
           <Plus className="w-4 h-4" /> New Model
@@ -203,61 +203,61 @@ export function PricingModels() {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
         <input type="text" placeholder="Search pricing models…" value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+          className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100" />
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-16 text-gray-400"><Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading…</div>
       ) : error ? (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center text-red-600">{error} <button onClick={load} className="ml-3 underline">Retry</button></div>
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center text-red-600 dark:text-red-300">{error} <button onClick={load} className="ml-3 underline">Retry</button></div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.length === 0 ? (
-            <div className="col-span-3 text-center py-12 bg-white rounded-lg shadow text-gray-500">
+            <div className="col-span-3 text-center py-12 bg-white dark:bg-[#1E1E1E] rounded-lg shadow text-gray-500 dark:text-gray-400">
               No pricing models found. Click "New Model" to create one.
             </div>
           ) : filtered.map(m => (
-            <div key={m.id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+            <div key={m.id} className="bg-white dark:bg-[#1E1E1E] rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-lg"><LayoutTemplate className="w-5 h-5 text-blue-600" /></div>
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg"><LayoutTemplate className="w-5 h-5 text-blue-600" /></div>
                   <div>
-                    <h3 className="text-gray-900">{m.modelName}</h3>
-                    <span className="inline-flex px-2 py-0.5 bg-indigo-100 text-indigo-800 text-xs rounded-full mt-1">{m.mode}</span>
+                    <h3 className="text-gray-900 dark:text-gray-100">{m.modelName}</h3>
+                    <span className="inline-flex px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-300 text-xs rounded-full mt-1">{m.mode}</span>
                   </div>
                 </div>
                 <div className="flex gap-1">
                   <button onClick={() => { setEditingModel(m); setView('edit'); }}
-                    className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded"><Edit2 className="w-4 h-4" /></button>
+                    className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"><Edit2 className="w-4 h-4" /></button>
                   <button onClick={() => handleDelete(m.id)}
-                    className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded"><Trash2 className="w-4 h-4" /></button>
+                    className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"><Trash2 className="w-4 h-4" /></button>
                 </div>
               </div>
-              {m.description && <p className="text-sm text-gray-500 mb-4">{m.description}</p>}
+              {m.description && <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{m.description}</p>}
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Calculation:</span>
-                  <span className="text-gray-900 capitalize">{m.calculationType.replace(/_/g, ' ')}</span>
+                  <span className="text-gray-500 dark:text-gray-400">Calculation:</span>
+                  <span className="text-gray-900 dark:text-gray-100 capitalize">{m.calculationType.replace(/_/g, ' ')}</span>
                 </div>
                 {m.baseUnit && (
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Base Unit:</span>
-                    <span className="text-gray-900 uppercase">{m.baseUnit}</span>
+                    <span className="text-gray-500 dark:text-gray-400">Base Unit:</span>
+                    <span className="text-gray-900 dark:text-gray-100 uppercase">{m.baseUnit}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Validity:</span>
-                  <span className="text-gray-900">{m.defaultValidityDays} days</span>
+                  <span className="text-gray-500 dark:text-gray-400">Validity:</span>
+                  <span className="text-gray-900 dark:text-gray-100">{m.defaultValidityDays} days</span>
                 </div>
                 {m.minimumCharge != null && (
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Min. Charge:</span>
-                    <span className="text-gray-900">{m.minimumCharge.toLocaleString()}</span>
+                    <span className="text-gray-500 dark:text-gray-400">Min. Charge:</span>
+                    <span className="text-gray-900 dark:text-gray-100">{m.minimumCharge.toLocaleString()}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Status:</span>
-                  <span className={`px-2 py-0.5 rounded-full text-xs ${m.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                  <span className="text-gray-500 dark:text-gray-400">Status:</span>
+                  <span className={`px-2 py-0.5 rounded-full text-xs ${m.isActive ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-200'}`}>
                     {m.isActive ? 'Active' : 'Inactive'}
                   </span>
                 </div>

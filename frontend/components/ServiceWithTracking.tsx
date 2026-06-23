@@ -234,11 +234,11 @@ export function ServiceWithTracking({ containerId, equipmentType }: ServiceWithT
   const getStatusColor = (status: Milestone['status']) => {
     switch (status) {
       case 'completed':
-        return 'text-green-600 bg-green-50';
+        return 'text-green-600 dark:text-green-300 bg-green-50 dark:bg-green-900/30';
       case 'in-progress':
-        return 'text-blue-600 bg-blue-50';
+        return 'text-blue-600 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30';
       case 'upcoming':
-        return 'text-gray-400 bg-gray-50';
+        return 'text-gray-400 dark:text-gray-400 bg-gray-50 dark:bg-[#262626]';
     }
   };
 
@@ -270,9 +270,9 @@ export function ServiceWithTracking({ containerId, equipmentType }: ServiceWithT
     const hasInProgress = milestones.some(m => m.status === 'in-progress');
     const allCompleted = milestones.every(m => m.status === 'completed');
     
-    if (allCompleted) return 'bg-green-100 border-green-300';
-    if (hasInProgress) return 'bg-blue-100 border-blue-300';
-    return 'bg-gray-100 border-gray-300';
+    if (allCompleted) return 'bg-green-100 dark:bg-green-900/30 border-green-300 dark:border-green-700';
+    if (hasInProgress) return 'bg-blue-100 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700';
+    return 'bg-gray-100 dark:bg-[#262626] border-gray-300 dark:border-gray-600';
   };
 
   return (
@@ -281,7 +281,7 @@ export function ServiceWithTracking({ containerId, equipmentType }: ServiceWithT
         const isExpanded = expandedSections[section.id];
 
         return (
-          <div key={section.id} className="border border-gray-200 rounded-lg overflow-hidden">
+          <div key={section.id} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
             {/* Section Header */}
             <button
               onClick={() => toggleSection(section.id)}
@@ -290,22 +290,22 @@ export function ServiceWithTracking({ containerId, equipmentType }: ServiceWithT
               )} hover:opacity-80 transition-opacity`}
             >
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-900">{section.title}</span>
-                <span className="text-xs text-gray-600">
+                <span className="text-sm text-gray-900 dark:text-gray-100">{section.title}</span>
+                <span className="text-xs text-gray-600 dark:text-gray-400">
                   ({section.milestones.filter(m => m.status === 'completed').length}/
                   {section.milestones.length} completed)
                 </span>
               </div>
               {isExpanded ? (
-                <ChevronUp className="w-4 h-4 text-gray-600" />
+                <ChevronUp className="w-4 h-4 text-gray-600 dark:text-gray-400" />
               ) : (
-                <ChevronDown className="w-4 h-4 text-gray-600" />
+                <ChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-400" />
               )}
             </button>
 
             {/* Section Content */}
             {isExpanded && (
-              <div className="bg-white p-4">
+              <div className="bg-white dark:bg-[#1E1E1E] p-4">
                 <div className="space-y-0">
                   {section.milestones.map((milestone, index) => {
                     const IconComponent = getIconComponent(milestone.icon);
@@ -319,7 +319,7 @@ export function ServiceWithTracking({ containerId, equipmentType }: ServiceWithT
                             className={`absolute left-[15px] top-[32px] w-0.5 h-[calc(100%+4px)] ${
                               milestone.status === 'completed'
                                 ? 'bg-green-500'
-                                : 'bg-gray-300'
+                                : 'bg-gray-300 dark:bg-gray-600'
                             }`}
                           ></div>
                         )}
@@ -339,11 +339,11 @@ export function ServiceWithTracking({ containerId, equipmentType }: ServiceWithT
                           <div className="flex-1 pt-0.5">
                             <div className="flex items-start justify-between gap-2 mb-1">
                               <div className="flex-1">
-                                <h4 className="text-xs text-gray-900">
+                                <h4 className="text-xs text-gray-900 dark:text-gray-100">
                                   {milestone.title}
                                 </h4>
                                 {milestone.description && (
-                                  <p className="text-xs text-gray-600 italic mt-0.5">
+                                  <p className="text-xs text-gray-600 dark:text-gray-400 italic mt-0.5">
                                     {milestone.description}
                                   </p>
                                 )}
@@ -358,7 +358,7 @@ export function ServiceWithTracking({ containerId, equipmentType }: ServiceWithT
                             </div>
 
                             {/* Details */}
-                            <div className="space-y-1 text-xs text-gray-600 mt-1.5">
+                            <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400 mt-1.5">
                               {milestone.location && (
                                 <div className="flex items-center gap-1.5">
                                   <MapPin className="w-3 h-3" />
@@ -392,13 +392,13 @@ export function ServiceWithTracking({ containerId, equipmentType }: ServiceWithT
                               )}
 
                               {milestone.vesselInfo?.etd && (
-                                <div className="text-xs text-gray-500 ml-4">
+                                <div className="text-xs text-gray-500 dark:text-gray-400 ml-4">
                                   ETD: {milestone.vesselInfo.etd}
                                 </div>
                               )}
 
                               {milestone.vesselInfo?.eta && (
-                                <div className="text-xs text-gray-500 ml-4">
+                                <div className="text-xs text-gray-500 dark:text-gray-400 ml-4">
                                   ETA: {milestone.vesselInfo.eta}
                                 </div>
                               )}

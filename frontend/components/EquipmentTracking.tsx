@@ -115,11 +115,11 @@ export function EquipmentTracking({ containerId, equipmentType }: EquipmentTrack
   const getStatusColor = (status: Milestone['status']) => {
     switch (status) {
       case 'completed':
-        return 'text-green-600 bg-green-100';
+        return 'text-green-600 dark:text-green-300 bg-green-100 dark:bg-green-900/30';
       case 'in-progress':
-        return 'text-blue-600 bg-blue-100';
+        return 'text-blue-600 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/30';
       case 'upcoming':
-        return 'text-gray-400 bg-gray-100';
+        return 'text-gray-400 dark:text-gray-400 bg-gray-100 dark:bg-gray-700';
     }
   };
 
@@ -148,21 +148,21 @@ export function EquipmentTracking({ containerId, equipmentType }: EquipmentTrack
   };
 
   return (
-    <div className="p-4 bg-gray-50">
+    <div className="p-4 bg-gray-50 dark:bg-[#262626]">
       {/* Equipment Info Header */}
-      <div className="mb-4 p-3 bg-white border border-gray-200 rounded-lg">
+      <div className="mb-4 p-3 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-gray-700 rounded-lg">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs text-gray-500">Container ID</div>
-            <div className="text-gray-900">{containerId}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">Container ID</div>
+            <div className="text-gray-900 dark:text-gray-100">{containerId}</div>
           </div>
           <div>
-            <div className="text-xs text-gray-500">Equipment Type</div>
-            <div className="text-gray-900">{equipmentType}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">Equipment Type</div>
+            <div className="text-gray-900 dark:text-gray-100">{equipmentType}</div>
           </div>
           <div>
-            <div className="text-xs text-gray-500">Current Status</div>
-            <div className="flex items-center gap-1.5 text-blue-600">
+            <div className="text-xs text-gray-500 dark:text-gray-400">Current Status</div>
+            <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-300">
               <Ship className="w-4 h-4" />
               <span>In Transit</span>
             </div>
@@ -171,7 +171,7 @@ export function EquipmentTracking({ containerId, equipmentType }: EquipmentTrack
       </div>
 
       {/* Compact Timeline */}
-      <div className="space-y-0 bg-white border border-gray-200 rounded-lg p-4">
+      <div className="space-y-0 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-gray-700 rounded-lg p-4">
         {milestones.map((milestone, index) => {
           const IconComponent = getIconComponent(milestone.icon);
           const isLast = index === milestones.length - 1;
@@ -184,7 +184,7 @@ export function EquipmentTracking({ containerId, equipmentType }: EquipmentTrack
                   className={`absolute left-[19px] top-[40px] w-0.5 h-[calc(100%+4px)] ${
                     milestone.status === 'completed'
                       ? 'bg-green-500'
-                      : 'bg-gray-300'
+                      : 'bg-gray-300 dark:bg-gray-600'
                   }`}
                 ></div>
               )}
@@ -204,11 +204,11 @@ export function EquipmentTracking({ containerId, equipmentType }: EquipmentTrack
                 <div className="flex-1 pt-1">
                   <div className="flex items-start justify-between gap-3 mb-1">
                     <div className="flex-1">
-                      <h4 className="text-sm text-gray-900">
+                      <h4 className="text-sm text-gray-900 dark:text-gray-100">
                         {milestone.title}
                       </h4>
                       {milestone.description && (
-                        <p className="text-xs text-gray-600 italic mt-0.5">
+                        <p className="text-xs text-gray-600 dark:text-gray-400 italic mt-0.5">
                           {milestone.description}
                         </p>
                       )}
@@ -224,7 +224,7 @@ export function EquipmentTracking({ containerId, equipmentType }: EquipmentTrack
                   </div>
 
                   {/* Details */}
-                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 mt-2">
+                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400 mt-2">
                     {milestone.location && (
                       <div className="flex items-center gap-1.5">
                         <MapPin className="w-3.5 h-3.5" />
@@ -257,13 +257,13 @@ export function EquipmentTracking({ containerId, equipmentType }: EquipmentTrack
                         </div>
 
                         {milestone.vesselInfo.etd && (
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
                             ETD: {milestone.vesselInfo.etd}
                           </div>
                         )}
 
                         {milestone.vesselInfo.eta && (
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
                             ETA: {milestone.vesselInfo.eta}
                           </div>
                         )}

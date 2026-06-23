@@ -12,13 +12,13 @@ export function ServiceDetailDrawer({ service, isOpen, onClose, onEdit }: Servic
   if (!isOpen || !service) return null;
 
   return (
-    <div className="fixed inset-y-0 right-0 z-40 w-full max-w-xl bg-white shadow-xl border-l border-gray-200 flex flex-col">
+    <div className="fixed inset-y-0 right-0 z-40 w-full max-w-xl bg-white dark:bg-[#1E1E1E] shadow-xl border-l border-gray-200 dark:border-gray-700 flex flex-col">
       <div className="flex items-center justify-between border-b px-6 py-4">
         <div>
-          <div className="text-xs text-gray-500">{service.serviceCode}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">{service.serviceCode}</div>
           <div className="text-lg font-semibold">{service.serviceName}</div>
         </div>
-        <button onClick={onClose} className="p-1 rounded hover:bg-gray-100" aria-label="Close">
+        <button onClick={onClose} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700" aria-label="Close">
           <X className="h-5 w-5" />
         </button>
       </div>
@@ -43,7 +43,7 @@ export function ServiceDetailDrawer({ service, isOpen, onClose, onEdit }: Servic
       </div>
       {onEdit && (
         <div className="border-t px-6 py-3 flex justify-end gap-2">
-          <button onClick={onClose} className="px-3 py-1.5 text-sm border rounded hover:bg-gray-50">Close</button>
+          <button onClick={onClose} className="px-3 py-1.5 text-sm border rounded hover:bg-gray-50 dark:hover:bg-gray-800">Close</button>
           <button onClick={() => onEdit(service)} className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">Edit</button>
         </div>
       )}
@@ -54,8 +54,8 @@ export function ServiceDetailDrawer({ service, isOpen, onClose, onEdit }: Servic
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="grid grid-cols-[180px_1fr] gap-2">
-      <div className="text-gray-500">{label}</div>
-      <div className="text-gray-900">{value}</div>
+      <div className="text-gray-500 dark:text-gray-400">{label}</div>
+      <div className="text-gray-900 dark:text-gray-100">{value}</div>
     </div>
   );
 }

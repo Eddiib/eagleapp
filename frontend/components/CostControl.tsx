@@ -306,11 +306,11 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
   const getBookingStatusBadge = (status: string) => {
     switch (status) {
       case 'balanced':
-        return <Badge className="bg-green-100 text-green-700 border-green-200">Balanced</Badge>;
+        return <Badge className="bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300">Balanced</Badge>;
       case 'unbalanced':
-        return <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">Unbalanced</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300">Unbalanced</Badge>;
       case 'draft':
-        return <Badge className="bg-gray-100 text-gray-700 border-gray-200">Draft</Badge>;
+        return <Badge className="bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-700 dark:text-gray-200">Draft</Badge>;
       default:
         return null;
     }
@@ -368,10 +368,10 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Bookings</p>
-              <p className="text-2xl text-gray-900 mt-1">{filteredBookings.length}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Total Bookings</p>
+              <p className="text-2xl text-gray-900 dark:text-gray-100 mt-1">{filteredBookings.length}</p>
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
               <TrendingUp className="w-6 h-6 text-blue-600" />
             </div>
           </div>
@@ -380,12 +380,12 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Cost</p>
-              <p className="text-2xl text-gray-900 mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-400">Total Cost</p>
+              <p className="text-2xl text-gray-900 dark:text-gray-100 mt-1">
                 {formatBase(totalBuyingEUR)}
               </p>
             </div>
-            <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+            <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
               <TrendingDown className="w-6 h-6 text-red-600" />
             </div>
           </div>
@@ -394,12 +394,12 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Revenue</p>
-              <p className="text-2xl text-gray-900 mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-400">Total Revenue</p>
+              <p className="text-2xl text-gray-900 dark:text-gray-100 mt-1">
                 {formatBase(totalSellingEUR)}
               </p>
             </div>
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+            <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
               <TrendingUp className="w-6 h-6 text-green-600" />
             </div>
           </div>
@@ -408,12 +408,12 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Profit</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Total Profit</p>
               <p className={`text-2xl mt-1 ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {formatBase(totalProfit)}
               </p>
             </div>
-            <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${totalProfit >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
+            <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${totalProfit >= 0 ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
               {totalProfit >= 0 ? (
                 <TrendingUp className="w-6 h-6 text-green-600" />
               ) : (
@@ -427,7 +427,7 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
       <Card className="p-4">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
             <Input
               placeholder="Search by booking ref, client, or agent..."
               value={searchQuery}
@@ -439,7 +439,7 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 dark:text-gray-100"
             >
               <option value="all">All Status</option>
               <option value="balanced">Balanced</option>
@@ -449,7 +449,7 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
             <select
               value={invoiceFilter}
               onChange={(e) => setInvoiceFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 dark:text-gray-100"
             >
               <option value="all">All Invoices</option>
               <option value="incomplete">Incomplete Invoices</option>
@@ -472,11 +472,11 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 dark:bg-[#262626] border-b border-gray-200 dark:border-gray-700">
               <tr>
-                <th className="px-2 py-1.5 text-left text-xs text-gray-600 w-10"></th>
+                <th className="px-2 py-1.5 text-left text-xs text-gray-600 dark:text-gray-400 w-10"></th>
                 {columnDefs.map(def => (
-                  <th key={def.key} className={`px-2 py-1.5 text-xs text-gray-600 ${def.align === 'right' ? 'text-right' : def.align === 'center' ? 'text-center' : 'text-left'}`}>
+                  <th key={def.key} className={`px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 ${def.align === 'right' ? 'text-right' : def.align === 'center' ? 'text-center' : 'text-left'}`}>
                     <ColumnHeader
                       label={def.label}
                       align={def.align}
@@ -488,29 +488,29 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
                     />
                   </th>
                 ))}
-                <th className="px-2 py-1.5 text-center text-xs text-gray-600">Alerts</th>
+                <th className="px-2 py-1.5 text-center text-xs text-gray-600 dark:text-gray-400">Alerts</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
               {filteredBookings.map((booking) => {
                 const isExpanded = expandedBookings[booking.id];
 
                 return (
                   <Fragment key={booking.id}>
-                    <tr className="hover:bg-gray-50 cursor-pointer" onClick={() => toggleBookingExpansion(booking.id)}>
+                    <tr className="hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer" onClick={() => toggleBookingExpansion(booking.id)}>
                       <td className="px-2 py-1.5">
                         {isExpanded ? (
-                          <ChevronDown className="w-4 h-4 text-gray-600" />
+                          <ChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                         ) : (
-                          <ChevronRight className="w-4 h-4 text-gray-600" />
+                          <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                         )}
                       </td>
                       <td className="px-2 py-1.5 text-blue-600">{booking.bookingReference}</td>
-                      <td className="px-2 py-1.5 text-gray-900">{booking.clientName}</td>
-                      <td className="px-2 py-1.5 text-right text-gray-900">
+                      <td className="px-2 py-1.5 text-gray-900 dark:text-gray-100">{booking.clientName}</td>
+                      <td className="px-2 py-1.5 text-right text-gray-900 dark:text-gray-100">
                         {formatBase(booking.totalBuyingEUR)}
                       </td>
-                      <td className="px-2 py-1.5 text-right text-gray-900">
+                      <td className="px-2 py-1.5 text-right text-gray-900 dark:text-gray-100">
                         {formatBase(booking.totalSellingEUR)}
                       </td>
                       <td className={`px-2 py-1.5 text-right ${booking.totalProfitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -519,8 +519,8 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
                       <td className={`px-2 py-1.5 text-right ${booking.profitMargin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {booking.profitMargin.toFixed(2)}%
                       </td>
-                      <td className="px-2 py-1.5 text-center text-gray-900">{booking.numberOfServices}</td>
-                      <td className="px-2 py-1.5 text-gray-600">{booking.salesAgent}</td>
+                      <td className="px-2 py-1.5 text-center text-gray-900 dark:text-gray-100">{booking.numberOfServices}</td>
+                      <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400">{booking.salesAgent}</td>
                       <td className="px-2 py-1.5">{getBookingStatusBadge(booking.status)}</td>
                       <td className="px-2 py-1.5 text-center">
                         {booking.hasIncompleteInvoices && <AlertTriangle className="w-4 h-4 text-yellow-600 mx-auto" />}
@@ -529,61 +529,61 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
 
                     {isExpanded && (
                       <tr>
-                        <td colSpan={11} className="px-4 py-4 bg-gray-50">
+                        <td colSpan={11} className="px-4 py-4 bg-gray-50 dark:bg-[#262626]">
                           <div className="space-y-4">
                             <div className="flex items-center justify-between mb-3">
-                              <h4 className="text-sm text-gray-700">Service Level Details</h4>
-                              <div className="text-xs text-gray-500">
+                              <h4 className="text-sm text-gray-700 dark:text-gray-300">Service Level Details</h4>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
                                 Accrued Date Range: {booking.earliestAccruedDate || '—'} → {booking.latestAccruedDate || '—'}
                               </div>
                             </div>
 
-                            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                            <div className="bg-white dark:bg-[#1E1E1E] rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                               <table className="w-full text-xs">
-                                <thead className="bg-gray-100 border-b border-gray-200">
+                                <thead className="bg-gray-100 dark:bg-[#262626] border-b border-gray-200 dark:border-gray-700">
                                   <tr>
-                                    <th className="px-2 py-1.5 text-left text-xs text-gray-600">Status</th>
-                                    <th className="px-2 py-1.5 text-left text-xs text-gray-600">Service ID</th>
-                                    <th className="px-2 py-1.5 text-left text-xs text-gray-600">Type</th>
-                                    <th className="px-2 py-1.5 text-left text-xs text-gray-600">Buying Invoice</th>
-                                    <th className="px-2 py-1.5 text-left text-xs text-gray-600">Supplier</th>
-                                    <th className="px-2 py-1.5 text-right text-xs text-gray-600">Buying ({baseCurrency})</th>
-                                    <th className="px-2 py-1.5 text-left text-xs text-gray-600">Selling Invoice</th>
-                                    <th className="px-2 py-1.5 text-right text-xs text-gray-600">Selling ({baseCurrency})</th>
-                                    <th className="px-2 py-1.5 text-left text-xs text-gray-600">Accrued Date</th>
-                                    <th className="px-2 py-1.5 text-right text-xs text-gray-600">Profit ({baseCurrency})</th>
-                                    <th className="px-2 py-1.5 text-center text-xs text-gray-600">Actions</th>
+                                    <th className="px-2 py-1.5 text-left text-xs text-gray-600 dark:text-gray-400">Status</th>
+                                    <th className="px-2 py-1.5 text-left text-xs text-gray-600 dark:text-gray-400">Service ID</th>
+                                    <th className="px-2 py-1.5 text-left text-xs text-gray-600 dark:text-gray-400">Type</th>
+                                    <th className="px-2 py-1.5 text-left text-xs text-gray-600 dark:text-gray-400">Buying Invoice</th>
+                                    <th className="px-2 py-1.5 text-left text-xs text-gray-600 dark:text-gray-400">Supplier</th>
+                                    <th className="px-2 py-1.5 text-right text-xs text-gray-600 dark:text-gray-400">Buying ({baseCurrency})</th>
+                                    <th className="px-2 py-1.5 text-left text-xs text-gray-600 dark:text-gray-400">Selling Invoice</th>
+                                    <th className="px-2 py-1.5 text-right text-xs text-gray-600 dark:text-gray-400">Selling ({baseCurrency})</th>
+                                    <th className="px-2 py-1.5 text-left text-xs text-gray-600 dark:text-gray-400">Accrued Date</th>
+                                    <th className="px-2 py-1.5 text-right text-xs text-gray-600 dark:text-gray-400">Profit ({baseCurrency})</th>
+                                    <th className="px-2 py-1.5 text-center text-xs text-gray-600 dark:text-gray-400">Actions</th>
                                   </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-200">
+                                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
                                   {booking.services.map((service) => (
-                                    <tr key={service.id} className="hover:bg-gray-50">
+                                    <tr key={service.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                                       <td className="px-2 py-1.5 text-center">{getServiceStatusIcon(service.status || 'no-invoices')}</td>
-                                      <td className="px-2 py-1.5 text-gray-900">{service.serviceIdentifier}</td>
+                                      <td className="px-2 py-1.5 text-gray-900 dark:text-gray-100">{service.serviceIdentifier}</td>
                                       <td className="px-2 py-1.5">
                                         <Badge variant="outline" className="text-xs">{service.serviceType}</Badge>
                                       </td>
-                                      <td className="px-2 py-1.5 text-gray-600">
+                                      <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400">
                                         {service.buyingInvoiceNumber || <span className="text-yellow-600 text-xs">Missing</span>}
                                       </td>
-                                      <td className="px-2 py-1.5 text-gray-600">{service.buyingSupplier || '-'}</td>
+                                      <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400">{service.buyingSupplier || '-'}</td>
                                       <td className="px-2 py-1.5 text-right">
-                                        <div className="text-gray-900">
+                                        <div className="text-gray-900 dark:text-gray-100">
                                           {formatBase(service.buyingPriceEUR)}
                                         </div>
                                         {service.buyingPrice > 0 && (
-                                          <div className="text-xs text-gray-500">
+                                          <div className="text-xs text-gray-500 dark:text-gray-400">
                                             {service.buyingCurrency} {service.buyingPrice.toLocaleString()}
                                           </div>
                                         )}
                                       </td>
-                                      <td className="px-2 py-1.5 text-gray-600">
+                                      <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400">
                                         {service.sellingInvoiceNumber || <span className="text-yellow-600 text-xs">Pending schema</span>}
                                       </td>
-                                      <td className="px-2 py-1.5 text-right text-gray-900">
+                                      <td className="px-2 py-1.5 text-right text-gray-900 dark:text-gray-100">
                                         {formatBase(service.sellingPriceEUR)}
                                       </td>
-                                      <td className="px-2 py-1.5 text-gray-600">{service.accruedDate || '—'}</td>
+                                      <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400">{service.accruedDate || '—'}</td>
                                       <td className={`px-2 py-1.5 text-right ${service.profitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                                         {formatBase(service.profitLoss)}
                                       </td>
@@ -600,7 +600,7 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
                                                 if (entry) onEditEntry(entry);
                                               }}
                                             >
-                                              <Edit2 className="w-3 h-3 text-gray-600" />
+                                              <Edit2 className="w-3 h-3 text-gray-600 dark:text-gray-400" />
                                             </Button>
                                           )}
                                           {service.isLocked && <Lock className="w-3 h-3 text-orange-600" />}
@@ -609,16 +609,16 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
                                     </tr>
                                   ))}
                                 </tbody>
-                                <tfoot className="bg-blue-50 border-t-2 border-blue-200">
+                                <tfoot className="bg-blue-50 dark:bg-blue-900/30 border-t-2 border-blue-200 dark:border-blue-800">
                                   <tr>
-                                    <td colSpan={5} className="px-2 py-1.5 text-gray-900">
+                                    <td colSpan={5} className="px-2 py-1.5 text-gray-900 dark:text-gray-100">
                                       <strong>Booking Subtotal</strong>
                                     </td>
-                                    <td className="px-2 py-1.5 text-right text-gray-900">
+                                    <td className="px-2 py-1.5 text-right text-gray-900 dark:text-gray-100">
                                       <strong>{formatBase(booking.totalBuyingEUR)}</strong>
                                     </td>
                                     <td className="px-2 py-1.5"></td>
-                                    <td className="px-2 py-1.5 text-right text-gray-900">
+                                    <td className="px-2 py-1.5 text-right text-gray-900 dark:text-gray-100">
                                       <strong>{formatBase(booking.totalSellingEUR)}</strong>
                                     </td>
                                     <td className="px-2 py-1.5"></td>
@@ -644,25 +644,25 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
 
         {filteredBookings.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500">No cost-control entries found</p>
+            <p className="text-gray-500 dark:text-gray-400">No cost-control entries found</p>
           </div>
         )}
       </Card>
 
       {bookingsWithIssues > 0 && (
-        <div className="flex items-center gap-2 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-700">
+        <div className="flex items-center gap-2 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-700 dark:bg-yellow-900/30 dark:border-yellow-800 dark:text-yellow-300">
           <AlertTriangle className="w-4 h-4" />
           {bookingsWithIssues} booking{bookingsWithIssues > 1 ? 's' : ''} contain incomplete supplier-side invoice data.
         </div>
       )}
 
-      <div className="flex items-center justify-between text-sm text-gray-600">
+      <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
         <div>
           Showing {filteredBookings.length} of {costBookings.length} bookings
         </div>
         <div className="flex items-center gap-6">
-          <div>Total Cost: <span className="text-gray-900">{formatBase(totalBuyingEUR)}</span></div>
-          <div>Total Revenue: <span className="text-gray-900">{formatBase(totalSellingEUR)}</span></div>
+          <div>Total Cost: <span className="text-gray-900 dark:text-gray-100">{formatBase(totalBuyingEUR)}</span></div>
+          <div>Total Revenue: <span className="text-gray-900 dark:text-gray-100">{formatBase(totalSellingEUR)}</span></div>
           <div>Total Profit: <span className={totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}>
             {formatBase(totalProfit)}
           </span></div>

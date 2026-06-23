@@ -123,6 +123,7 @@ export interface Booking {
   placeOfLoadingCity: string;
   placeOfLoadingCountry: string;
   finalDestination: string;
+  finalDestinationCountry: string;
   origin: string;       // display-only: "country / port"
   destination: string;  // display-only
 
@@ -184,6 +185,7 @@ interface BookingRow {
   place_of_loading_city?: string;
   place_of_loading_country?: string;
   final_destination?: string;
+  final_destination_country?: string;
   booking_date?: string;
   etd?: string;
   eta?: string;
@@ -373,6 +375,7 @@ export function toBooking(row: BookingRow): Booking {
     placeOfLoadingCity: row.place_of_loading_city ?? '',
     placeOfLoadingCountry: row.place_of_loading_country ?? '',
     finalDestination: row.final_destination ?? '',
+    finalDestinationCountry: row.final_destination_country ?? '',
     origin: [originCountry, originPort].filter(Boolean).join(' / '),
     destination: [destinationCountry, destinationPort].filter(Boolean).join(' / '),
     bookingDate: dateOnly(row.booking_date) || dateOnly(row.created_date),
@@ -427,6 +430,7 @@ export interface BookingPayload {
   placeOfLoadingCity?: string;
   placeOfLoadingCountry?: string;
   finalDestination?: string;
+  finalDestinationCountry?: string;
 
   bookingDate?: string;
   estimatedDeparture?: string;
@@ -481,6 +485,7 @@ function toApiPayload(p: BookingPayload, extra: Record<string, any> = {}) {
     place_of_loading_city: p.placeOfLoadingCity || null,
     place_of_loading_country: p.placeOfLoadingCountry || null,
     final_destination: p.finalDestination || null,
+    final_destination_country: p.finalDestinationCountry || null,
 
     booking_date: p.bookingDate || null,
     etd: p.estimatedDeparture || null,
@@ -655,6 +660,7 @@ export function emptyBooking(initialBookingNumber?: string, currency = 'EUR'): B
     placeOfLoadingCity: '',
     placeOfLoadingCountry: '',
     finalDestination: '',
+    finalDestinationCountry: '',
     origin: '',
     destination: '',
     bookingDate: today,
@@ -713,6 +719,7 @@ export function bookingToPayload(
     placeOfLoadingCity: b.placeOfLoadingCity,
     placeOfLoadingCountry: b.placeOfLoadingCountry,
     finalDestination: b.finalDestination,
+    finalDestinationCountry: b.finalDestinationCountry,
     bookingDate: b.bookingDate || undefined,
     estimatedDeparture: b.estimatedDeparture || undefined,
     estimatedArrival: b.estimatedArrival || undefined,

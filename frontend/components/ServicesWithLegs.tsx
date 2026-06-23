@@ -437,11 +437,11 @@ export function ServicesWithLegs({ equipmentId, containerId }: ServicesWithLegsP
   const getStatusColor = (status: PassingPoint['status']) => {
     switch (status) {
       case 'completed':
-        return 'text-green-600 bg-green-50';
+        return 'text-green-600 dark:text-green-300 bg-green-50 dark:bg-green-900/30';
       case 'in-progress':
-        return 'text-blue-600 bg-blue-50';
+        return 'text-blue-600 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30';
       case 'upcoming':
-        return 'text-gray-400 bg-gray-50';
+        return 'text-gray-400 dark:text-gray-400 bg-gray-50 dark:bg-[#262626]';
     }
   };
 
@@ -477,11 +477,11 @@ export function ServicesWithLegs({ equipmentId, containerId }: ServicesWithLegsP
     const hasInProgress = leg.passingPoints.some(p => p.status === 'in-progress');
     const allCompleted = leg.passingPoints.every(p => p.status === 'completed');
 
-    const legColor = allCompleted 
-      ? 'bg-green-50 border-green-300' 
-      : hasInProgress 
-      ? 'bg-blue-50 border-blue-300' 
-      : 'bg-gray-50 border-gray-300';
+    const legColor = allCompleted
+      ? 'bg-green-50 dark:bg-green-900/30 border-green-300 dark:border-green-700'
+      : hasInProgress
+      ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700'
+      : 'bg-gray-50 dark:bg-[#262626] border-gray-300 dark:border-gray-600';
 
     const ModeIcon = getModeIcon(leg.mode);
 
@@ -496,48 +496,48 @@ export function ServicesWithLegs({ equipmentId, containerId }: ServicesWithLegsP
             >
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
-                  <ModeIcon className="w-4 h-4 text-gray-700" />
-                  <span className="text-xs text-gray-900">
+                  <ModeIcon className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+                  <span className="text-xs text-gray-900 dark:text-gray-100">
                     Leg {leg.legNumber}: {leg.origin} → {leg.destination}
                   </span>
                 </div>
                 {leg.carrier && (
-                  <span className="text-xs text-gray-600">
+                  <span className="text-xs text-gray-600 dark:text-gray-400">
                     • {leg.carrier}
                   </span>
                 )}
                 {leg.vesselVoyage && (
-                  <span className="text-xs text-gray-600">
+                  <span className="text-xs text-gray-600 dark:text-gray-400">
                     • {leg.vesselVoyage}
                   </span>
                 )}
                 {leg.truckPlate && (
-                  <span className="text-xs text-gray-600">
+                  <span className="text-xs text-gray-600 dark:text-gray-400">
                     • Truck: {leg.truckPlate}
                   </span>
                 )}
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-gray-500 dark:text-gray-400">
                   • {completedPoints}/{leg.passingPoints.length} points
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 {leg.etd && leg.eta && (
-                  <span className="text-xs text-gray-600">
+                  <span className="text-xs text-gray-600 dark:text-gray-400">
                     {leg.etd} → {leg.eta}
                   </span>
                 )}
                 {isExpanded ? (
-                  <ChevronUp className="w-4 h-4 text-gray-600" />
+                  <ChevronUp className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                 ) : (
-                  <ChevronDown className="w-4 h-4 text-gray-600" />
+                  <ChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                 )}
               </div>
             </button>
 
             {/* Passing Points */}
             {isExpanded && (
-              <div className="px-6 pb-3 bg-white border-t border-gray-200">
-                <div className="py-2 text-xs text-gray-500">Passing Points:</div>
+              <div className="px-6 pb-3 bg-white dark:bg-[#1E1E1E] border-t border-gray-200 dark:border-gray-700">
+                <div className="py-2 text-xs text-gray-500 dark:text-gray-400">Passing Points:</div>
                 <div className="space-y-0">
                   {leg.passingPoints.map((point, index) => {
                     const isLast = index === leg.passingPoints.length - 1;
@@ -548,7 +548,7 @@ export function ServicesWithLegs({ equipmentId, containerId }: ServicesWithLegsP
                         {!isLast && (
                           <div
                             className={`absolute left-[15px] top-[28px] w-0.5 h-[calc(100%+4px)] ${
-                              point.status === 'completed' ? 'bg-green-500' : 'bg-gray-300'
+                              point.status === 'completed' ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'
                             }`}
                           ></div>
                         )}
@@ -558,7 +558,7 @@ export function ServicesWithLegs({ equipmentId, containerId }: ServicesWithLegsP
                           <div
                             className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${getStatusColor(
                               point.status
-                            )} relative z-10 border-2 border-white`}
+                            )} relative z-10 border-2 border-white dark:border-[#1E1E1E]`}
                           >
                             <MapPin className="w-3.5 h-3.5" />
                           </div>
@@ -566,8 +566,8 @@ export function ServicesWithLegs({ equipmentId, containerId }: ServicesWithLegsP
                           <div className="flex-1 pt-0.5">
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1">
-                                <h4 className="text-xs text-gray-900">{point.name}</h4>
-                                <div className="text-xs text-gray-600 flex items-center gap-1 mt-0.5">
+                                <h4 className="text-xs text-gray-900 dark:text-gray-100">{point.name}</h4>
+                                <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1 mt-0.5">
                                   <MapPin className="w-3 h-3" />
                                   <span>{point.location}</span>
                                 </div>
@@ -578,7 +578,7 @@ export function ServicesWithLegs({ equipmentId, containerId }: ServicesWithLegsP
                             </div>
 
                             {/* Point Details */}
-                            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-gray-600 mt-1.5">
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-gray-600 dark:text-gray-400 mt-1.5">
                               {point.actualDateTime && (
                                 <div className="flex items-center gap-1.5">
                                   <Calendar className="w-3 h-3 text-green-600" />
@@ -598,7 +598,7 @@ export function ServicesWithLegs({ equipmentId, containerId }: ServicesWithLegsP
                                 </div>
                               )}
                               {point.notes && (
-                                <div className="col-span-2 text-xs text-gray-500 italic mt-0.5">
+                                <div className="col-span-2 text-xs text-gray-500 dark:text-gray-400 italic mt-0.5">
                                   {point.notes}
                                 </div>
                               )}
@@ -618,29 +618,29 @@ export function ServicesWithLegs({ equipmentId, containerId }: ServicesWithLegsP
   };
 
   return (
-    <div className="border-t border-gray-200">
+    <div className="border-t border-gray-200 dark:border-gray-700">
       <table className="min-w-full">
         <thead>
-          <tr className="bg-gray-100">
-            <th className="px-3 py-1.5 text-left text-xs text-gray-600 uppercase tracking-wider border-r border-gray-200">
+          <tr className="bg-gray-100 dark:bg-[#262626]">
+            <th className="px-3 py-1.5 text-left text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider border-r border-gray-200 dark:border-gray-700">
               Equipment ID
             </th>
-            <th className="px-3 py-1.5 text-left text-xs text-gray-600 uppercase tracking-wider border-r border-gray-200">
+            <th className="px-3 py-1.5 text-left text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider border-r border-gray-200 dark:border-gray-700">
               Service Type
             </th>
-            <th className="px-3 py-1.5 text-left text-xs text-gray-600 uppercase tracking-wider border-r border-gray-200">
+            <th className="px-3 py-1.5 text-left text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider border-r border-gray-200 dark:border-gray-700">
               Equipment
             </th>
-            <th className="px-3 py-1.5 text-left text-xs text-gray-600 uppercase tracking-wider border-r border-gray-200">
+            <th className="px-3 py-1.5 text-left text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider border-r border-gray-200 dark:border-gray-700">
               Invoice Party
             </th>
-            <th className="px-3 py-1.5 text-right text-xs text-gray-600 uppercase tracking-wider border-r border-gray-200">
+            <th className="px-3 py-1.5 text-right text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider border-r border-gray-200 dark:border-gray-700">
               Agreed Rate
             </th>
-            <th className="px-3 py-1.5 text-left text-xs text-gray-600 uppercase tracking-wider border-r border-gray-200">
+            <th className="px-3 py-1.5 text-left text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider border-r border-gray-200 dark:border-gray-700">
               Supplier
             </th>
-            <th className="px-3 py-1.5 text-right text-xs text-gray-600 uppercase tracking-wider border-r border-gray-200">
+            <th className="px-3 py-1.5 text-right text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider border-r border-gray-200 dark:border-gray-700">
               Agreed Cost
             </th>
             <th className="px-3 py-1.5 w-10"></th>
@@ -653,21 +653,21 @@ export function ServicesWithLegs({ equipmentId, containerId }: ServicesWithLegsP
             return (
               <ReactFragment key={serviceRow.id}>
                 {/* Service Row */}
-                <tr className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'} hover:bg-gray-50`}>
-                  <td className="px-3 py-1.5 border-r border-gray-200">
+                <tr className={`${idx % 2 === 0 ? 'bg-white dark:bg-[#1E1E1E]' : 'bg-gray-50/50 dark:bg-[#262626]'} hover:bg-gray-50 dark:hover:bg-gray-800`}>
+                  <td className="px-3 py-1.5 border-r border-gray-200 dark:border-gray-700">
                     <input
                       type="text"
                       value={serviceRow.equipmentId}
                       onChange={(e) => handleUpdateRow(serviceRow.id, 'equipmentId', e.target.value)}
-                      className="w-full px-1.5 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                      className="w-full px-1.5 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100"
                       placeholder="Enter equipment ID"
                     />
                   </td>
-                  <td className="px-3 py-1.5 border-r border-gray-200">
+                  <td className="px-3 py-1.5 border-r border-gray-200 dark:border-gray-700">
                     <select
                       value={serviceRow.serviceType}
                       onChange={(e) => handleUpdateRow(serviceRow.id, 'serviceType', e.target.value)}
-                      className="w-full px-1.5 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                      className="w-full px-1.5 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100"
                     >
                       <option value="">Select Service Type...</option>
                       {serviceTypeOptions.map(opt => (
@@ -675,11 +675,11 @@ export function ServicesWithLegs({ equipmentId, containerId }: ServicesWithLegsP
                       ))}
                     </select>
                   </td>
-                  <td className="px-3 py-1.5 border-r border-gray-200">
+                  <td className="px-3 py-1.5 border-r border-gray-200 dark:border-gray-700">
                     <select
                       value={serviceRow.equipment}
                       onChange={(e) => handleUpdateRow(serviceRow.id, 'equipment', e.target.value)}
-                      className="w-full px-1.5 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                      className="w-full px-1.5 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100"
                     >
                       <option value="">Select Equipment...</option>
                       {equipmentTypes.map(type => (
@@ -687,11 +687,11 @@ export function ServicesWithLegs({ equipmentId, containerId }: ServicesWithLegsP
                       ))}
                     </select>
                   </td>
-                  <td className="px-3 py-1.5 border-r border-gray-200">
+                  <td className="px-3 py-1.5 border-r border-gray-200 dark:border-gray-700">
                     <select
                       value={serviceRow.invoiceParty}
                       onChange={(e) => handleUpdateRow(serviceRow.id, 'invoiceParty', e.target.value)}
-                      className="w-full px-1.5 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                      className="w-full px-1.5 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100"
                     >
                       <option value="">Select Invoice Party...</option>
                       <option value="client1">ABC Trading Co.</option>
@@ -701,21 +701,21 @@ export function ServicesWithLegs({ equipmentId, containerId }: ServicesWithLegsP
                       <option value="client5">Adriatic Logistics LLC</option>
                     </select>
                   </td>
-                  <td className="px-3 py-1.5 border-r border-gray-200">
+                  <td className="px-3 py-1.5 border-r border-gray-200 dark:border-gray-700">
                     <input
                       type="number"
                       value={serviceRow.agreedRate}
                       onChange={(e) => handleUpdateRow(serviceRow.id, 'agreedRate', e.target.value)}
-                      className="w-full px-1.5 py-1 text-xs text-right border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white tabular-nums"
+                      className="w-full px-1.5 py-1 text-xs text-right border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100 tabular-nums"
                       placeholder="0.00"
                       step="0.01"
                     />
                   </td>
-                  <td className="px-3 py-1.5 border-r border-gray-200">
+                  <td className="px-3 py-1.5 border-r border-gray-200 dark:border-gray-700">
                     <select
                       value={serviceRow.serviceProvider}
                       onChange={(e) => handleUpdateRow(serviceRow.id, 'serviceProvider', e.target.value)}
-                      className="w-full px-1.5 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                      className="w-full px-1.5 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100"
                     >
                       <option value="">Select Supplier...</option>
                       <option value="maersk">MAERSK LINE</option>
@@ -729,12 +729,12 @@ export function ServicesWithLegs({ equipmentId, containerId }: ServicesWithLegsP
                       <option value="fedex">FedEx</option>
                     </select>
                   </td>
-                  <td className="px-3 py-1.5 border-r border-gray-200">
+                  <td className="px-3 py-1.5 border-r border-gray-200 dark:border-gray-700">
                     <input
                       type="number"
                       value={serviceRow.agreedCost}
                       onChange={(e) => handleUpdateRow(serviceRow.id, 'agreedCost', e.target.value)}
-                      className="w-full px-1.5 py-1 text-xs text-right border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white tabular-nums"
+                      className="w-full px-1.5 py-1 text-xs text-right border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100 tabular-nums"
                       placeholder="0.00"
                       step="0.01"
                     />
@@ -758,7 +758,7 @@ export function ServicesWithLegs({ equipmentId, containerId }: ServicesWithLegsP
           })}
         </tbody>
       </table>
-      <div className="px-3 py-2 bg-gray-50 border-t border-gray-200">
+      <div className="px-3 py-2 bg-gray-50 dark:bg-[#262626] border-t border-gray-200 dark:border-gray-700">
         <button
           onClick={handleAddRow}
           className="flex items-center gap-1.5 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"

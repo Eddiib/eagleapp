@@ -83,7 +83,7 @@ const HEADER_COLUMNS = [
   'booking_date', 'carrier_ref', 'supplier_ref',
   'master_bl', 'house_bl', 'bl_type', 'bl_status',
   'freight_terms', 'notify_party_id',
-  'place_of_loading_city', 'place_of_loading_country', 'final_destination',
+  'place_of_loading_city', 'place_of_loading_country', 'final_destination', 'final_destination_country',
   'cargo_readiness_date', 'cargo_nature',
   'internal_notes', 'free_text_comments',
   // Lineage (migration 013): where this booking came from.

@@ -569,15 +569,30 @@ export function BookingHeader({
               </div>
 
               <div>
-                <label className={labelCls}>Final Destination</label>
-                <input
-                  type="text"
-                  className={inputCls}
-                  placeholder="Enter final destination"
-                  value={draft.finalDestination}
-                  onChange={(e) => onChange({ finalDestination: e.target.value })}
-                  disabled={isViewMode}
-                />
+                <label className={labelCls}>Final Destination (City, Country)</label>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <input
+                    type="text"
+                    className={inputCls}
+                    placeholder="City"
+                    value={draft.finalDestination}
+                    onChange={(e) => onChange({ finalDestination: e.target.value })}
+                    disabled={isViewMode}
+                  />
+                  <select
+                    className={inputCls}
+                    value={draft.finalDestinationCountry}
+                    onChange={(e) => onChange({ finalDestinationCountry: e.target.value })}
+                    disabled={isViewMode}
+                  >
+                    <option value="">Country</option>
+                    {countries.map((country) => (
+                      <option key={country.code} value={country.code}>
+                        {country.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
           </div>

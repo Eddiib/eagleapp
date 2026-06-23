@@ -83,10 +83,10 @@ interface ServicesIntegratedProps {
 }
 
 export function ServicesIntegrated({ equipmentId, containerId }: ServicesIntegratedProps) {
-  const denseHeadBase = `${tableClasses.denseHead} text-gray-600 border-r border-gray-200`;
+  const denseHeadBase = `${tableClasses.denseHead} text-gray-600 dark:text-gray-400 border-r border-gray-200 dark:border-gray-700`;
   const denseHead = `${denseHeadBase} text-left`;
   const denseHeadRight = `${denseHeadBase} text-right`;
-  const denseCell = `${tableClasses.denseCell} border-r border-gray-200`;
+  const denseCell = `${tableClasses.denseCell} border-r border-gray-200 dark:border-gray-700`;
   const [serviceRows, setServiceRows] = useState<ServiceRow[]>(() => {
     // Initialize with mock data for this specific equipment/container
     if (equipmentId === '1' && containerId === 'MSCU1234567') {
@@ -164,10 +164,10 @@ export function ServicesIntegrated({ equipmentId, containerId }: ServicesIntegra
   };
 
   return (
-    <div className="border-t border-gray-200">
+    <div className="border-t border-gray-200 dark:border-gray-700">
       <table className="min-w-full">
         <thead>
-          <tr className="bg-gray-100">
+          <tr className="bg-gray-100 dark:bg-[#262626]">
             <th className={denseHead}>
               Equipment ID
             </th>
@@ -194,13 +194,13 @@ export function ServicesIntegrated({ equipmentId, containerId }: ServicesIntegra
         </thead>
         <tbody>
           {serviceRows.map((serviceRow, idx) => (
-            <tr key={serviceRow.id} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'} hover:bg-gray-50`}>
+            <tr key={serviceRow.id} className={`${idx % 2 === 0 ? 'bg-white dark:bg-[#1E1E1E]' : 'bg-gray-50/50 dark:bg-[#262626]'} hover:bg-gray-50 dark:hover:bg-gray-800`}>
               <td className={denseCell}>
                 <input
                   type="text"
                   value={serviceRow.equipmentId}
                   onChange={(e) => handleUpdateRow(serviceRow.id, 'equipmentId', e.target.value)}
-                  className="w-full px-1.5 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                  className="w-full px-1.5 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100"
                   placeholder="Enter equipment ID"
                 />
               </td>
@@ -208,7 +208,7 @@ export function ServicesIntegrated({ equipmentId, containerId }: ServicesIntegra
                 <select
                   value={serviceRow.serviceType}
                   onChange={(e) => handleUpdateRow(serviceRow.id, 'serviceType', e.target.value)}
-                  className="w-full px-1.5 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                  className="w-full px-1.5 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100"
                 >
                   <option value="">Select Service Type...</option>
                   {serviceTypeOptions.map(opt => (
@@ -220,7 +220,7 @@ export function ServicesIntegrated({ equipmentId, containerId }: ServicesIntegra
                 <select
                   value={serviceRow.equipment}
                   onChange={(e) => handleUpdateRow(serviceRow.id, 'equipment', e.target.value)}
-                  className="w-full px-1.5 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                  className="w-full px-1.5 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100"
                 >
                   <option value="">Select Equipment...</option>
                   {equipmentTypes.map(type => (
@@ -232,7 +232,7 @@ export function ServicesIntegrated({ equipmentId, containerId }: ServicesIntegra
                 <select
                   value={serviceRow.invoiceParty}
                   onChange={(e) => handleUpdateRow(serviceRow.id, 'invoiceParty', e.target.value)}
-                  className="w-full px-1.5 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                  className="w-full px-1.5 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100"
                 >
                   <option value="">Select Invoice Party...</option>
                   {getClients().map(client => (
@@ -245,7 +245,7 @@ export function ServicesIntegrated({ equipmentId, containerId }: ServicesIntegra
                   type="number"
                   value={serviceRow.agreedRate}
                   onChange={(e) => handleUpdateRow(serviceRow.id, 'agreedRate', e.target.value)}
-                  className="w-full px-1.5 py-1 text-xs text-right border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white tabular-nums"
+                  className="w-full px-1.5 py-1 text-xs text-right border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100 tabular-nums"
                   placeholder="0.00"
                   step="0.01"
                 />
@@ -254,7 +254,7 @@ export function ServicesIntegrated({ equipmentId, containerId }: ServicesIntegra
                 <select
                   value={serviceRow.serviceProvider}
                   onChange={(e) => handleUpdateRow(serviceRow.id, 'serviceProvider', e.target.value)}
-                  className="w-full px-1.5 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                  className="w-full px-1.5 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100"
                 >
                   <option value="">Select Supplier...</option>
                   {getSuppliers().map(supplier => (
@@ -267,7 +267,7 @@ export function ServicesIntegrated({ equipmentId, containerId }: ServicesIntegra
                   type="number"
                   value={serviceRow.agreedCost}
                   onChange={(e) => handleUpdateRow(serviceRow.id, 'agreedCost', e.target.value)}
-                  className="w-full px-1.5 py-1 text-xs text-right border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white tabular-nums"
+                  className="w-full px-1.5 py-1 text-xs text-right border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100 tabular-nums"
                   placeholder="0.00"
                   step="0.01"
                 />
@@ -286,7 +286,7 @@ export function ServicesIntegrated({ equipmentId, containerId }: ServicesIntegra
           ))}
         </tbody>
       </table>
-      <div className="px-3 py-2 bg-gray-50 border-t border-gray-200">
+      <div className="px-3 py-2 bg-gray-50 dark:bg-[#262626] border-t border-gray-200 dark:border-gray-700">
         <button
           onClick={handleAddRow}
           className="flex items-center gap-1.5 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"

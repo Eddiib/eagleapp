@@ -137,22 +137,22 @@ export function ServicesList({
   const getCategoryColor = (category: ServiceCategory) => {
     switch (category) {
       case 'Main Freight':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
       case 'Local Charge (Origin)':
       case 'Local Charge (Destination)':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
       case 'Documentation':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300';
       case 'Handling / Terminal':
-        return 'bg-orange-100 text-orange-800';
+        return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300';
       case 'Trucking':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
       case 'Warehouse':
-        return 'bg-indigo-100 text-indigo-800';
+        return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300';
       case 'Value-Added Service':
-        return 'bg-pink-100 text-pink-800';
+        return 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
     }
   };
 
@@ -187,8 +187,8 @@ export function ServicesList({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-gray-900">Services Master Catalog</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-gray-900 dark:text-gray-100">Services Master Catalog</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
             Manage all billable services across logistics operations
           </p>
         </div>
@@ -205,7 +205,7 @@ export function ServicesList({
             {/* Search Bar */}
             <div className="flex gap-3">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-400" />
                 <Input
                   placeholder="Search by service name or code..."
                   value={searchTerm}
@@ -236,7 +236,7 @@ export function ServicesList({
             {showFilters && (
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4 border-t">
                 <div>
-                  <label className="text-sm text-gray-700 mb-2 block">Category</label>
+                  <label className="text-sm text-gray-700 dark:text-gray-300 mb-2 block">Category</label>
                   <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                     <SelectTrigger>
                       <SelectValue placeholder="All Categories" />
@@ -253,7 +253,7 @@ export function ServicesList({
                 </div>
 
                 <div>
-                  <label className="text-sm text-gray-700 mb-2 block">Mode</label>
+                  <label className="text-sm text-gray-700 dark:text-gray-300 mb-2 block">Mode</label>
                   <Select value={modeFilter} onValueChange={setModeFilter}>
                     <SelectTrigger>
                       <SelectValue placeholder="All Modes" />
@@ -270,7 +270,7 @@ export function ServicesList({
                 </div>
 
                 <div>
-                  <label className="text-sm text-gray-700 mb-2 block">Status</label>
+                  <label className="text-sm text-gray-700 dark:text-gray-300 mb-2 block">Status</label>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger>
                       <SelectValue placeholder="All Statuses" />
@@ -284,7 +284,7 @@ export function ServicesList({
                 </div>
 
                 <div>
-                  <label className="text-sm text-gray-700 mb-2 block">Charge Unit</label>
+                  <label className="text-sm text-gray-700 dark:text-gray-300 mb-2 block">Charge Unit</label>
                   <Select value={chargeUnitFilter} onValueChange={setChargeUnitFilter}>
                     <SelectTrigger>
                       <SelectValue placeholder="All Units" />
@@ -306,7 +306,7 @@ export function ServicesList({
       </Card>
 
       {/* Results Summary */}
-      <div className="text-sm text-gray-600">
+      <div className="text-sm text-gray-600 dark:text-gray-400">
         Showing {filteredServices.length} of {services.length} services
       </div>
 
@@ -334,7 +334,7 @@ export function ServicesList({
                   <TableRow>
                     <TableCell
                       colSpan={10}
-                      className="text-center py-8 text-gray-500"
+                      className="text-center py-8 text-gray-500 dark:text-gray-400"
                     >
                       No services found. Try adjusting your filters or create a new service.
                     </TableCell>
@@ -343,14 +343,14 @@ export function ServicesList({
                   filteredServices.map((service) => (
                     <TableRow
                       key={service.id}
-                      className="cursor-pointer hover:bg-gray-50"
+                      className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
                       onClick={() => onViewDetail(service.id)}
                     >
-                      <TableCell className="text-gray-900">
+                      <TableCell className="text-gray-900 dark:text-gray-100">
                         {service.serviceCode}
                       </TableCell>
                       <TableCell>
-                        <div className="text-gray-900">{service.serviceName}</div>
+                        <div className="text-gray-900 dark:text-gray-100">{service.serviceName}</div>
                       </TableCell>
                       <TableCell>
                         <Badge className={getCategoryColor(service.category)}>
@@ -362,7 +362,7 @@ export function ServicesList({
                           {service.transportModes.map((mode) => (
                             <div
                               key={mode}
-                              className="text-gray-600"
+                              className="text-gray-600 dark:text-gray-400"
                               title={mode}
                             >
                               {getModeIcon(mode)}
@@ -371,29 +371,29 @@ export function ServicesList({
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
                           {service.appliesTo.slice(0, 2).join(', ')}
                           {service.appliesTo.length > 2 && (
-                            <span className="text-gray-400">
+                            <span className="text-gray-400 dark:text-gray-400">
                               {' '}+{service.appliesTo.length - 2}
                             </span>
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="text-gray-600">
+                      <TableCell className="text-gray-600 dark:text-gray-400">
                         {service.chargeUnit}
                       </TableCell>
-                      <TableCell className="text-gray-600">
+                      <TableCell className="text-gray-600 dark:text-gray-400">
                         {service.defaultCurrency}
                       </TableCell>
                       <TableCell>
                         <Badge
                           className={
                             service.buySellType === 'Buy'
-                              ? 'bg-orange-100 text-orange-800'
+                              ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
                               : service.buySellType === 'Sell'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-blue-100 text-blue-800'
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                              : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
                           }
                         >
                           {service.buySellType}
@@ -401,11 +401,11 @@ export function ServicesList({
                       </TableCell>
                       <TableCell>
                         {service.isActive ? (
-                          <Badge className="bg-green-100 text-green-800">
+                          <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
                             Active
                           </Badge>
                         ) : (
-                          <Badge className="bg-gray-100 text-gray-800">
+                          <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
                             Inactive
                           </Badge>
                         )}

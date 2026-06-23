@@ -61,7 +61,7 @@ export function MeetingMinutes({ prefillData }: MeetingMinutesProps = {}) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20 text-gray-500">
+      <div className="flex items-center justify-center py-20 text-gray-500 dark:text-gray-400">
         <Loader2 className="w-6 h-6 animate-spin mr-2" />
         Loading meeting minutes…
       </div>
@@ -70,7 +70,7 @@ export function MeetingMinutes({ prefillData }: MeetingMinutesProps = {}) {
 
   if (error) {
     return (
-      <div className="bg-white rounded-lg shadow p-8 text-center">
+      <div className="bg-white dark:bg-[#1E1E1E] rounded-lg shadow p-8 text-center">
         <p className="text-red-600 mb-4">{error}</p>
         <button onClick={load} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Retry</button>
       </div>

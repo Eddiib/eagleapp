@@ -68,14 +68,14 @@ export function CarrierSelect({
           className={cn(
             'w-full justify-between font-normal',
             buttonSizeClasses,
-            !value && 'text-gray-500',
+            !value && 'text-gray-500 dark:text-gray-400',
             className
           )}
         >
           {selectedCarrier ? (
             <span className="truncate">{selectedCarrier.tradingName}</span>
           ) : (
-            <span className="text-gray-500">{placeholder}</span>
+            <span className="text-gray-500 dark:text-gray-400">{placeholder}</span>
           )}
           <ChevronsUpDown className={cn('ml-2 flex-shrink-0 opacity-50', size === 'sm' ? 'h-3 w-3' : 'h-4 w-4')} />
         </Button>
@@ -91,7 +91,7 @@ export function CarrierSelect({
           </div>
           <CommandList>
             <CommandEmpty>
-              <div className="py-6 text-center text-sm text-gray-500">
+              <div className="py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                 No carriers found
               </div>
             </CommandEmpty>
@@ -115,16 +115,16 @@ export function CarrierSelect({
                         )}
                       />
                       <div className="flex flex-col min-w-0 flex-1">
-                        <span className="text-sm text-gray-900 truncate">
+                        <span className="text-sm text-gray-900 dark:text-gray-100 truncate">
                           {carrier.tradingName}
                         </span>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
                           {carrier.partnerCode} • {getCountryName(carrier.country)}
                         </span>
                       </div>
                     </div>
                     <div className="flex-shrink-0">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-700">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
                         {carrier.partnerCategory === 'Shipping Line' && 'Sea'}
                         {carrier.partnerCategory === 'Air Carrier' && 'Air'}
                         {carrier.partnerCategory === 'Trucking Company' && 'Road'}

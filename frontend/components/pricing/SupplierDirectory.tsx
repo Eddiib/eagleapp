@@ -71,23 +71,23 @@ export function SupplierDirectory() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl text-gray-900">Supplier Directory</h1>
-          <p className="text-sm text-gray-500 mt-1">Active carriers, forwarders, and service providers from the Partners module</p>
+          <h1 className="text-2xl text-gray-900 dark:text-gray-100">Supplier Directory</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Active carriers, forwarders, and service providers from the Partners module</p>
         </div>
-        <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+        <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-[#262626] px-3 py-1 rounded-full">
           {filtered.length} supplier{filtered.length !== 1 ? 's' : ''}
         </span>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-4">
+      <div className="bg-white dark:bg-[#1E1E1E] rounded-lg shadow p-4">
         <div className="grid grid-cols-3 gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input type="text" placeholder="Search suppliers…" value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100" />
           </div>
           <select value={filterType} onChange={e => setFilterType(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100">
             <option value="all">All Types</option>
             <option value="Carrier">Carrier</option>
             <option value="Freight Forwarder">Freight Forwarder</option>
@@ -96,7 +96,7 @@ export function SupplierDirectory() {
             <option value="Special Services">Special Services</option>
           </select>
           <select value={filterSpec} onChange={e => setFilterSpec(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100">
             <option value="all">All Modes</option>
             {(['FCL','LCL','FTL','LTL','AIR','RAIL','PARCEL'] as TransportMode[]).map(m => (
               <option key={m} value={m}>{m}</option>
@@ -112,7 +112,7 @@ export function SupplierDirectory() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {filtered.length === 0 ? (
-            <div className="col-span-2 text-center py-12 bg-white rounded-lg shadow text-gray-500">
+            <div className="col-span-2 text-center py-12 bg-white dark:bg-[#1E1E1E] rounded-lg shadow text-gray-500 dark:text-gray-400">
               No suppliers found. Add carriers or freight forwarders in the Partners module.
             </div>
           ) : filtered.map(p => {
@@ -120,68 +120,68 @@ export function SupplierDirectory() {
             const specs = getSpecializations(p);
             const typeLabel = TYPE_LABELS[p.partnerType] ?? 'Other';
             return (
-              <div key={p.id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+              <div key={p.id} className="bg-white dark:bg-[#1E1E1E] rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-3 bg-blue-100 rounded-lg"><Building2 className="w-6 h-6 text-blue-600" /></div>
+                    <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg"><Building2 className="w-6 h-6 text-blue-600" /></div>
                     <div>
-                      <h3 className="text-lg text-gray-900">{p.tradingName || p.companyLegalName}</h3>
-                      <span className="text-xs text-gray-500">{typeLabel} · {p.partnerType}</span>
+                      <h3 className="text-lg text-gray-900 dark:text-gray-100">{p.tradingName || p.companyLegalName}</h3>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">{typeLabel} · {p.partnerType}</span>
                     </div>
                   </div>
-                  <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">Active</span>
+                  <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs rounded-full">Active</span>
                 </div>
 
                 {specs.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-4">
                     {specs.map(s => (
-                      <span key={s} className="px-2 py-1 bg-indigo-100 text-indigo-800 text-xs rounded-full">{s}</span>
+                      <span key={s} className="px-2 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-300 text-xs rounded-full">{s}</span>
                     ))}
                   </div>
                 )}
 
                 <div className="space-y-2 mb-4">
                   {(p.city || p.country) && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                       <Globe className="w-4 h-4" />
                       <span>{[p.city, p.country ? getCountryName(p.country) : ''].filter(Boolean).join(', ')}</span>
                     </div>
                   )}
                   {contact?.name && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <span className="text-gray-900">{contact.name}</span>
-                      {contact.position && <span className="text-gray-500">· {contact.position}</span>}
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                      <span className="text-gray-900 dark:text-gray-100">{contact.name}</span>
+                      {contact.position && <span className="text-gray-500 dark:text-gray-400">· {contact.position}</span>}
                     </div>
                   )}
                   {contact?.email && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                       <Mail className="w-4 h-4" />
                       <a href={`mailto:${contact.email}`} className="hover:text-blue-600">{contact.email}</a>
                     </div>
                   )}
                   {contact?.phone && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                       <Phone className="w-4 h-4" />
                       <span>{contact.phone}</span>
                     </div>
                   )}
                 </div>
 
-                <div className="grid grid-cols-3 gap-3 pt-4 border-t border-gray-200">
+                <div className="grid grid-cols-3 gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <div>
                     <div className="flex items-center gap-1 text-yellow-500 mb-1">
                       <Star className="w-4 h-4 fill-current" />
-                      <span className="text-sm text-gray-900">{p.rating ?? '—'}</span>
+                      <span className="text-sm text-gray-900 dark:text-gray-100">{p.rating ?? '—'}</span>
                     </div>
-                    <p className="text-xs text-gray-500">Rating</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Rating</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-900 mb-1">{p.partnerCode}</p>
-                    <p className="text-xs text-gray-500">Partner Code</p>
+                    <p className="text-sm text-gray-900 dark:text-gray-100 mb-1">{p.partnerCode}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Partner Code</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-900 mb-1 capitalize">{p.defaultServiceType}</p>
-                    <p className="text-xs text-gray-500">Default Service</p>
+                    <p className="text-sm text-gray-900 dark:text-gray-100 mb-1 capitalize">{p.defaultServiceType}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Default Service</p>
                   </div>
                 </div>
               </div>

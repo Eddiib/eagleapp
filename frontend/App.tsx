@@ -586,7 +586,7 @@ function AppShell() {
           <main className={`min-w-0 flex-1 transition-all duration-300 ${sidebarOpen ? 'mr-80' : 'mr-0'}`}>
             <div className="min-w-0 p-4 sm:p-6">
               {activeTab === 'equipment' && (
-                <div className="min-w-0 overflow-hidden rounded-lg bg-white p-3 shadow dark:bg-gray-800 sm:p-6">
+                <div className="min-w-0 overflow-hidden rounded-lg bg-white p-3 shadow dark:bg-[#1E1E1E] sm:p-6">
                   <BookingEquipmentEditor
                     value={editEquipment}
                     onChange={(next) => { setEditEquipment(next); setBookingDirty(true); }}
@@ -595,7 +595,7 @@ function AppShell() {
                 </div>
               )}
               {activeTab === 'services' && (
-                <div className="min-w-0 overflow-hidden rounded-lg bg-white p-3 shadow dark:bg-gray-800 sm:p-6">
+                <div className="min-w-0 overflow-hidden rounded-lg bg-white p-3 shadow dark:bg-[#1E1E1E] sm:p-6">
                   <EquipmentServicesView equipment={editEquipment} />
                 </div>
               )}
@@ -629,7 +629,7 @@ function AppShell() {
   };
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-gray-50 dark:bg-[#1E1E1E]">
+    <div className="min-h-screen overflow-x-clip bg-gray-50 dark:bg-[#1E1E1E]">
       <LeftSidebar
         activeModule={activeModule}
         onModuleChange={handleModuleChange}

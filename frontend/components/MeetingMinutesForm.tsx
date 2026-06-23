@@ -165,24 +165,24 @@ export function MeetingMinutesForm({ initialData, leadId, mode, onSaved, onCance
   };
 
   return (
-    <div className="bg-white rounded-lg shadow">
-      <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+    <div className="bg-white dark:bg-[#1E1E1E] rounded-lg shadow">
+      <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <button onClick={onCancel} className="p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors">
+          <button onClick={onCancel} className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h2 className="text-gray-900">
+            <h2 className="text-gray-900 dark:text-gray-100">
               {mode === 'create' ? 'New Meeting Minute' : mode === 'edit' ? 'Edit Meeting Minute' : 'View Meeting Minute'}
             </h2>
-            <p className="text-sm text-gray-500 mt-0.5">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
               {mode === 'create' ? 'Record a new client meeting' : `Meeting on ${new Date(meetingDate).toLocaleDateString()}`}
             </p>
           </div>
         </div>
         {!isViewMode && (
           <div className="flex items-center gap-2">
-            <button type="button" onClick={onCancel} className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+            <button type="button" onClick={onCancel} className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800">
               Cancel
             </button>
             <button onClick={handleSubmit} disabled={saving} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-60">
@@ -194,42 +194,42 @@ export function MeetingMinutesForm({ initialData, leadId, mode, onSaved, onCance
       </div>
 
       {error && (
-        <div className="mx-6 mt-4 px-4 py-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">{error}</div>
+        <div className="mx-6 mt-4 px-4 py-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-md text-sm text-red-700 dark:text-red-300">{error}</div>
       )}
 
       <form onSubmit={handleSubmit} className="p-6 space-y-8">
 
         {/* Basic Information */}
         <section>
-          <h3 className="text-gray-900 mb-4 pb-2 border-b border-gray-200">Basic Information</h3>
+          <h3 className="text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">Basic Information</h3>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Date *</label>
+              <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Date *</label>
               <input type="date" value={meetingDate} onChange={e => setMeetingDate(e.target.value)} disabled={isViewMode}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50" required />
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-800" required />
             </div>
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Week Number</label>
-              <input type="number" value={weekNumber} disabled className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600" />
+              <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Week Number</label>
+              <input type="number" value={weekNumber} disabled className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-[#262626] text-gray-600 dark:text-gray-400" />
             </div>
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Time</label>
+              <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Time</label>
               <input type="time" value={meetingTime} onChange={e => setMeetingTime(e.target.value)} disabled={isViewMode}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50" />
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-800" />
             </div>
           </div>
         </section>
 
         {/* Sales Person */}
         <section>
-          <h3 className="text-gray-900 mb-4 pb-2 border-b border-gray-200">Sales Representative</h3>
+          <h3 className="text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">Sales Representative</h3>
           <div className="max-w-sm">
-            <label className="block text-sm text-gray-700 mb-1">Sales Person</label>
+            <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Sales Person</label>
             {isViewMode ? (
-              <input type="text" value={salesAgent} disabled className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600" />
+              <input type="text" value={salesAgent} disabled className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-[#262626] text-gray-600 dark:text-gray-400" />
             ) : (
               <select value={salesAgentId} onChange={e => handleSalesAgentChange(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="">Select sales person…</option>
                 {salesPeople.map(e => (
                   <option key={e.id} value={e.id}>{e.firstName} {e.surname}</option>
@@ -241,16 +241,16 @@ export function MeetingMinutesForm({ initialData, leadId, mode, onSaved, onCance
 
         {/* Client Details */}
         <section>
-          <h3 className="text-gray-900 mb-4 pb-2 border-b border-gray-200">Client Details</h3>
+          <h3 className="text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">Client Details</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Partner / Client *</label>
+              <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Partner / Client *</label>
               {isViewMode ? (
                 <input type="text" value={selectedPartner?.tradingName ?? selectedPartner?.companyLegalName ?? partnerId} disabled
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600" />
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-[#262626] text-gray-600 dark:text-gray-400" />
               ) : (
                 <select value={partnerId} onChange={e => { setPartnerId(e.target.value); setContactPerson(''); setClientParticipants([]); }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                   <option value="">Select a client…</option>
                   {clients.map(c => (
                     <option key={c.id} value={c.id}>{c.tradingName || c.companyLegalName}</option>
@@ -259,12 +259,12 @@ export function MeetingMinutesForm({ initialData, leadId, mode, onSaved, onCance
               )}
             </div>
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Contact Person</label>
+              <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Contact Person</label>
               {isViewMode ? (
-                <input type="text" value={contactPerson} disabled className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600" />
+                <input type="text" value={contactPerson} disabled className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-[#262626] text-gray-600 dark:text-gray-400" />
               ) : (
                 <select value={contactPerson} onChange={e => setContactPerson(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <option value="">Select a contact…</option>
                   {partnerContacts.map(c => (
                     <option key={c.id} value={c.name}>{c.name}{c.position ? ` — ${c.position}` : ''}</option>
@@ -277,69 +277,69 @@ export function MeetingMinutesForm({ initialData, leadId, mode, onSaved, onCance
 
         {/* Meeting Details */}
         <section>
-          <h3 className="text-gray-900 mb-4 pb-2 border-b border-gray-200">Meeting Details</h3>
+          <h3 className="text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">Meeting Details</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Contact Type *</label>
+              <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Contact Type *</label>
               <select value={contactType} onChange={e => setContactType(e.target.value as ContactType)} disabled={isViewMode}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50">
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-800">
                 {CONTACT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Meeting Type</label>
+              <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Meeting Type</label>
               <select value={meetingType} onChange={e => setMeetingType(e.target.value)} disabled={isViewMode}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50">
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-800">
                 {MEETING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Duration (minutes)</label>
+              <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Duration (minutes)</label>
               <input type="number" value={durationMinutes} onChange={e => setDurationMinutes(Number(e.target.value))} disabled={isViewMode} min={1}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50" />
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-800" />
             </div>
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Location</label>
+              <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Location</label>
               <input type="text" value={location} onChange={e => setLocation(e.target.value)} disabled={isViewMode}
                 placeholder="Meeting location…"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50" />
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-800" />
             </div>
             <div className="col-span-2">
-              <label className="block text-sm text-gray-700 mb-1">Purpose</label>
+              <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Purpose</label>
               <textarea value={purpose} onChange={e => setPurpose(e.target.value)} disabled={isViewMode} rows={2}
                 placeholder="Describe the purpose of this meeting…"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50" />
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-800" />
             </div>
           </div>
 
           {/* Participants */}
           <div className="mt-4 grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-gray-700 mb-2">Participants from Client Side</label>
-              <div className="border border-gray-300 rounded-md p-3 bg-gray-50 max-h-40 overflow-y-auto space-y-2">
+              <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">Participants from Client Side</label>
+              <div className="border border-gray-300 dark:border-gray-600 rounded-md p-3 bg-gray-50 dark:bg-[#262626] max-h-40 overflow-y-auto space-y-2">
                 {partnerContacts.length === 0 ? (
-                  <p className="text-xs text-gray-500">Select a client to see contacts</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Select a client to see contacts</p>
                 ) : (
                   partnerContacts.map(c => (
                     <label key={c.id} className="flex items-center gap-2 cursor-pointer">
                       <input type="checkbox" checked={clientParticipants.includes(c.name)} onChange={() => toggleClientParticipant(c.name)} disabled={isViewMode}
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded" />
-                      <span className="text-sm text-gray-700">{c.name}</span>
+                        className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded" />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{c.name}</span>
                     </label>
                   ))
                 )}
               </div>
             </div>
             <div>
-              <label className="block text-sm text-gray-700 mb-2">Participants from Our Company</label>
-              <div className="border border-gray-300 rounded-md p-3 bg-gray-50 max-h-40 overflow-y-auto space-y-2">
+              <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">Participants from Our Company</label>
+              <div className="border border-gray-300 dark:border-gray-600 rounded-md p-3 bg-gray-50 dark:bg-[#262626] max-h-40 overflow-y-auto space-y-2">
                 {employees.filter(e => e.isActive).map(e => {
                   const name = `${e.firstName} ${e.surname}`;
                   return (
                     <label key={e.id} className="flex items-center gap-2 cursor-pointer">
                       <input type="checkbox" checked={companyParticipants.includes(name)} onChange={() => toggleCompanyParticipant(name)} disabled={isViewMode}
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded" />
-                      <span className="text-sm text-gray-700">{name}</span>
+                        className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded" />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{name}</span>
                     </label>
                   );
                 })}
@@ -350,51 +350,51 @@ export function MeetingMinutesForm({ initialData, leadId, mode, onSaved, onCance
 
         {/* Discussion Summary */}
         <section>
-          <h3 className="text-gray-900 mb-4 pb-2 border-b border-gray-200">Discussion Summary</h3>
+          <h3 className="text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">Discussion Summary</h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Summary *</label>
+              <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Summary *</label>
               <textarea value={summary} onChange={e => setSummary(e.target.value)} disabled={isViewMode} rows={3} required
                 placeholder="Brief summary of the meeting…"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50" />
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-800" />
             </div>
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Key Points Discussed</label>
+              <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Key Points Discussed</label>
               <textarea value={keyPoints} onChange={e => setKeyPoints(e.target.value)} disabled={isViewMode} rows={3}
                 placeholder="Key points from the meeting…"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50" />
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-800" />
             </div>
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Client Needs / Problems Identified</label>
+              <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Client Needs / Problems Identified</label>
               <textarea value={clientNeeds} onChange={e => setClientNeeds(e.target.value)} disabled={isViewMode} rows={2}
                 placeholder="Document specific needs or pain points…"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50" />
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-800" />
             </div>
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Proposed Solutions</label>
+              <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Proposed Solutions</label>
               <textarea value={proposedSolutions} onChange={e => setProposedSolutions(e.target.value)} disabled={isViewMode} rows={2}
                 placeholder="Solutions or approaches discussed…"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50" />
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-800" />
             </div>
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Competitors Mentioned</label>
+              <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Competitors Mentioned</label>
               <input type="text" value={competitorsMentioned} onChange={e => setCompetitorsMentioned(e.target.value)} disabled={isViewMode}
                 placeholder="List any competitors discussed…"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50" />
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-800" />
             </div>
 
             {/* Action Items */}
             <div>
-              <label className="block text-sm text-gray-700 mb-2">Action Items</label>
-              <div className="border border-gray-300 rounded-md p-3 bg-gray-50">
+              <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">Action Items</label>
+              <div className="border border-gray-300 dark:border-gray-600 rounded-md p-3 bg-gray-50 dark:bg-[#262626]">
                 {actionItems.map(item => (
-                  <div key={item.id} className="flex items-center gap-2 mb-2 bg-white p-2 rounded border border-gray-200">
+                  <div key={item.id} className="flex items-center gap-2 mb-2 bg-white dark:bg-[#1E1E1E] p-2 rounded border border-gray-200 dark:border-gray-700">
                     <input type="checkbox" checked={item.completed} onChange={() => setActionItems(prev => prev.map(i => i.id === item.id ? { ...i, completed: !i.completed } : i))}
-                      disabled={isViewMode} className="w-4 h-4 text-blue-600 border-gray-300 rounded" />
-                    <span className={`flex-1 text-sm ${item.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>{item.text}</span>
+                      disabled={isViewMode} className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded" />
+                    <span className={`flex-1 text-sm ${item.completed ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}>{item.text}</span>
                     {!isViewMode && (
                       <button type="button" onClick={() => setActionItems(prev => prev.filter(i => i.id !== item.id))}
-                        className="p-1 text-gray-400 hover:text-red-600">
+                        className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-600">
                         <X className="w-4 h-4" />
                       </button>
                     )}
@@ -405,7 +405,7 @@ export function MeetingMinutesForm({ initialData, leadId, mode, onSaved, onCance
                     <input type="text" value={newActionText} onChange={e => setNewActionText(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddActionItem(); } }}
                       placeholder="Add action item…"
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
                     <button type="button" onClick={handleAddActionItem} className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
                       <Plus className="w-4 h-4" />
                     </button>
@@ -418,32 +418,32 @@ export function MeetingMinutesForm({ initialData, leadId, mode, onSaved, onCance
 
         {/* Follow-Up */}
         <section>
-          <h3 className="text-gray-900 mb-4 pb-2 border-b border-gray-200">Follow-Up</h3>
+          <h3 className="text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">Follow-Up</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Next Action</label>
+              <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Next Action</label>
               <select value={nextAction} onChange={e => setNextAction(e.target.value as NextAction)} disabled={isViewMode}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50">
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-800">
                 {NEXT_ACTIONS.map(a => <option key={a} value={a}>{a}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Next Action Date</label>
+              <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Next Action Date</label>
               <input type="date" value={nextActionDate} onChange={e => setNextActionDate(e.target.value)} disabled={isViewMode}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50" />
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-800" />
             </div>
           </div>
         </section>
 
         {/* Communication Method */}
         <section>
-          <h3 className="text-gray-900 mb-4 pb-2 border-b border-gray-200">Communication Method</h3>
+          <h3 className="text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">Communication Method</h3>
           <div className="grid grid-cols-4 gap-3">
             {COMM_METHODS.map(method => (
               <label key={method} className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={communicationMethods.includes(method)} onChange={() => toggleCommunicationMethod(method)} disabled={isViewMode}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded" />
-                <span className="text-sm text-gray-700">{method}</span>
+                  className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded" />
+                <span className="text-sm text-gray-700 dark:text-gray-300">{method}</span>
               </label>
             ))}
           </div>
@@ -451,11 +451,11 @@ export function MeetingMinutesForm({ initialData, leadId, mode, onSaved, onCance
 
         {/* Status */}
         <section>
-          <h3 className="text-gray-900 mb-4 pb-2 border-b border-gray-200">Status</h3>
+          <h3 className="text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">Status</h3>
           <div className="max-w-xs">
-            <label className="block text-sm text-gray-700 mb-1">Meeting Status</label>
+            <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Meeting Status</label>
             <select value={status} onChange={e => setStatus(e.target.value as typeof status)} disabled={isViewMode}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50">
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-800">
               <option value="draft">Draft</option>
               <option value="completed">Completed</option>
               <option value="follow-up-pending">Follow-up Pending</option>

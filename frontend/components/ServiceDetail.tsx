@@ -32,22 +32,22 @@ export function ServiceDetail({
   const getCategoryColor = (category: string) => {
     switch (category) {
       case 'Main Freight':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
       case 'Local Charge (Origin)':
       case 'Local Charge (Destination)':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
       case 'Documentation':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300';
       case 'Handling / Terminal':
-        return 'bg-orange-100 text-orange-800';
+        return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300';
       case 'Trucking':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
       case 'Warehouse':
-        return 'bg-indigo-100 text-indigo-800';
+        return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300';
       case 'Value-Added Service':
-        return 'bg-pink-100 text-pink-800';
+        return 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
     }
   };
 
@@ -87,8 +87,8 @@ export function ServiceDetail({
             Back
           </Button>
           <div>
-            <h1 className="text-gray-900">Service Details</h1>
-            <p className="text-gray-600 mt-1">View service information</p>
+            <h1 className="text-gray-900 dark:text-gray-100">Service Details</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">View service information</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -120,15 +120,15 @@ export function ServiceDetail({
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
-                  <h2 className="text-2xl text-gray-900">{service.serviceName}</h2>
+                  <h2 className="text-2xl text-gray-900 dark:text-gray-100">{service.serviceName}</h2>
                   {service.isActive ? (
-                    <Badge className="bg-green-100 text-green-800">Active</Badge>
+                    <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Active</Badge>
                   ) : (
-                    <Badge className="bg-gray-100 text-gray-800">Inactive</Badge>
+                    <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">Inactive</Badge>
                   )}
                 </div>
-                <div className="text-gray-600 mb-4">
-                  Service Code: <span className="text-gray-900">{service.serviceCode}</span>
+                <div className="text-gray-600 dark:text-gray-400 mb-4">
+                  Service Code: <span className="text-gray-900 dark:text-gray-100">{service.serviceCode}</span>
                 </div>
                 <div className="flex items-center gap-4">
                   <Badge className={getCategoryColor(service.category)}>
@@ -138,7 +138,7 @@ export function ServiceDetail({
                     {service.transportModes.map((mode) => (
                       <div
                         key={mode}
-                        className="flex items-center gap-1 text-gray-600"
+                        className="flex items-center gap-1 text-gray-600 dark:text-gray-400"
                         title={mode}
                       >
                         {getModeIcon(mode)}
@@ -154,10 +154,10 @@ export function ServiceDetail({
 
         {/* Usage Warning */}
         {!canDelete() && (
-          <Card className="border-l-4 border-l-yellow-500 bg-yellow-50">
+          <Card className="border-l-4 border-l-yellow-500 bg-yellow-50 dark:bg-yellow-900/30">
             <CardContent className="pt-4 pb-4">
               <div className="flex items-start gap-2">
-                <div className="text-yellow-800">
+                <div className="text-yellow-800 dark:text-yellow-300">
                   <strong>Service In Use:</strong> This service is currently used in:
                   <ul className="mt-2 space-y-1 text-sm">
                     {(service.usedInQuotations ?? 0) > 0 && (
@@ -188,38 +188,38 @@ export function ServiceDetail({
           {/* A) Basic Info */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-gray-900">Basic Information</CardTitle>
+              <CardTitle className="text-gray-900 dark:text-gray-100">Basic Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
-                <div className="text-sm text-gray-600">Service Code</div>
-                <div className="text-gray-900">{service.serviceCode}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Service Code</div>
+                <div className="text-gray-900 dark:text-gray-100">{service.serviceCode}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-600">Service Name</div>
-                <div className="text-gray-900">{service.serviceName}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Service Name</div>
+                <div className="text-gray-900 dark:text-gray-100">{service.serviceName}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-600">Category</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Category</div>
                 <Badge className={getCategoryColor(service.category)}>
                   {service.category}
                 </Badge>
               </div>
               <div>
-                <div className="text-sm text-gray-600">Transport Modes</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Transport Modes</div>
                 <div className="flex flex-wrap gap-2 mt-1">
                   {service.transportModes.map((mode) => (
-                    <Badge key={mode} className="bg-blue-100 text-blue-800">
+                    <Badge key={mode} className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                       {mode}
                     </Badge>
                   ))}
                 </div>
               </div>
               <div>
-                <div className="text-sm text-gray-600">Applies To</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Applies To</div>
                 <div className="flex flex-wrap gap-2 mt-1">
                   {service.appliesTo.map((type) => (
-                    <Badge key={type} className="bg-gray-200 text-gray-800">
+                    <Badge key={type} className="bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
                       {type}
                     </Badge>
                   ))}
@@ -231,26 +231,26 @@ export function ServiceDetail({
           {/* B) Charge Logic */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-gray-900">Charging Logic</CardTitle>
+              <CardTitle className="text-gray-900 dark:text-gray-100">Charging Logic</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
-                <div className="text-sm text-gray-600">Charge Unit</div>
-                <div className="text-gray-900">{service.chargeUnit}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Charge Unit</div>
+                <div className="text-gray-900 dark:text-gray-100">{service.chargeUnit}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-600">Default Currency</div>
-                <div className="text-gray-900">{service.defaultCurrency}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Default Currency</div>
+                <div className="text-gray-900 dark:text-gray-100">{service.defaultCurrency}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-600">Buy/Sell Type</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Buy/Sell Type</div>
                 <Badge
                   className={
                     service.buySellType === 'Buy'
-                      ? 'bg-orange-100 text-orange-800'
+                      ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
                       : service.buySellType === 'Sell'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-blue-100 text-blue-800'
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                      : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
                   }
                 >
                   {service.buySellType}
@@ -258,14 +258,14 @@ export function ServiceDetail({
               </div>
               {service.defaultVatRate && service.defaultVatRate > 0 && (
                 <div>
-                  <div className="text-sm text-gray-600">Default VAT Rate</div>
-                  <div className="text-gray-900">{service.defaultVatRate}%</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Default VAT Rate</div>
+                  <div className="text-gray-900 dark:text-gray-100">{service.defaultVatRate}%</div>
                 </div>
               )}
               {service.defaultGlCode && (
                 <div>
-                  <div className="text-sm text-gray-600">GL / Account Code</div>
-                  <div className="text-gray-900">{service.defaultGlCode}</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">GL / Account Code</div>
+                  <div className="text-gray-900 dark:text-gray-100">{service.defaultGlCode}</div>
                 </div>
               )}
             </CardContent>
@@ -274,17 +274,17 @@ export function ServiceDetail({
           {/* C) Pricing Behavior */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-gray-900">Pricing Behavior</CardTitle>
+              <CardTitle className="text-gray-900 dark:text-gray-100">Pricing Behavior</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
-                <div className="text-sm text-gray-600">Price Behavior</div>
-                <div className="text-gray-900">{service.priceBehavior || 'Fixed'}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Price Behavior</div>
+                <div className="text-gray-900 dark:text-gray-100">{service.priceBehavior || 'Fixed'}</div>
               </div>
               {service.priceBehavior === 'Formula-based' && service.pricingModelId && (
                 <div>
-                  <div className="text-sm text-gray-600">Pricing Model</div>
-                  <div className="text-gray-900">{service.pricingModelId}</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Pricing Model</div>
+                  <div className="text-gray-900 dark:text-gray-100">{service.pricingModelId}</div>
                 </div>
               )}
             </CardContent>
@@ -293,49 +293,49 @@ export function ServiceDetail({
           {/* D) Operational Info */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-gray-900">Operational Information</CardTitle>
+              <CardTitle className="text-gray-900 dark:text-gray-100">Operational Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
-                <div className="text-sm text-gray-600">Related Partner Types</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Related Partner Types</div>
                 <div className="flex flex-wrap gap-2 mt-1">
                   {service.relatedPartnerTypes.length > 0 ? (
                     service.relatedPartnerTypes.map((type) => (
-                      <Badge key={type} className="bg-purple-100 text-purple-800">
+                      <Badge key={type} className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
                         {type}
                       </Badge>
                     ))
                   ) : (
-                    <span className="text-gray-400 text-sm">None specified</span>
+                    <span className="text-gray-400 dark:text-gray-400 text-sm">None specified</span>
                   )}
                 </div>
               </div>
               <div>
-                <div className="text-sm text-gray-600">Location Type</div>
-                <div className="text-gray-900">{service.locationType}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Location Type</div>
+                <div className="text-gray-900 dark:text-gray-100">{service.locationType}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-600">Documentation Required</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Documentation Required</div>
                 <div className="flex items-center gap-2">
                   {service.documentationRequired ? (
                     <>
                       <Check className="w-4 h-4 text-green-600" />
-                      <span className="text-gray-900">Yes</span>
+                      <span className="text-gray-900 dark:text-gray-100">Yes</span>
                     </>
                   ) : (
                     <>
-                      <X className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-600">No</span>
+                      <X className="w-4 h-4 text-gray-400 dark:text-gray-400" />
+                      <span className="text-gray-600 dark:text-gray-400">No</span>
                     </>
                   )}
                 </div>
               </div>
               {service.mandatoryForShipmentTypes.length > 0 && (
                 <div>
-                  <div className="text-sm text-gray-600">Mandatory For</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Mandatory For</div>
                   <div className="flex flex-wrap gap-2 mt-1">
                     {service.mandatoryForShipmentTypes.map((type) => (
-                      <Badge key={type} className="bg-red-100 text-red-800">
+                      <Badge key={type} className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
                         {type}
                       </Badge>
                     ))}
@@ -350,10 +350,10 @@ export function ServiceDetail({
         {service.notes && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-gray-900">Notes</CardTitle>
+              <CardTitle className="text-gray-900 dark:text-gray-100">Notes</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-700 whitespace-pre-wrap">{service.notes}</p>
+              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{service.notes}</p>
             </CardContent>
           </Card>
         )}
@@ -361,19 +361,19 @@ export function ServiceDetail({
         {/* F) Audit Information */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-gray-900">Audit Information</CardTitle>
+            <CardTitle className="text-gray-900 dark:text-gray-100">Audit Information</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <div className="text-gray-600">Created By</div>
-                <div className="text-gray-900">{service.createdBy}</div>
-                <div className="text-gray-500 text-xs">{service.createdAt}</div>
+                <div className="text-gray-600 dark:text-gray-400">Created By</div>
+                <div className="text-gray-900 dark:text-gray-100">{service.createdBy}</div>
+                <div className="text-gray-500 dark:text-gray-400 text-xs">{service.createdAt}</div>
               </div>
               <div>
-                <div className="text-gray-600">Last Updated By</div>
-                <div className="text-gray-900">{service.updatedBy}</div>
-                <div className="text-gray-500 text-xs">{service.updatedAt}</div>
+                <div className="text-gray-600 dark:text-gray-400">Last Updated By</div>
+                <div className="text-gray-900 dark:text-gray-100">{service.updatedBy}</div>
+                <div className="text-gray-500 dark:text-gray-400 text-xs">{service.updatedAt}</div>
               </div>
             </div>
           </CardContent>
@@ -382,7 +382,7 @@ export function ServiceDetail({
         {/* System Visibility */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-gray-900">System Visibility</CardTitle>
+            <CardTitle className="text-gray-900 dark:text-gray-100">System Visibility</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -390,19 +390,19 @@ export function ServiceDetail({
                 {service.visibleToSales ? (
                   <Check className="w-4 h-4 text-green-600" />
                 ) : (
-                  <X className="w-4 h-4 text-gray-400" />
+                  <X className="w-4 h-4 text-gray-400 dark:text-gray-400" />
                 )}
-                <span className="text-gray-700">Visible to Sales</span>
+                <span className="text-gray-700 dark:text-gray-300">Visible to Sales</span>
               </div>
               <div className="flex items-center gap-2">
                 {service.visibleToMarketplace ? (
                   <Check className="w-4 h-4 text-green-600" />
                 ) : (
-                  <X className="w-4 h-4 text-gray-400" />
+                  <X className="w-4 h-4 text-gray-400 dark:text-gray-400" />
                 )}
-                <span className="text-gray-700">
+                <span className="text-gray-700 dark:text-gray-300">
                   Visible to External Marketplace{' '}
-                  <span className="text-gray-500">(future)</span>
+                  <span className="text-gray-500 dark:text-gray-400">(future)</span>
                 </span>
               </div>
             </div>
