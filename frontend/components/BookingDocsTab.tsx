@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback } from 'react';
 import { Upload, Download, Trash2, FileText, Loader2, FolderOpen } from 'lucide-react';
 import { BookingAttachment, bookingAttachmentsApi } from '../services/bookings';
+import { formatDate } from '../utils/date';
 import { authHeader, API_BASE_URL } from '../services/client';
 
 interface Props {
@@ -171,9 +172,9 @@ export function BookingDocsTab({ bookingId, attachments, onAttachmentsChange, di
                     </td>
                     <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
                       {att.docDate
-                        ? new Date(att.docDate).toLocaleDateString()
+                        ? formatDate(att.docDate)
                         : att.uploadedAt
-                          ? new Date(att.uploadedAt).toLocaleDateString()
+                          ? formatDate(att.uploadedAt)
                           : <span className="text-gray-300 dark:text-gray-600">—</span>
                       }
                     </td>

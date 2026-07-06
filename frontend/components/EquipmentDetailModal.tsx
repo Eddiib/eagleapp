@@ -1,4 +1,5 @@
 import { EquipmentType } from '../types/equipment';
+import { formatDate } from '../utils/date';
 import { X, Edit2, ToggleLeft, ToggleRight, Package } from 'lucide-react';
 
 interface EquipmentDetailModalProps {
@@ -135,7 +136,7 @@ export function EquipmentDetailModal({
                     Created By
                   </label>
                   <p className="text-gray-900 dark:text-gray-300">{equipment.createdBy}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{equipment.createdAt}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{formatDate(equipment.createdAt)}</p>
                 </div>
 
                 <div>
@@ -143,7 +144,7 @@ export function EquipmentDetailModal({
                     Last Updated By
                   </label>
                   <p className="text-gray-900 dark:text-gray-300">{equipment.updatedBy}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{equipment.updatedAt}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{formatDate(equipment.updatedAt)}</p>
                 </div>
               </div>
             </div>

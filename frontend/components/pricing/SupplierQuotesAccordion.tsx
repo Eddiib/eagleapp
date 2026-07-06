@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronRight, CheckCircle, XCircle, TrendingUp, Calendar, Clock } from 'lucide-react';
 import { SupplierQuote } from './types';
+import { formatDate } from '../../utils/date';
 
 interface SupplierQuotesAccordionProps {
   quotes: SupplierQuote[];
@@ -120,13 +121,13 @@ export function SupplierQuotesAccordion({
                       Valid Until
                     </label>
                     <p className="text-gray-900 dark:text-gray-100 mt-1">
-                      {new Date(quote.validityDate).toLocaleDateString()}
+                      {formatDate(quote.validityDate)}
                     </p>
                   </div>
                   <div>
                     <label className="text-xs text-gray-500 dark:text-gray-400 uppercase">Received Date</label>
                     <p className="text-gray-900 dark:text-gray-100 mt-1">
-                      {new Date(quote.receivedDate).toLocaleDateString()}
+                      {formatDate(quote.receivedDate)}
                     </p>
                   </div>
                 </div>

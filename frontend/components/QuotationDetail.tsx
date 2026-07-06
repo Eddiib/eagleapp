@@ -1,5 +1,6 @@
 import { ArrowLeft, Edit2, CheckCircle, XCircle, FileText, Calendar, MapPin, DollarSign, User, Ship, AlertCircle } from 'lucide-react';
 import { Quotation } from '../services/quotations';
+import { formatDate } from '../utils/date';
 import { getCountryName } from '../data/countries';
 
 interface QuotationDetailProps {
@@ -218,7 +219,7 @@ export function QuotationDetail({
                   <Calendar className="w-3 h-3" />
                   Valid Until
                 </label>
-                <p className="text-gray-900 dark:text-gray-100 mt-1">{quotation.validUntil || '—'}</p>
+                <p className="text-gray-900 dark:text-gray-100 mt-1">{formatDate(quotation.validUntil)}</p>
               </div>
               <div>
                 <label className="text-xs text-gray-500 dark:text-gray-400 uppercase flex items-center gap-1">

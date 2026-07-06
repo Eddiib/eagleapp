@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { SalesLead, LeadRanking, SalesLeadMeetingMinute } from './SalesLeads';
+import { formatDate } from '../utils/date';
 import { PaginationBar } from './ui/PaginationBar';
 import { Employee } from './EmployeesModule';
 import { SalesLeadMeetingPanel } from './SalesLeadMeetingPanel';
@@ -60,7 +61,7 @@ export function SalesLeadsList({
     { key: 'assignedSalesAgent', label: 'Sales Agent', align: 'left', get: (l) => l.assignedSalesAgent },
     { key: 'preferredTrades', label: 'Preferred Trades', align: 'left', get: (l) => l.preferredTrades.join(', ') },
     { key: 'city', label: 'City', align: 'left', get: (l) => l.city },
-    { key: 'lastContactDate', label: 'Last Contacted', align: 'left', get: (l) => l.lastContactDate || '-', sortValue: (l) => l.lastContactDate || '' },
+    { key: 'lastContactDate', label: 'Last Contacted', align: 'left', get: (l) => formatDate(l.lastContactDate, '-'), sortValue: (l) => l.lastContactDate || '' },
     { key: 'leadRanking', label: 'Ranking', align: 'left', get: (l) => l.leadRanking },
     { key: 'partnerStatus', label: 'Status', align: 'left', get: (l) => l.partnerStatus },
   ]), []);
@@ -433,7 +434,7 @@ export function SalesLeadsList({
                 </td>
                 <td className="px-2 py-1.5 whitespace-nowrap">
                   <div className="text-gray-900 dark:text-white">
-                    {lead.lastContactDate || '-'}
+                    {formatDate(lead.lastContactDate, '-')}
                   </div>
                   {lead.meetingMinutesCount > 0 && (
                     <div className="text-xs text-gray-500 dark:text-gray-400">

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plus, Trash2, Ship, Truck, Train, CheckCircle2, Clock, MapPin, Calendar, ChevronDown, ChevronUp, Plane } from 'lucide-react';
 import { Fragment as ReactFragment } from 'react';
+import { formatDate } from '../utils/date';
 
 interface ServiceRow {
   id: string;
@@ -523,7 +524,7 @@ export function ServicesWithLegs({ equipmentId, containerId }: ServicesWithLegsP
               <div className="flex items-center gap-2">
                 {leg.etd && leg.eta && (
                   <span className="text-xs text-gray-600 dark:text-gray-400">
-                    {leg.etd} → {leg.eta}
+                    {formatDate(leg.etd)} → {formatDate(leg.eta)}
                   </span>
                 )}
                 {isExpanded ? (

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Service } from '../types/service';
+import { formatDate } from '../utils/date';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { X, Edit, Power, Ship, Plane, Truck, Train, Package, Globe, Check, X as XIcon } from 'lucide-react';
@@ -338,13 +339,13 @@ export function ServiceDetailModal({
         <div>
           <span className="text-gray-500 dark:text-gray-400">Created:</span>{' '}
           <span className="text-gray-900 dark:text-gray-100">
-            {service.createdAt} by {service.createdBy}
+            {formatDate(service.createdAt)} by {service.createdBy}
           </span>
         </div>
         <div>
           <span className="text-gray-500 dark:text-gray-400">Last Updated:</span>{' '}
           <span className="text-gray-900 dark:text-gray-100">
-            {service.updatedAt} by {service.updatedBy}
+            {formatDate(service.updatedAt)} by {service.updatedBy}
           </span>
         </div>
       </div>

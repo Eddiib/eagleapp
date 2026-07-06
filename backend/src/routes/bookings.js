@@ -5,7 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 const { asyncHandler, AppError } = require('../middleware/errorHandler');
 const { requireFields, requireUUID, requireDate, requireArray } = require('../middleware/validate');
 const { logAudit, snapshotRow } = require('../lib/audit');
-const { getDefaultCurrency } = require('../lib/companySettings');
+const { getDefaultCurrency, normalizeCurrency } = require('../lib/companySettings');
 const { canAccess } = require('../lib/permissions');
 
 const REASSIGN_AGENT_PERMISSION = 'edit:booking-agent-assignment';
@@ -55,19 +55,83 @@ function validateDateOrdering(header) {
   }
 }
 
-// Derive booking totals from line items so the value can never drift away from
-// what the equipment-service rows actually carry. Top-level `services` are
-// included for forward compatibility (currently unused in the UI).
-function computeTotalsFromPayload(services, equipment) {
+// Derive booking totals from equipment service line items so the value can
+// never drift away from what the visible Equipment tab carries. Legacy
+// top-level `services` rows are still persisted below for compatibility, but
+// they do not carry an FX snapshot and are no longer summed into booking totals.
+function normalizeEquipmentServiceCurrency(value, fieldName, baseCurrency) {
+  if (value === undefined || value === null || value === '') return null;
+  const currency = normalizeCurrency(String(value));
+  if (!currency) {
+    throw new AppError(400, `Invalid ${fieldName}: expected a 3-letter currency code`, 'INVALID_CURRENCY');
+  }
+  return currency === baseCurrency ? baseCurrency : currency;
+}
+
+function normalizeEquipmentServiceFx(line, currencyField, fxField, amountField, fieldPath, baseCurrency) {
+  const currency = normalizeEquipmentServiceCurrency(line[currencyField], `${fieldPath}.${currencyField}`, baseCurrency);
+  const rawFx = line[fxField];
+  const hasFx = rawFx !== undefined && rawFx !== null && rawFx !== '';
+
+  if (!currency) {
+    // An exchange rate with no currency is contradictory — reject it rather
+    // than silently summing the amount at 1:1 (fx=1 is the implicit identity
+    // and is tolerated).
+    if (hasFx && Number(rawFx) !== 1) {
+      throw new AppError(
+        400,
+        `Invalid ${fieldPath}.${fxField}: exchange rate supplied without a currency`,
+        'INVALID_EXCHANGE_RATE',
+      );
+    }
+    line[currencyField] = null;
+    line[fxField] = null;
+    return 1;
+  }
+
+  if (currency === baseCurrency) {
+    line[currencyField] = currency;
+    line[fxField] = 1;
+    return 1;
+  }
+
+  const fx = Number(rawFx);
+  if (!hasFx || !Number.isFinite(fx) || fx <= 0) {
+    // A side with no amount contributes nothing to totals, so a missing rate
+    // there must not block the save (e.g. cost currency picked while Agreed
+    // Cost is still empty).
+    if (!(Number(line[amountField]) || 0)) {
+      line[currencyField] = currency;
+      line[fxField] = null;
+      return 1;
+    }
+    throw new AppError(
+      400,
+      `Invalid ${fieldPath}.${fxField}: foreign-currency lines require a positive exchange rate`,
+      'INVALID_EXCHANGE_RATE',
+    );
+  }
+
+  line[currencyField] = currency;
+  line[fxField] = fx;
+  return fx;
+}
+
+function computeTotalsFromPayload(services, equipment, baseCurrency) {
   let total_revenue = 0;
   let total_cost = 0;
-  for (const s of services || []) {
-    total_revenue += Number(s.total_price) || 0;
-  }
-  for (const eq of equipment || []) {
-    for (const es of eq.equipment_services || []) {
-      total_revenue += Number(es.agreed_rate) || 0;
-      total_cost    += Number(es.agreed_cost) || 0;
+  void services;
+  for (let i = 0; i < (equipment || []).length; i++) {
+    const eq = equipment[i];
+    for (let j = 0; j < (eq.equipment_services || []).length; j++) {
+      const es = eq.equipment_services[j];
+      const fieldPath = `equipment[${i}].equipment_services[${j}]`;
+      // Amounts may be entered in a foreign currency; convert to the company
+      // base currency using the per-line exchange rates.
+      const rateFx = normalizeEquipmentServiceFx(es, 'rate_currency', 'rate_exchange_rate', 'agreed_rate', fieldPath, baseCurrency);
+      const costFx = normalizeEquipmentServiceFx(es, 'cost_currency', 'cost_exchange_rate', 'agreed_cost', fieldPath, baseCurrency);
+      total_revenue += (Number(es.agreed_rate) || 0) * rateFx;
+      total_cost    += (Number(es.agreed_cost) || 0) * costFx;
     }
   }
   return { total_revenue, total_cost };
@@ -432,21 +496,27 @@ async function reconcileEquipmentServices(conn, bookingId, equipmentRowId, incom
     if (s.id && isUuid(s.id) && existingIds.has(s.id)) {
       await conn.query(
         `UPDATE booking_equipment_services
-            SET service_id=?, equipment_id=?, invoice_party_id=?, agreed_rate=?, supplier_id=?, agreed_cost=?, planned_date=?, sort_order=?
+            SET service_id=?, equipment_id=?, invoice_party_id=?, agreed_rate=?, rate_currency=?, rate_exchange_rate=?,
+                supplier_id=?, agreed_cost=?, cost_currency=?, cost_exchange_rate=?, planned_date=?, sort_order=?
           WHERE id=?`,
         [s.service_id || null, s.equipment_id || null, s.invoice_party_id || null, s.agreed_rate ?? null,
-          s.supplier_id || null, s.agreed_cost ?? null, s.planned_date || null, i, s.id],
+          s.rate_currency || null, s.rate_exchange_rate ?? null,
+          s.supplier_id || null, s.agreed_cost ?? null,
+          s.cost_currency || null, s.cost_exchange_rate ?? null, s.planned_date || null, i, s.id],
       );
       keptIds.add(s.id);
     } else {
       await conn.query(
         `INSERT INTO booking_equipment_services
             (id, equipment_row_id, booking_id, service_id, equipment_id, invoice_party_id, agreed_rate,
-             supplier_id, agreed_cost, planned_date, sort_order)
-          VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+             rate_currency, rate_exchange_rate, supplier_id, agreed_cost, cost_currency, cost_exchange_rate,
+             planned_date, sort_order)
+          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
         [uuidv4(), equipmentRowId, bookingId, s.service_id || null, s.equipment_id || null,
           s.invoice_party_id || null, s.agreed_rate ?? null,
-          s.supplier_id || null, s.agreed_cost ?? null, s.planned_date || null, i],
+          s.rate_currency || null, s.rate_exchange_rate ?? null,
+          s.supplier_id || null, s.agreed_cost ?? null,
+          s.cost_currency || null, s.cost_exchange_rate ?? null, s.planned_date || null, i],
       );
     }
   }
@@ -526,10 +596,14 @@ async function insertBookingEquipmentForCreate(conn, bookingId, incoming) {
       const s = services[i];
       await conn.query(
         `INSERT INTO booking_equipment_services
-           (id, equipment_row_id, booking_id, service_id, equipment_id, invoice_party_id, agreed_rate, supplier_id, agreed_cost, planned_date, sort_order)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+           (id, equipment_row_id, booking_id, service_id, equipment_id, invoice_party_id, agreed_rate,
+            rate_currency, rate_exchange_rate, supplier_id, agreed_cost, cost_currency, cost_exchange_rate,
+            planned_date, sort_order)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
         [uuidv4(), rowId, bookingId, s.service_id || null, s.equipment_id || null, s.invoice_party_id || null,
-          s.agreed_rate ?? null, s.supplier_id || null, s.agreed_cost ?? null, s.planned_date || null, i],
+          s.agreed_rate ?? null, s.rate_currency || null, s.rate_exchange_rate ?? null,
+          s.supplier_id || null, s.agreed_cost ?? null,
+          s.cost_currency || null, s.cost_exchange_rate ?? null, s.planned_date || null, i],
       );
     }
   }
@@ -595,11 +669,6 @@ router.post('/', asyncHandler(async (req, res) => {
     checkOptionalUuid(id, `shippers[${i}].shipper_id`);
   });
 
-  // Totals are derived — never trust whatever the client sent.
-  const { total_revenue, total_cost } = computeTotalsFromPayload(services, equipment);
-  header.total_revenue = total_revenue;
-  header.total_cost    = total_cost;
-
   // Assigned agent: callers without `edit:booking-agent-assignment` can never
   // reassign the booking to someone else. Default everyone to their own
   // linked employee, regardless of permission.
@@ -621,6 +690,10 @@ router.post('/', asyncHandler(async (req, res) => {
     await conn.beginTransaction();
     const defaultCurrency = await getDefaultCurrency(conn);
     header.currency = header.currency || defaultCurrency;
+    // Totals are derived — never trust whatever the client sent.
+    const { total_revenue, total_cost } = computeTotalsFromPayload(services, equipment, defaultCurrency);
+    header.total_revenue = total_revenue;
+    header.total_cost    = total_cost;
     const id = uuidv4();
 
     // Booking number race: if two POSTs collide on the unique index, fetch the
@@ -706,10 +779,6 @@ router.put('/:id', asyncHandler(async (req, res) => {
     checkOptionalUuid(id, `shippers[${i}].shipper_id`);
   });
 
-  // Totals are derived — never trust whatever the client sent.
-  const { total_revenue, total_cost } = computeTotalsFromPayload(services, equipment);
-  header.total_revenue = total_revenue;
-  header.total_cost    = total_cost;
   const canReassignAgent = canAccess(req.user, REASSIGN_AGENT_PERMISSION);
   if (canReassignAgent) checkOptionalUuid(header.assigned_agent_id, 'assigned_agent_id');
 
@@ -732,6 +801,11 @@ router.put('/:id', asyncHandler(async (req, res) => {
         throw new AppError(400, `Invalid status: ${header.status}`, 'INVALID_STATUS');
       }
     }
+
+    // Totals are derived — never trust whatever the client sent.
+    const { total_revenue, total_cost } = computeTotalsFromPayload(services, equipment, defaultCurrency);
+    header.total_revenue = total_revenue;
+    header.total_cost    = total_cost;
 
     // Lock the assigned agent for callers without reassign permission so an
     // edit submitted with a stale or tampered payload can't move the booking.

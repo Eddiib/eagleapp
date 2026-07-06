@@ -5,6 +5,7 @@ import {
   Building2, Truck, DollarSign, Calendar, Edit2, Trash2,
   Loader2, Save, ArrowLeft
 } from 'lucide-react';
+import { formatDate } from '../../utils/date';
 import { pricingApi, PricingLoad, PricingQuote } from '../../services/pricing';
 import { quotationsApi, generateQuoteNumber } from '../../services/quotations';
 import { usePartners } from '../../hooks/usePartners';
@@ -604,7 +605,7 @@ export function AvailableLoads() {
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{l.cargoNature || '—'}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                        {l.requiredDate ? new Date(l.requiredDate).toLocaleDateString() : '—'}
+                        {formatDate(l.requiredDate)}
                       </td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs ${statusBadge(l.status)}`}>
@@ -683,7 +684,7 @@ export function AvailableLoads() {
                                         <div className="text-xs text-gray-500 dark:text-gray-400">Total Rate</div>
                                       </div>
                                       <div>
-                                        <div className="flex items-center gap-1 text-sm text-gray-900 dark:text-gray-100"><Calendar className="w-4 h-4 text-gray-400" />{q.equipmentAvailableDate || '—'}</div>
+                                        <div className="flex items-center gap-1 text-sm text-gray-900 dark:text-gray-100"><Calendar className="w-4 h-4 text-gray-400" />{formatDate(q.equipmentAvailableDate)}</div>
                                         <div className="text-xs text-gray-500 dark:text-gray-400">Equip. Available</div>
                                       </div>
                                       <div>

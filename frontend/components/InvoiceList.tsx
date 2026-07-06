@@ -4,6 +4,7 @@ import {
   CheckCircle, Clock, Ban, RefreshCw, Edit2, Trash2, Filter,
 } from 'lucide-react';
 import { Invoice, InvoiceStatus, invoicesApi } from '../services/invoices';
+import { formatDate } from '../utils/date';
 import { useConfirm } from '../context/ConfirmDialog';
 import { PaginationBar } from './ui/PaginationBar';
 import { useCompanySettings } from '../context/CompanySettingsContext';
@@ -52,8 +53,8 @@ export function InvoiceList({ onNew, onEdit, listKey }: InvoiceListProps) {
     { key: 'invoiceNumber', label: 'Invoice #', align: 'left', get: (i) => i.invoiceNumber || '—' },
     { key: 'clientName', label: 'Client', align: 'left', get: (i) => i.clientName || '—' },
     { key: 'bookingNumber', label: 'Booking', align: 'left', get: (i) => i.bookingNumber || '—' },
-    { key: 'invoiceDate', label: 'Date', align: 'left', get: (i) => i.invoiceDate || '—', sortValue: (i) => i.invoiceDate || '' },
-    { key: 'dueDate', label: 'Due', align: 'left', get: (i) => i.dueDate || '—', sortValue: (i) => i.dueDate || '' },
+    { key: 'invoiceDate', label: 'Date', align: 'left', get: (i) => formatDate(i.invoiceDate), sortValue: (i) => i.invoiceDate || '' },
+    { key: 'dueDate', label: 'Due', align: 'left', get: (i) => formatDate(i.dueDate), sortValue: (i) => i.dueDate || '' },
     { key: 'totalAmount', label: 'Total', align: 'right', get: (i) => `${i.currency} ${i.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, sortValue: (i) => i.totalAmount },
     { key: 'balanceDue', label: 'Balance Due', align: 'right', get: (i) => `${i.currency} ${i.balanceDue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, sortValue: (i) => i.balanceDue },
     { key: 'status', label: 'Status', align: 'left', get: (i) => i.status || '—' },
@@ -254,8 +255,8 @@ export function InvoiceList({ onNew, onEdit, listKey }: InvoiceListProps) {
                   <td className="px-2 py-1.5 font-medium text-blue-600 dark:text-blue-400">{inv.invoiceNumber}</td>
                   <td className="px-2 py-1.5 text-gray-900 dark:text-gray-100">{inv.clientName || <span className="text-gray-400">—</span>}</td>
                   <td className="px-2 py-1.5 text-gray-500 dark:text-gray-400">{inv.bookingNumber || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
-                  <td className="px-2 py-1.5 text-gray-500 dark:text-gray-400">{inv.invoiceDate}</td>
-                  <td className="px-2 py-1.5 text-gray-500 dark:text-gray-400">{inv.dueDate || <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
+                  <td className="px-2 py-1.5 text-gray-500 dark:text-gray-400">{formatDate(inv.invoiceDate)}</td>
+                  <td className="px-2 py-1.5 text-gray-500 dark:text-gray-400">{inv.dueDate ? formatDate(inv.dueDate) : <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
                   <td className="px-2 py-1.5 text-right text-gray-900 dark:text-gray-100 tabular-nums">
                     {inv.currency} {inv.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </td>

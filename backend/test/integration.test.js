@@ -537,6 +537,58 @@ test('MVP API smoke flow covers auth, master data, bookings, CRM, services, and 
     assert.equal(bookingDetail.body.services[0].currency, 'EUR');
     assert.equal(bookingDetail.body.equipment.length, 1);
 
+    const invalidForeignFxBooking = await jsonRequest('/api/bookings', {
+      method: 'POST',
+      token,
+      body: {
+        ...bookingPayload,
+        booking_number: `PH7FX${short}`,
+        equipment: [
+          {
+            equipment_id: equipmentCreate.body.id,
+            quantity: 1,
+            equipment_services: [
+              {
+                service_id: serviceCreate.body.id,
+                agreed_rate: 100,
+                rate_currency: 'USD',
+                rate_exchange_rate: null,
+              },
+            ],
+          },
+        ],
+      },
+    });
+    assert.equal(invalidForeignFxBooking.status, 400);
+    assert.equal(invalidForeignFxBooking.body.code, 'INVALID_EXCHANGE_RATE');
+
+    const legacyForeignServiceBooking = await jsonRequest('/api/bookings', {
+      method: 'POST',
+      token,
+      body: {
+        ...bookingPayload,
+        booking_number: `PH7LS${short}`,
+        services: [
+          {
+            service_id: serviceCreate.body.id,
+            supplier_id: carrierCreate.body.id,
+            quantity: 1,
+            unit_price: 100,
+            total_price: 100,
+            currency: 'USD',
+          },
+        ],
+        equipment: [],
+      },
+    });
+    assert.equal(legacyForeignServiceBooking.status, 201);
+    tracker.bookingIds.push(legacyForeignServiceBooking.body.id);
+
+    const legacyForeignServiceDetail = await jsonRequest(`/api/bookings/${legacyForeignServiceBooking.body.id}`, { token });
+    assert.equal(legacyForeignServiceDetail.status, 200);
+    assert.equal(Number(legacyForeignServiceDetail.body.total_revenue), 0);
+    assert.equal(legacyForeignServiceDetail.body.services[0].currency, 'USD');
+
     const invalidBooking = await jsonRequest('/api/bookings', {
       method: 'POST',
       token,
@@ -777,11 +829,13 @@ test('MVP API smoke flow covers auth, master data, bookings, CRM, services, and 
     assert.equal(deleteQuotation.status, 200);
     tracker.quotationIds = [];
 
-    const deleteBooking = await jsonRequest(`/api/bookings/${bookingCreate.body.id}`, {
-      method: 'DELETE',
-      token,
-    });
-    assert.equal(deleteBooking.status, 200);
+    for (const bookingId of tracker.bookingIds) {
+      const deleteBooking = await jsonRequest(`/api/bookings/${bookingId}`, {
+        method: 'DELETE',
+        token,
+      });
+      assert.equal(deleteBooking.status, 200);
+    }
     tracker.bookingIds = [];
 
     const deleteEquipment = await jsonRequest(`/api/equipment/${equipmentCreate.body.id}`, {

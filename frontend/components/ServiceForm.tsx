@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, FormEvent } from 'react';
-import { exchangeRatesApi } from '../services/exchangeRates';
+import { useCurrencyOptions } from '../hooks/useCurrencies';
 import { useCompanySettings } from '../context/CompanySettingsContext';
 import { useConfirm } from '../context/ConfirmDialog';
 import {
@@ -97,8 +97,6 @@ const CHARGE_UNITS: ChargeUnit[] = [
   'Per Hour',
 ];
 
-const COMMON_CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF', 'CNY', 'JPY', 'CAD', 'AUD', 'SGD'];
-
 const LOCATION_TYPES: LocationType[] = [
   'At Origin',
   'At Destination',
@@ -155,28 +153,9 @@ export function ServiceForm({
   const [activeSection, setActiveSection] = useState<SectionId>('basic');
 
   const confirmDialog = useConfirm();
-  const [knownCurrencies, setKnownCurrencies] = useState<string[]>([]);
-
-  useEffect(() => {
-    exchangeRatesApi
-      .getAll()
-      .then((rates) => {
-        const set = new Set<string>();
-        for (const r of rates) {
-          if (r.from_currency) set.add(r.from_currency.toUpperCase());
-          if (r.to_currency) set.add(r.to_currency.toUpperCase());
-        }
-        setKnownCurrencies(Array.from(set));
-      })
-      .catch(() => { /* fallback list still applies */ });
-  }, []);
-
-  const currencyOptions = useMemo(() => {
-    const set = new Set<string>(COMMON_CURRENCIES);
-    if (baseCurrency) set.add(baseCurrency.toUpperCase());
-    for (const c of knownCurrencies) set.add(c);
-    return Array.from(set).sort();
-  }, [baseCurrency, knownCurrencies]);
+  // Managed currency list; the stored default currency stays visible even if
+  // deactivated in the master list since.
+  const currencyOptions = useCurrencyOptions([formData.defaultCurrency]);
 
   const isDirty = useMemo(
     () => JSON.stringify(formData) !== JSON.stringify(initialFormData),

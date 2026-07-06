@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Loader2, AlertCircle, TrendingDown, Clock, CheckCircle, Filter } from 'lucide-react';
 import { CostEntry, CostEntryStatus, costControlApi } from '../services/costControl';
+import { formatDate } from '../utils/date';
 import { ColumnHeader } from './ui/ColumnHeader';
 import { useTableControls, ColumnDef } from '../hooks/useTableControls';
 
@@ -40,8 +41,8 @@ export function Payables() {
     { key: 'serviceName', label: 'Service', align: 'left', get: (e) => e.serviceName || '—' },
     { key: 'supplierName', label: 'Supplier', align: 'left', get: (e) => e.supplierName || '—' },
     { key: 'invoiceNumber', label: 'Invoice #', align: 'left', get: (e) => e.invoiceNumber || 'Missing' },
-    { key: 'invoiceDate', label: 'Invoice Date', align: 'left', get: (e) => e.invoiceDate || '—', sortValue: (e) => e.invoiceDate || '' },
-    { key: 'dueDate', label: 'Due Date', align: 'left', get: (e) => e.dueDate || '—', sortValue: (e) => e.dueDate || '' },
+    { key: 'invoiceDate', label: 'Invoice Date', align: 'left', get: (e) => formatDate(e.invoiceDate), sortValue: (e) => e.invoiceDate || '' },
+    { key: 'dueDate', label: 'Due Date', align: 'left', get: (e) => formatDate(e.dueDate), sortValue: (e) => e.dueDate || '' },
     { key: 'amount', label: 'Amount', align: 'right', get: (e) => `${e.currency} ${e.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, sortValue: (e) => e.amount },
     { key: 'status', label: 'Status', align: 'left', get: (e) => e.status || '—' },
   ]), []);
@@ -182,9 +183,9 @@ export function Payables() {
                     <td className="px-2 py-1.5 text-gray-700 dark:text-gray-300">{e.serviceName || <span className="text-gray-400">—</span>}</td>
                     <td className="px-2 py-1.5 text-gray-700 dark:text-gray-300">{e.supplierName || <span className="text-gray-400">—</span>}</td>
                     <td className="px-2 py-1.5 text-gray-500 dark:text-gray-400">{e.invoiceNumber || <span className="text-gray-300 dark:text-gray-600">Missing</span>}</td>
-                    <td className="px-2 py-1.5 text-gray-500 dark:text-gray-400">{e.invoiceDate || '—'}</td>
+                    <td className="px-2 py-1.5 text-gray-500 dark:text-gray-400">{formatDate(e.invoiceDate)}</td>
                     <td className={`px-2 py-1.5 ${isOverdue ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}>
-                      {e.dueDate || '—'}
+                      {formatDate(e.dueDate)}
                     </td>
                     <td className="px-2 py-1.5 text-right tabular-nums text-gray-900 dark:text-gray-100">
                       {e.currency} {e.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}

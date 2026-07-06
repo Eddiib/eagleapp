@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef, type KeyboardEvent } from 'react'
 import { useAuth } from '../context/AuthContext';
 import { Partner, PartnerType, PartnerCategory, PartnerStatus, PaymentTerms, DefaultServiceType, PartnerContact, DeliveryAddress, PartnerBankDetails, PartnerDocument, TradeMarketInfo, PartnerRole } from '../types/partner';
 import { Employee } from './EmployeesModule';
+import { formatDate } from '../utils/date';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -14,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { countries, getCountryName } from '../data/countries';
 import { MultiSelectCountry } from './MultiSelectCountry';
 import { usePorts, getPortLabel } from '../hooks/usePorts';
+import { useCurrencies, useCurrencyOptions } from '../hooks/useCurrencies';
 
 import { employeesApi } from '../services/employees';
 import { useCompanySettings } from '../context/CompanySettingsContext';
@@ -35,14 +37,6 @@ interface PartnerFormProps {
 }
 
 type FormSection = 'basic' | 'delivery' | 'bank' | 'trade' | 'attachments';
-const COMMON_CURRENCIES = ['EUR', 'USD', 'GBP', 'AED', 'CNY'];
-const CURRENCY_LABELS: Record<string, string> = {
-  EUR: 'EUR - Euro',
-  USD: 'USD - US Dollar',
-  GBP: 'GBP - British Pound',
-  AED: 'AED - UAE Dirham',
-  CNY: 'CNY - Chinese Yuan',
-};
 
 export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [], onDirtyChange }: PartnerFormProps) {
   const { user } = useAuth();
@@ -62,15 +56,18 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
   ];
 
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const currencyOptions = useMemo(() => {
-    const set = new Set<string>([baseCurrency, ...COMMON_CURRENCIES].filter(Boolean));
-    return Array.from(set);
-  }, [baseCurrency]);
-  const renderCurrencyOptions = () => currencyOptions.map((currency) => (
-    <SelectItem key={currency} value={currency}>
-      {CURRENCY_LABELS[currency] || currency}
-    </SelectItem>
-  ));
+  // Managed currency list; the partner's stored currency stays visible even
+  // if deactivated in the master list since.
+  const currencyOptions = useCurrencyOptions([partner?.currency]);
+  const { currencies } = useCurrencies();
+  const renderCurrencyOptions = () => currencyOptions.map((currency) => {
+    const name = currencies.find((c) => c.code === currency)?.name;
+    return (
+      <SelectItem key={currency} value={currency}>
+        {name ? `${currency} - ${name}` : currency}
+      </SelectItem>
+    );
+  });
 
   useEffect(() => {
     employeesApi.getAll().then(setEmployees).catch(() => {});
@@ -2535,7 +2532,7 @@ export function PartnerForm({ partner, mode, onSave, onCancel, allPartners = [],
                           <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
                             <Badge variant="outline" className="text-xs">{doc.type}</Badge>
                             <span>•</span>
-                            <span>Uploaded on {doc.uploadedDate}</span>
+                            <span>Uploaded on {formatDate(doc.uploadedDate)}</span>
                             <span>•</span>
                             <span>by {doc.uploadedBy}</span>
                           </div>

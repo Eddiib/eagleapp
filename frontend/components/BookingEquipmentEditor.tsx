@@ -5,6 +5,10 @@ import { servicesApi } from '../services/services';
 import { EquipmentType } from '../types/equipment';
 import { Service } from '../types/service';
 import { BookingEquipmentLine, EquipmentServiceLine } from '../services/bookings';
+import { exchangeRatesApi, ExchangeRateRow } from '../services/exchangeRates';
+import { pickRate } from '../lib/fx';
+import { useCompanySettings } from '../context/CompanySettingsContext';
+import { useCurrencyOptions } from '../hooks/useCurrencies';
 import { usePartners } from '../hooks/usePartners';
 import { tableClasses } from './ui/table';
 import { isPartnerSeller } from '../utils/partnerRoles';
@@ -50,7 +54,10 @@ function emptyLine(catalog: EquipmentType[]): BookingEquipmentLine {
 }
 
 function emptyServiceLine(): EquipmentServiceLine {
-  return { serviceId: '', equipmentId: '', invoicePartyId: '', agreedRate: null, supplierId: '', agreedCost: null, plannedDate: null };
+  return {
+    serviceId: '', equipmentId: '', invoicePartyId: '', agreedRate: null, rateCurrency: null, rateExchangeRate: null,
+    supplierId: '', agreedCost: null, costCurrency: null, costExchangeRate: null, plannedDate: null,
+  };
 }
 
 // ── Weight & Dimensions sub-panel ─────────────────────────────────────────────
@@ -255,9 +262,11 @@ interface ServicesPanelProps {
   catalog: EquipmentType[];
   servicesCatalog: Service[];
   partners: any[];
+  baseCurrency: string;
+  fxRates: ExchangeRateRow[];
 }
 
-function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servicesCatalog, partners }: ServicesPanelProps) {
+function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servicesCatalog, partners, baseCurrency, fxRates }: ServicesPanelProps) {
   const inp = (extra = '') =>
     `w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 disabled:opacity-60 focus:outline-none focus:ring-1 focus:ring-blue-500 ${extra}`;
   const activePartners = partners.filter(p => p.status === 'Active');
@@ -269,6 +278,26 @@ function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servic
 
   const addService = () => onChange([...services, emptyServiceLine()]);
   const removeService = (idx: number) => onChange(services.filter((_, i) => i !== idx));
+
+  // Extras keep a line's stored currency visible even if an admin later
+  // deactivates it in the currency master list.
+  const currencyOptions = useCurrencyOptions(services.flatMap(s => [s.rateCurrency, s.costCurrency]));
+
+  // Latest rate (currency → base) effective on/before the line's planned date,
+  // from the Exchange Rates settings module. Shares pickRate with Dashboard
+  // and P&L so all fx lookups agree on the same semantics.
+  const lookupFx = (currency: string, plannedDate?: string | null): number | null => {
+    if (!currency || currency === baseCurrency) return 1;
+    const cutoff = plannedDate || new Date().toISOString().slice(0, 10);
+    return pickRate(fxRates, currency, baseCurrency, cutoff, { fallbackToLatest: false });
+  };
+
+  // Flags a foreign-currency line whose rate is neither stored nor available
+  // from Forex Management, so the user knows the value must be typed by hand.
+  const fxMissing = (currency: string | null | undefined, fx: number | null | undefined, plannedDate?: string | null) => {
+    const cur = currency ?? baseCurrency;
+    return cur !== baseCurrency && fx == null && lookupFx(cur, plannedDate) == null;
+  };
 
   // Which service row currently has the supplier picker open (null = closed).
   const [supplierPickerForIdx, setSupplierPickerForIdx] = useState<number | null>(null);
@@ -287,6 +316,7 @@ function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servic
 
   return (
     <div className="p-4 bg-gray-50 dark:bg-[#1E1E1E] border-t border-gray-200 dark:border-gray-700">
+      <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-200 dark:border-gray-700">
@@ -295,16 +325,20 @@ function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servic
             <th className={th}>Service Type</th>
             <th className={th}>Equipment</th>
             <th className={th}>Invoice Party</th>
-            <th className={thRight} style={{ width: 120 }}>Agreed Rate</th>
+            <th className={thRight} style={{ width: 110 }}>Agreed Rate</th>
+            <th className={th} style={{ width: 70 }}>Cur.</th>
+            <th className={thRight} style={{ width: 95 }}>Exch. Rate</th>
             <th className={th}>Supplier</th>
-            <th className={thRight} style={{ width: 120 }}>Agreed Cost</th>
+            <th className={thRight} style={{ width: 110 }}>Agreed Cost</th>
+            <th className={th} style={{ width: 70 }}>Cur.</th>
+            <th className={thRight} style={{ width: 95 }}>Exch. Rate</th>
             <th className={`${th} w-8`}></th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
           {services.length === 0 ? (
             <tr>
-              <td colSpan={9} className="px-3 py-4 text-center text-sm text-gray-400 dark:text-gray-500">
+              <td colSpan={13} className="px-3 py-4 text-center text-sm text-gray-400 dark:text-gray-500">
                 No services added for this equipment row.
               </td>
             </tr>
@@ -317,7 +351,21 @@ function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servic
                 <input
                   type="date"
                   value={svc.plannedDate ?? ''}
-                  onChange={e => setService(idx, { plannedDate: e.target.value || null })}
+                  onChange={e => {
+                    const plannedDate = e.target.value || null;
+                    // The prefilled fx is keyed to the planned date, so
+                    // refresh foreign-currency sides when the date changes.
+                    // If no rate exists on/before that date, clear the fx and
+                    // let the missing-rate warning prompt manual entry.
+                    const patch: Partial<EquipmentServiceLine> = { plannedDate };
+                    if (svc.rateCurrency && svc.rateCurrency !== baseCurrency) {
+                      patch.rateExchangeRate = lookupFx(svc.rateCurrency, plannedDate);
+                    }
+                    if (svc.costCurrency && svc.costCurrency !== baseCurrency) {
+                      patch.costExchangeRate = lookupFx(svc.costCurrency, plannedDate);
+                    }
+                    setService(idx, patch);
+                  }}
                   disabled={disabled}
                   className={inp()}
                 />
@@ -416,6 +464,49 @@ function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servic
                 />
               </td>
               <td className={td}>
+                <select
+                  value={svc.rateCurrency ?? baseCurrency}
+                  onChange={e => {
+                    const cur = e.target.value;
+                    const prevCurrency = svc.rateCurrency ?? baseCurrency;
+                    const nextFx = cur === baseCurrency
+                      ? 1
+                      : cur === prevCurrency
+                        ? (svc.rateExchangeRate ?? lookupFx(cur, svc.plannedDate))
+                        : lookupFx(cur, svc.plannedDate);
+                    // Prefill from the rate table when it has an answer;
+                    // otherwise preserve manual fx only when the currency did
+                    // not change. Never carry one foreign currency's rate onto
+                    // a different foreign currency.
+                    setService(idx, {
+                      rateCurrency: cur,
+                      rateExchangeRate: nextFx ?? null,
+                    });
+                  }}
+                  disabled={disabled}
+                  style={{ minWidth: 68 }}
+                  className={inp()}
+                >
+                  {currencyOptions.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </td>
+              <td className={td}>
+                <input
+                  type="number" min={0} step={0.000001}
+                  value={(svc.rateCurrency ?? baseCurrency) === baseCurrency ? 1 : (svc.rateExchangeRate ?? '')}
+                  onChange={e => setService(idx, { rateExchangeRate: e.target.value === '' ? null : parseFloat(e.target.value) })}
+                  disabled={disabled || (svc.rateCurrency ?? baseCurrency) === baseCurrency}
+                  placeholder="1.00"
+                  title={fxMissing(svc.rateCurrency, svc.rateExchangeRate, svc.plannedDate)
+                    ? `No ${svc.rateCurrency}→${baseCurrency} rate in Forex Management — enter manually`
+                    : undefined}
+                  style={{ minWidth: 80 }}
+                  className={inp('text-right' + (fxMissing(svc.rateCurrency, svc.rateExchangeRate, svc.plannedDate)
+                    ? ' border-amber-400 dark:border-amber-500'
+                    : ''))}
+                />
+              </td>
+              <td className={td}>
                 <div className="flex items-center gap-1">
                   <button
                     type="button"
@@ -455,6 +546,49 @@ function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servic
                 />
               </td>
               <td className={td}>
+                <select
+                  value={svc.costCurrency ?? baseCurrency}
+                  onChange={e => {
+                    const cur = e.target.value;
+                    const prevCurrency = svc.costCurrency ?? baseCurrency;
+                    const nextFx = cur === baseCurrency
+                      ? 1
+                      : cur === prevCurrency
+                        ? (svc.costExchangeRate ?? lookupFx(cur, svc.plannedDate))
+                        : lookupFx(cur, svc.plannedDate);
+                    // Prefill from the rate table when it has an answer;
+                    // otherwise preserve manual fx only when the currency did
+                    // not change. Never carry one foreign currency's rate onto
+                    // a different foreign currency.
+                    setService(idx, {
+                      costCurrency: cur,
+                      costExchangeRate: nextFx ?? null,
+                    });
+                  }}
+                  disabled={disabled}
+                  style={{ minWidth: 68 }}
+                  className={inp()}
+                >
+                  {currencyOptions.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </td>
+              <td className={td}>
+                <input
+                  type="number" min={0} step={0.000001}
+                  value={(svc.costCurrency ?? baseCurrency) === baseCurrency ? 1 : (svc.costExchangeRate ?? '')}
+                  onChange={e => setService(idx, { costExchangeRate: e.target.value === '' ? null : parseFloat(e.target.value) })}
+                  disabled={disabled || (svc.costCurrency ?? baseCurrency) === baseCurrency}
+                  placeholder="1.00"
+                  title={fxMissing(svc.costCurrency, svc.costExchangeRate, svc.plannedDate)
+                    ? `No ${svc.costCurrency}→${baseCurrency} rate in Forex Management — enter manually`
+                    : undefined}
+                  style={{ minWidth: 80 }}
+                  className={inp('text-right' + (fxMissing(svc.costCurrency, svc.costExchangeRate, svc.plannedDate)
+                    ? ' border-amber-400 dark:border-amber-500'
+                    : ''))}
+                />
+              </td>
+              <td className={td}>
                 <button
                   type="button"
                   onClick={() => removeService(idx)}
@@ -468,6 +602,7 @@ function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servic
           ))}
         </tbody>
       </table>
+      </div>
       <button
         type="button"
         onClick={addService}
@@ -564,10 +699,12 @@ function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servic
 export function BookingEquipmentEditor({ value, onChange, disabled }: Props) {
   const [catalog, setCatalog] = useState<EquipmentType[]>([]);
   const [servicesCatalog, setServicesCatalog] = useState<Service[]>([]);
+  const [fxRates, setFxRates] = useState<ExchangeRateRow[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [expanded, setExpanded] = useState<Map<number, ExpandTab>>(new Map());
   const { partners } = usePartners();
+  const { baseCurrency } = useCompanySettings();
 
   const CARRIER_TYPES = ['Shipping Line', 'Air Carrier', 'Trucking Company', 'Rail Operator'];
   const carriers = partners.filter(p =>
@@ -583,6 +720,11 @@ export function BookingEquipmentEditor({ value, onChange, disabled }: Props) {
       .catch(err => setLoadError(err.message || 'Failed to load equipment'));
     servicesApi.getAll()
       .then(list => setServicesCatalog(list.filter((s: Service) => s.isActive !== false)))
+      .catch(() => {});
+    // Used only to prefill exchange rates; the endpoint sits behind the
+    // forex-management permission, so a failure just skips the prefill.
+    exchangeRatesApi.getAll()
+      .then(setFxRates)
       .catch(() => {});
   }, []);
 
@@ -910,6 +1052,8 @@ export function BookingEquipmentEditor({ value, onChange, disabled }: Props) {
                             catalog={catalog}
                             servicesCatalog={servicesCatalog}
                             partners={partners}
+                            baseCurrency={baseCurrency}
+                            fxRates={fxRates}
                           />
                         ) : (
                           <DimensionPanel

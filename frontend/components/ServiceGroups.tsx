@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Eye, Edit2, Trash2, X, Search, Filter } from 'lucide-react';
 import { ServiceGroup, TransportMode, WhereUsed } from '../types/service';
+import { formatDate } from '../utils/date';
 import { useConfirm } from '../context/ConfirmDialog';
 import { ColumnHeader } from './ui/ColumnHeader';
 import { useTableControls, ColumnDef } from '../hooks/useTableControls';
@@ -44,13 +45,6 @@ function buildEmptyGroup(currentUsername?: string): ServiceGroup {
     createdBy: currentUsername || '',
     createdDate: new Date().toISOString().split('T')[0],
   };
-}
-
-function formatDate(value?: string | null) {
-  if (!value) return '—';
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return value;
-  return d.toLocaleString();
 }
 
 export function ServiceGroups({

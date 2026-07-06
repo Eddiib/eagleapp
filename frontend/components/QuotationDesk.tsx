@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Plus, Search, Eye, Edit2, Trash2, Filter, CheckCircle, XCircle, Clock, Loader2, RefreshCw } from 'lucide-react';
 import { Quotation, quotationsApi } from '../services/quotations';
+import { formatDate } from '../utils/date';
 import { getCountryName } from '../data/countries';
 import { ColumnHeader } from './ui/ColumnHeader';
 import { useTableControls, ColumnDef } from '../hooks/useTableControls';
@@ -69,7 +70,7 @@ export function QuotationDesk({
     { key: 'modeOfTransport', label: 'Mode', align: 'left', get: (q) => q.modeOfTransport || '—' },
     { key: 'serviceCount', label: 'Services', align: 'left', get: (q) => String(q.serviceCount), sortValue: (q) => q.serviceCount || 0 },
     { key: 'sellTotal', label: 'Sell Total', align: 'left', get: (q) => `${q.currency} ${q.totalSell.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, sortValue: (q) => q.totalSell || 0 },
-    { key: 'validUntil', label: 'Valid Until', align: 'left', get: (q) => q.validUntil || '—', sortValue: (q) => q.validUntil || '' },
+    { key: 'validUntil', label: 'Valid Until', align: 'left', get: (q) => formatDate(q.validUntil), sortValue: (q) => q.validUntil || '' },
     { key: 'status', label: 'Status', align: 'left', get: (q) => q.status || '—' },
   ]), []);
 
@@ -309,7 +310,7 @@ export function QuotationDesk({
                       <td className="px-2 py-1.5 text-gray-900 dark:text-gray-100">
                         {quotation.currency} {quotation.totalSell.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
-                      <td className="px-2 py-1.5 text-gray-900 dark:text-gray-100">{quotation.validUntil || '—'}</td>
+                      <td className="px-2 py-1.5 text-gray-900 dark:text-gray-100">{formatDate(quotation.validUntil)}</td>
                       <td className="px-2 py-1.5">
                         <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs ${getStatusBadge(quotation.status)}`}>
                           {getStatusIcon(quotation.status)}

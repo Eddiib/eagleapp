@@ -7,6 +7,7 @@ import { Service } from '../types/service';
 import { CostEntry, CostEntryPayload, CostEntryStatus, costControlApi } from '../services/costControl';
 import { useAuth } from '../context/AuthContext';
 import { useCompanySettings } from '../context/CompanySettingsContext';
+import { useCurrencyOptions } from '../hooks/useCurrencies';
 import { isPartnerBuyer, isPartnerSeller } from '../utils/partnerRoles';
 
 interface CostControlFormProps {
@@ -16,7 +17,6 @@ interface CostControlFormProps {
   onCancel: () => void;
 }
 
-const CURRENCIES = ['EUR', 'USD', 'GBP', 'AED', 'CNY', 'JPY', 'CHF'];
 const STATUSES: CostEntryStatus[] = ['Pending', 'Approved', 'Paid', 'Disputed'];
 
 const inputClass = (hasError?: boolean) =>
@@ -39,10 +39,9 @@ export function CostControlForm({ entry, mode, onSaved, onCancel }: CostControlF
   const suppliers = partners.filter((p) => p.status === 'Active' && isPartnerSeller(p));
 
   const today = new Date().toISOString().split('T')[0];
-  const currencyOptions = useMemo(() => {
-    const set = new Set<string>([baseCurrency, ...CURRENCIES].filter(Boolean));
-    return Array.from(set);
-  }, [baseCurrency]);
+  // Managed currency list; the entry's stored currencies stay visible even
+  // if deactivated in the master list since.
+  const currencyOptions = useCurrencyOptions([entry?.currency, entry?.sellingCurrency]);
 
   const [form, setForm] = useState({
     bookingId: entry?.bookingId || '',

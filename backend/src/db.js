@@ -7,6 +7,11 @@ const config = {
   database: process.env.DB_NAME || 'transport',
   waitForConnections: true,
   connectionLimit: Number(process.env.DB_CONNECTION_LIMIT) || 10,
+  // Return DATE columns as plain 'YYYY-MM-DD' strings. Hydrating them as JS
+  // Date objects makes JSON serialization shift them to UTC, which moves
+  // effective_date / planned_date / etd / eta one day early on servers east
+  // of UTC. DATETIME/TIMESTAMP columns keep their Date-object behavior.
+  dateStrings: ['DATE'],
 };
 
 if (process.env.DB_SOCKET) {

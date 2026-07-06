@@ -11,6 +11,7 @@ import {
 } from '../services/quotations';
 import { QuotationServicesEditor } from './QuotationServicesEditor';
 import { useCompanySettings } from '../context/CompanySettingsContext';
+import { useCurrencyOptions } from '../hooks/useCurrencies';
 import { isPartnerBuyer } from '../utils/partnerRoles';
 
 interface QuotationFormProps {
@@ -21,15 +22,13 @@ interface QuotationFormProps {
 }
 
 const MODE_OPTIONS = ['Sea', 'Air', 'Road', 'Rail', 'Multimodal'];
-const COMMON_CURRENCIES = ['EUR', 'USD', 'GBP'];
 
 export function QuotationForm({ quotation, mode, onSave, onCancel }: QuotationFormProps) {
   const { partners } = usePartners();
   const { baseCurrency } = useCompanySettings();
-  const currencyOptions = useMemo(() => {
-    const set = new Set<string>([baseCurrency, ...COMMON_CURRENCIES].filter(Boolean));
-    return Array.from(set);
-  }, [baseCurrency]);
+  // Managed currency list; the quotation's stored currency stays visible
+  // even if deactivated in the master list since.
+  const currencyOptions = useCurrencyOptions([quotation?.currency]);
   const clients = partners.filter((partner) =>
     partner.status === 'Active' && isPartnerBuyer(partner)
   );

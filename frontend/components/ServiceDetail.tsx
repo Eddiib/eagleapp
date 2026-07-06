@@ -1,4 +1,5 @@
 import { Service } from '../types/service';
+import { formatDate } from '../utils/date';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -368,12 +369,12 @@ export function ServiceDetail({
               <div>
                 <div className="text-gray-600 dark:text-gray-400">Created By</div>
                 <div className="text-gray-900 dark:text-gray-100">{service.createdBy}</div>
-                <div className="text-gray-500 dark:text-gray-400 text-xs">{service.createdAt}</div>
+                <div className="text-gray-500 dark:text-gray-400 text-xs">{formatDate(service.createdAt)}</div>
               </div>
               <div>
                 <div className="text-gray-600 dark:text-gray-400">Last Updated By</div>
                 <div className="text-gray-900 dark:text-gray-100">{service.updatedBy}</div>
-                <div className="text-gray-500 dark:text-gray-400 text-xs">{service.updatedAt}</div>
+                <div className="text-gray-500 dark:text-gray-400 text-xs">{formatDate(service.updatedAt)}</div>
               </div>
             </div>
           </CardContent>

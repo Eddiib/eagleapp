@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Search, Plus, Edit, Trash2, Eye, Filter, Download, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { BookingQuickView } from './BookingQuickView';
 import { bookingsApi, Booking } from '../services/bookings';
+import { formatDate } from '../utils/date';
 import { useConfirm } from '../context/ConfirmDialog';
 import { PaginationBar } from './ui/PaginationBar';
 import { ColumnHeader } from './ui/ColumnHeader';
@@ -51,9 +52,9 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
     { key: 'route', label: 'Route', align: 'left', get: (b) => `${b.origin || '—'} → ${b.destination || '—'}` },
     { key: 'serviceType', label: 'Service', align: 'left', get: (b) => b.serviceType || '—' },
     { key: 'status', label: 'Status', align: 'left', get: (b) => b.status || '—' },
-    { key: 'bookingDate', label: 'Booking Date', align: 'left', get: (b) => b.bookingDate || '—' },
-    { key: 'estimatedDeparture', label: 'ETD', align: 'left', get: (b) => b.estimatedDeparture || '—' },
-    { key: 'estimatedArrival', label: 'ETA', align: 'left', get: (b) => b.estimatedArrival || '—' },
+    { key: 'bookingDate', label: 'Booking Date', align: 'left', get: (b) => formatDate(b.bookingDate), sortValue: (b) => b.bookingDate || '' },
+    { key: 'estimatedDeparture', label: 'ETD', align: 'left', get: (b) => formatDate(b.estimatedDeparture), sortValue: (b) => b.estimatedDeparture || '' },
+    { key: 'estimatedArrival', label: 'ETA', align: 'left', get: (b) => formatDate(b.estimatedArrival), sortValue: (b) => b.estimatedArrival || '' },
     { key: 'totalContainers', label: 'Containers', align: 'left', get: (b) => b.totalContainers > 0 ? String(b.totalContainers) : '—', sortValue: (b) => b.totalContainers || 0 },
     { key: 'createdBy', label: 'Created By', align: 'left', get: (b) => b.createdBy || '—' },
   ]), []);
@@ -312,9 +313,9 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
                       <td className="px-2 py-1.5">
                         <StatusBadge status={booking.status} className="px-1.5 py-0.5 text-xs rounded" />
                       </td>
-                      <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400">{booking.bookingDate || '—'}</td>
-                      <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400">{booking.estimatedDeparture || '—'}</td>
-                      <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400">{booking.estimatedArrival || '—'}</td>
+                      <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400">{formatDate(booking.bookingDate)}</td>
+                      <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400">{formatDate(booking.estimatedDeparture)}</td>
+                      <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400">{formatDate(booking.estimatedArrival)}</td>
                       <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400 text-center">
                         {booking.totalContainers > 0 ? booking.totalContainers : '—'}
                       </td>

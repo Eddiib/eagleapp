@@ -31,9 +31,13 @@ export interface EquipmentServiceLine {
   invoicePartyId?: string;
   invoicePartyName?: string;
   agreedRate?: number | null;
+  rateCurrency?: string | null;
+  rateExchangeRate?: number | null;
   supplierId?: string;
   supplierName?: string;
   agreedCost?: number | null;
+  costCurrency?: string | null;
+  costExchangeRate?: number | null;
   plannedDate?: string | null;
 }
 
@@ -250,9 +254,13 @@ function mapEquipmentServiceLine(row: any): EquipmentServiceLine {
     invoicePartyId: row.invoice_party_id ?? undefined,
     invoicePartyName: row.invoice_party_name ?? undefined,
     agreedRate: row.agreed_rate != null ? Number(row.agreed_rate) : null,
+    rateCurrency: row.rate_currency ?? null,
+    rateExchangeRate: row.rate_exchange_rate != null ? Number(row.rate_exchange_rate) : null,
     supplierId: row.supplier_id ?? undefined,
     supplierName: row.supplier_name ?? undefined,
     agreedCost: row.agreed_cost != null ? Number(row.agreed_cost) : null,
+    costCurrency: row.cost_currency ?? null,
+    costExchangeRate: row.cost_exchange_rate != null ? Number(row.cost_exchange_rate) : null,
     plannedDate: row.planned_date ? String(row.planned_date).slice(0, 10) : null,
   };
 }
@@ -547,8 +555,12 @@ function toApiPayload(p: BookingPayload, extra: Record<string, any> = {}) {
         equipment_id: s.equipmentId || null,
         invoice_party_id: s.invoicePartyId || null,
         agreed_rate: s.agreedRate ?? null,
+        rate_currency: s.rateCurrency || null,
+        rate_exchange_rate: s.rateExchangeRate ?? null,
         supplier_id: s.supplierId || null,
         agreed_cost: s.agreedCost ?? null,
+        cost_currency: s.costCurrency || null,
+        cost_exchange_rate: s.costExchangeRate ?? null,
         planned_date: s.plannedDate || null,
       })),
     })),

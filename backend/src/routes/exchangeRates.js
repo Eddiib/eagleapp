@@ -3,9 +3,13 @@ const router = express.Router();
 const db = require('../db');
 const { v4: uuidv4 } = require('uuid');
 const { asyncHandler, AppError } = require('../middleware/errorHandler');
+const { requirePermission } = require('../middleware/auth');
 const { requireFields, requireNumber, requireDate } = require('../middleware/validate');
 
-// GET all rates, newest effective date first
+// GET all rates, newest effective date first.
+// Open to any authenticated user — booking service lines prefill their
+// exchange rate from this list, so gating reads behind the forex module
+// would leave ordinary booking users without prefill.
 router.get('/', asyncHandler(async (_req, res) => {
   const [rows] = await db.query(
     `SELECT * FROM exchange_rates
@@ -15,7 +19,7 @@ router.get('/', asyncHandler(async (_req, res) => {
 }));
 
 // POST create or upsert a rate for (from, to, date)
-router.post('/', asyncHandler(async (req, res) => {
+router.post('/', requirePermission('edit:forex-management'), asyncHandler(async (req, res) => {
   requireFields(req.body, ['from_currency', 'to_currency', 'rate', 'effective_date']);
   const { from_currency, to_currency, rate, effective_date } = req.body;
   requireNumber(rate, 'rate', { min: 0 });
@@ -32,7 +36,7 @@ router.post('/', asyncHandler(async (req, res) => {
 }));
 
 // DELETE
-router.delete('/:id', asyncHandler(async (req, res) => {
+router.delete('/:id', requirePermission('edit:forex-management'), asyncHandler(async (req, res) => {
   const [result] = await db.query('DELETE FROM exchange_rates WHERE id = ?', [req.params.id]);
   if (result.affectedRows === 0) throw new AppError(404, 'Rate not found', 'NOT_FOUND');
   res.json({ message: 'Rate deleted' });

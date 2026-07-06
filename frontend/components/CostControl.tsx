@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { formatDate } from '../utils/date';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { bookingsApi, Booking } from '../services/bookings';
@@ -534,7 +535,7 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
                             <div className="flex items-center justify-between mb-3">
                               <h4 className="text-sm text-gray-700 dark:text-gray-300">Service Level Details</h4>
                               <div className="text-xs text-gray-500 dark:text-gray-400">
-                                Accrued Date Range: {booking.earliestAccruedDate || '—'} → {booking.latestAccruedDate || '—'}
+                                Accrued Date Range: {formatDate(booking.earliestAccruedDate)} → {formatDate(booking.latestAccruedDate)}
                               </div>
                             </div>
 
@@ -583,7 +584,7 @@ export function CostControl({ onAddEntry, onEditEntry }: CostControlProps) {
                                       <td className="px-2 py-1.5 text-right text-gray-900 dark:text-gray-100">
                                         {formatBase(service.sellingPriceEUR)}
                                       </td>
-                                      <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400">{service.accruedDate || '—'}</td>
+                                      <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400">{formatDate(service.accruedDate)}</td>
                                       <td className={`px-2 py-1.5 text-right ${service.profitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                                         {formatBase(service.profitLoss)}
                                       </td>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SalesLead, LeadStatus, LeadSource } from './SalesLeads';
+import { formatDate } from '../utils/date';
 import { Partner } from '../types/partner';
 import { Employee } from './EmployeesModule';
 import { countries } from '../data/countries';
@@ -381,7 +382,7 @@ export function SalesLeadForm({
               <div className="space-y-2 pt-4 border-t dark:border-gray-700">
                 <Label>Last Contact Date</Label>
                 <div className="text-gray-600 dark:text-gray-400 px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-md border dark:border-gray-700">
-                  {initialData.lastContactDate}
+                  {formatDate(initialData.lastContactDate)}
                 </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   This field is automatically updated when a Meeting Minute is created

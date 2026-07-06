@@ -5,6 +5,7 @@ import { usePartners } from '../hooks/usePartners';
 import { Service } from '../types/service';
 import { BookingServiceLine } from '../services/bookings';
 import { tableClasses } from './ui/table';
+import { useCurrencyOptions } from '../hooks/useCurrencies';
 import { isPartnerSeller } from '../utils/partnerRoles';
 
 interface Props {
@@ -19,7 +20,9 @@ export function BookingServicesEditor({ value, onChange, defaultCurrency = 'EUR'
   const [loadError, setLoadError] = useState<string | null>(null);
   const { partners } = usePartners();
   const suppliers = partners.filter(p => p.status === 'Active' && isPartnerSeller(p));
-  const currencyOptions = Array.from(new Set([defaultCurrency, 'EUR', 'USD', 'GBP'].filter(Boolean)));
+  // Managed currency list; stored line currencies stay visible even if
+  // deactivated in the master list since.
+  const currencyOptions = useCurrencyOptions([defaultCurrency, ...value.map(l => l.currency)]);
 
   useEffect(() => {
     servicesApi.getAll()

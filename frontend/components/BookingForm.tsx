@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Booking,
   BookingServiceType,
@@ -6,13 +6,11 @@ import {
 import { usePartners } from '../hooks/usePartners';
 import { useAuth } from '../context/AuthContext';
 import { useCompanySettings } from '../context/CompanySettingsContext';
-import { exchangeRatesApi } from '../services/exchangeRates';
+import { useCurrencyOptions } from '../hooks/useCurrencies';
 import { employeesApi } from '../services/employees';
 import { Employee } from './EmployeesModule';
 import { countries, getCountryName } from '../data/countries';
 import { isPartnerBuyer } from '../utils/partnerRoles';
-
-const COMMON_CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF', 'CNY', 'JPY', 'CAD', 'AUD', 'SGD'];
 
 interface BookingFormProps {
   draft: Booking;
@@ -62,26 +60,9 @@ export function BookingForm({ draft, onChange, mode, error, leadData }: BookingF
     || (draft.assignedAgentId === user?.employee_id ? user?.display_name : undefined)
     || 'Current assigned agent';
 
-  const [knownCurrencies, setKnownCurrencies] = useState<string[]>([]);
-  useEffect(() => {
-    exchangeRatesApi.getAll()
-      .then((rows) => {
-        const set = new Set<string>();
-        for (const r of rows) {
-          if (r.from_currency) set.add(r.from_currency.toUpperCase());
-          if (r.to_currency) set.add(r.to_currency.toUpperCase());
-        }
-        setKnownCurrencies(Array.from(set));
-      })
-      .catch(() => { /* fallback list */ });
-  }, []);
-
-  const currencyOptions = useMemo(() => {
-    const set = new Set<string>(COMMON_CURRENCIES);
-    if (baseCurrency) set.add(baseCurrency.toUpperCase());
-    for (const c of knownCurrencies) set.add(c);
-    return Array.from(set).sort();
-  }, [baseCurrency, knownCurrencies]);
+  // Managed currency list; the draft's stored currency stays visible even if
+  // it's been deactivated in the master list since.
+  const currencyOptions = useCurrencyOptions([draft.currency]);
 
   const computedMargin = (draft.totalRevenue || 0) - (draft.totalCost || 0);
 
@@ -243,7 +224,7 @@ export function BookingForm({ draft, onChange, mode, error, leadData }: BookingF
                     </datalist>
                   </div>
                   <div>
-                    <label className={labelClass}>Revenue</label>
+                    <label className={labelClass}>Revenue ({baseCurrency})</label>
                     <input
                       type="text"
                       value={(draft.totalRevenue || 0).toFixed(2)}
@@ -252,7 +233,7 @@ export function BookingForm({ draft, onChange, mode, error, leadData }: BookingF
                     />
                   </div>
                   <div>
-                    <label className={labelClass}>Cost</label>
+                    <label className={labelClass}>Cost ({baseCurrency})</label>
                     <input
                       type="text"
                       value={(draft.totalCost || 0).toFixed(2)}
@@ -262,12 +243,13 @@ export function BookingForm({ draft, onChange, mode, error, leadData }: BookingF
                   </div>
                 </div>
                 <p className="text-[10px] leading-tight text-gray-500 dark:text-gray-400">
-                  Totals are derived from the agreed rates / costs entered on the Equipment tab.
+                  Totals are derived from the agreed rates / costs on the Equipment tab,
+                  converted to {baseCurrency} using each line's exchange rate.
                 </p>
                 {(draft.totalRevenue > 0 || draft.totalCost > 0) && (
                   <div className="px-2 py-1 bg-gray-50 dark:bg-gray-700 rounded text-xs text-gray-700 dark:text-gray-300">
                     Margin: <strong className={computedMargin >= 0 ? 'text-green-600' : 'text-red-600'}>
-                      {draft.currency} {computedMargin.toFixed(2)}
+                      {baseCurrency} {computedMargin.toFixed(2)}
                     </strong>
                   </div>
                 )}

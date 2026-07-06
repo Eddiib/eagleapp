@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Trash2, Loader2, AlertCircle, Save, Filter } from 'lucide-react';
+import { Plus, Trash2, Loader2, AlertCircle, Save, Filter, Coins } from 'lucide-react';
 import { exchangeRatesApi, ExchangeRateRow } from '../services/exchangeRates';
+import { formatDate } from '../utils/date';
+import { currenciesApi } from '../services/currencies';
 import { useConfirm } from '../context/ConfirmDialog';
 import { useCompanySettings } from '../context/CompanySettingsContext';
+import { useCurrencies, useCurrencyOptions } from '../hooks/useCurrencies';
 import { ColumnHeader } from './ui/ColumnHeader';
 import { useTableControls, ColumnDef } from '../hooks/useTableControls';
-
-const COMMON_CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF', 'JPY', 'CNY', 'AED', 'TRY', 'ALL'];
 
 function todayIso(): string {
   return new Date().toISOString().split('T')[0];
@@ -15,7 +16,8 @@ function todayIso(): string {
 export function ExchangeRatesManager() {
   const confirmDialog = useConfirm();
   const { baseCurrency } = useCompanySettings();
-  const currencyOptions = Array.from(new Set([baseCurrency, ...COMMON_CURRENCIES].filter(Boolean)));
+  const currencyOptions = useCurrencyOptions();
+  const { currencies, refresh: refreshCurrencies } = useCurrencies();
   const [rates, setRates] = useState<ExchangeRateRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -76,10 +78,65 @@ export function ExchangeRatesManager() {
     }
   };
 
+  // ── Currency master list management ─────────────────────────────────────
+  const [currencyForm, setCurrencyForm] = useState({ code: '', name: '' });
+  const [currencyError, setCurrencyError] = useState<string | null>(null);
+  const [currencySaving, setCurrencySaving] = useState(false);
+
+  const handleAddCurrency = async () => {
+    const code = currencyForm.code.trim().toUpperCase();
+    const name = currencyForm.name.trim();
+    if (!/^[A-Z]{3}$/.test(code)) {
+      setCurrencyError('Code must be 3 letters (ISO 4217), e.g. NOK.');
+      return;
+    }
+    if (!name) {
+      setCurrencyError('Name is required.');
+      return;
+    }
+    setCurrencyError(null);
+    setCurrencySaving(true);
+    try {
+      await currenciesApi.create({ code, name });
+      setCurrencyForm({ code: '', name: '' });
+      refreshCurrencies();
+    } catch (err: any) {
+      setCurrencyError(err?.message || 'Save failed');
+    } finally {
+      setCurrencySaving(false);
+    }
+  };
+
+  const handleToggleCurrency = async (code: string, isActive: boolean) => {
+    setCurrencyError(null);
+    try {
+      await currenciesApi.update(code, { isActive });
+      refreshCurrencies();
+    } catch (err: any) {
+      setCurrencyError(err?.message || 'Update failed');
+    }
+  };
+
+  const handleDeleteCurrency = async (code: string, name: string) => {
+    const ok = await confirmDialog({
+      title: 'Delete currency?',
+      message: `Remove ${code} (${name}) from the currency list? Existing bookings and invoices keep their values — usually deactivating is enough.`,
+      tone: 'danger',
+      confirmLabel: 'Delete',
+    });
+    if (!ok) return;
+    try {
+      await currenciesApi.delete(code);
+      refreshCurrencies();
+    } catch (err: any) {
+      setCurrencyError(err?.message || 'Delete failed');
+    }
+  };
+
   const handleDelete = async (row: ExchangeRateRow) => {
     const ok = await confirmDialog({
       title: 'Delete exchange rate?',
-      message: `Remove ${row.from_currency}→${row.to_currency} @ ${row.rate} (effective ${row.effective_date})?`,
+      message: `Remove ${row.from_currency}→${row.to_currency} @ ${row.rate} (effective ${formatDate(row.effective_date)})?`,
       tone: 'danger',
       confirmLabel: 'Delete',
     });
@@ -101,8 +158,8 @@ export function ExchangeRatesManager() {
     { key: 'from_currency', label: 'From', align: 'left', get: (r) => r.from_currency },
     { key: 'to_currency', label: 'To', align: 'left', get: (r) => r.to_currency },
     { key: 'rate', label: 'Rate', align: 'right', get: (r) => Number(r.rate).toLocaleString(undefined, { maximumFractionDigits: 6 }), sortValue: (r) => Number(r.rate) || 0 },
-    { key: 'effective_date', label: 'Effective Date', align: 'left', get: (r) => r.effective_date, sortValue: (r) => r.effective_date || '' },
-    { key: 'updated', label: 'Updated', align: 'left', get: (r) => r.updated_at ? String(r.updated_at).split('T')[0] : '—', sortValue: (r) => r.updated_at ? String(r.updated_at) : '' },
+    { key: 'effective_date', label: 'Effective Date', align: 'left', get: (r) => formatDate(r.effective_date), sortValue: (r) => r.effective_date || '' },
+    { key: 'updated', label: 'Updated', align: 'left', get: (r) => formatDate(r.updated_at), sortValue: (r) => r.updated_at ? String(r.updated_at) : '' },
   ]), []);
 
   // Column-level Excel-style filters + AZ/ZA sorting (shared across all list tables).
@@ -125,6 +182,99 @@ export function ExchangeRatesManager() {
           Used by dashboard aggregations and the upcoming P&amp;L view to normalize multi-currency totals.
           Identity rates ({baseCurrency}→{baseCurrency}, EUR→EUR, …) are implicit and don't need rows.
         </p>
+      </div>
+
+      {/* Currency master list */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+        <div className="flex items-center gap-2 mb-1">
+          <Coins className="w-4 h-4 text-blue-600" />
+          <h2 className="text-sm text-gray-900 dark:text-gray-100">Currencies</h2>
+        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+          The currencies offered in dropdowns across bookings, invoices, quotations and cost control.
+          Deactivate instead of deleting to hide a currency without touching history.
+          The base currency ({baseCurrency}) is set in Company Settings.
+        </p>
+        <div className="flex flex-wrap gap-2 mb-3">
+          {currencies.map(c => {
+            const isBase = c.code === baseCurrency;
+            return (
+              <span
+                key={c.code}
+                title={c.name + (isBase ? ' — base currency' : '')}
+                className={`inline-flex items-center gap-1.5 pl-2.5 pr-1 py-1 rounded-full border text-xs ${
+                  c.isActive
+                    ? 'border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700/50'
+                    : 'border-dashed border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500'
+                }`}
+              >
+                <span className="font-medium">{c.code}</span>
+                <span className="hidden sm:inline text-gray-500 dark:text-gray-400">{c.name}</span>
+                {isBase ? (
+                  <span className="px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">base</span>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleCurrency(c.code, !c.isActive)}
+                      title={c.isActive ? 'Deactivate (hide from dropdowns)' : 'Activate'}
+                      className={`px-1.5 py-0.5 rounded-full transition-colors ${
+                        c.isActive
+                          ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/60'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      {c.isActive ? 'active' : 'inactive'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCurrency(c.code, c.name)}
+                      title="Delete currency"
+                      className="p-0.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </>
+                )}
+              </span>
+            );
+          })}
+        </div>
+        <div className="flex flex-wrap items-end gap-3">
+          <div>
+            <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Code</label>
+            <input
+              className={inputClass + ' w-24 uppercase'}
+              value={currencyForm.code}
+              onChange={e => setCurrencyForm(f => ({ ...f, code: e.target.value.toUpperCase() }))}
+              placeholder="NOK"
+              maxLength={3}
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Name</label>
+            <input
+              className={inputClass + ' w-56'}
+              value={currencyForm.name}
+              onChange={e => setCurrencyForm(f => ({ ...f, name: e.target.value }))}
+              placeholder="Norwegian Krone"
+            />
+          </div>
+          <button
+            onClick={handleAddCurrency}
+            disabled={currencySaving}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 text-sm"
+          >
+            {currencySaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+            Add Currency
+          </button>
+        </div>
+        {currencyError && (
+          <div className="mt-3 flex items-center gap-2 text-sm text-red-700 dark:text-red-300">
+            <AlertCircle className="w-4 h-4" />
+            {currencyError}
+          </div>
+        )}
       </div>
 
       {/* Add / upsert form */}
@@ -236,8 +386,8 @@ export function ExchangeRatesManager() {
                   <td className="px-2 py-1.5 font-medium text-gray-900 dark:text-gray-100">{r.from_currency}</td>
                   <td className="px-2 py-1.5 font-medium text-gray-900 dark:text-gray-100">{r.to_currency}</td>
                   <td className="px-2 py-1.5 text-right tabular-nums text-gray-900 dark:text-gray-100">{Number(r.rate).toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
-                  <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400">{r.effective_date}</td>
-                  <td className="px-2 py-1.5 text-gray-500 dark:text-gray-400">{r.updated_at ? String(r.updated_at).split('T')[0] : '—'}</td>
+                  <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400">{formatDate(r.effective_date)}</td>
+                  <td className="px-2 py-1.5 text-gray-500 dark:text-gray-400">{formatDate(r.updated_at)}</td>
                   <td className="px-2 py-1.5 text-right">
                     <button onClick={() => handleDelete(r)}
                       className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded">

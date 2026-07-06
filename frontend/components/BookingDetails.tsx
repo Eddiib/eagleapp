@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Download, Filter, Search, X, RefreshCw } from 'lucide-react';
 import { bookingsApi, Booking } from '../services/bookings';
+import { formatDate } from '../utils/date';
 
 // One row per service line: booking → equipment line → equipment service.
 // Booking + equipment fields repeat across the rows so any single service is
@@ -92,11 +93,14 @@ function buildRows(bookings: Booking[]): BookingDetailRow[] {
   return rows;
 }
 
-// Cell value as text — '—' for empty, 2dp for money.
+const DATE_KEYS: ColumnKey[] = ['etd', 'eta', 'plannedDate'];
+
+// Cell value as text — '—' for empty, 2dp for money, dd/mm/yyyy for dates.
 function cellText(row: BookingDetailRow, key: ColumnKey): string {
   const v = row[key];
   if (v === null || v === undefined || v === '') return '—';
   if (typeof v === 'number') return v.toFixed(2);
+  if (DATE_KEYS.includes(key)) return formatDate(v);
   return String(v);
 }
 
@@ -105,6 +109,7 @@ function filterText(row: BookingDetailRow, key: ColumnKey): string {
   const v = row[key];
   if (v === null || v === undefined) return '';
   if (typeof v === 'number') return v.toFixed(2);
+  if (v !== '' && DATE_KEYS.includes(key)) return formatDate(v);
   return String(v);
 }
 

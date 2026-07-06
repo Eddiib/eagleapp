@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Save, X, Plus } from 'lucide-react';
 import { salesLeadsApi, SalesLeadMeetingMinute, ActionItem, ContactType, NextAction } from '../services/salesLeads';
+import { formatDate } from '../utils/date';
 import { usePartners } from '../hooks/usePartners';
 import { employeesApi } from '../services/employees';
 import { Employee } from './EmployeesModule';
@@ -176,7 +177,7 @@ export function MeetingMinutesForm({ initialData, leadId, mode, onSaved, onCance
               {mode === 'create' ? 'New Meeting Minute' : mode === 'edit' ? 'Edit Meeting Minute' : 'View Meeting Minute'}
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-              {mode === 'create' ? 'Record a new client meeting' : `Meeting on ${new Date(meetingDate).toLocaleDateString()}`}
+              {mode === 'create' ? 'Record a new client meeting' : `Meeting on ${formatDate(meetingDate)}`}
             </p>
           </div>
         </div>

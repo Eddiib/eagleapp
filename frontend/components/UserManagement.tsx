@@ -4,6 +4,7 @@ import {
   CheckCircle, XCircle, Shield, UserCheck, X, Save, Eye, EyeOff, KeyRound,
 } from 'lucide-react';
 import { api } from '../services/client';
+import { formatDate } from '../utils/date';
 import { authAdminApi, AppModule, AppRole, EmployeeOption } from '../services/authAdmin';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../context/ConfirmDialog';
@@ -484,8 +485,8 @@ export function UserManagement() {
     { key: 'email', label: 'Email', align: 'left', get: (u) => u.email },
     { key: 'role', label: 'Role', align: 'left', get: (u) => roleByKey.get(u.role)?.name || u.role_name || u.role },
     { key: 'status', label: 'Status', align: 'left', get: (u) => (Boolean(u.is_active) ? 'Active' : 'Inactive') },
-    { key: 'last_login', label: 'Last Login', align: 'left', get: (u) => (u.last_login ? new Date(u.last_login).toLocaleDateString() : '-'), sortValue: (u) => u.last_login || '' },
-    { key: 'created_at', label: 'Created', align: 'left', get: (u) => (u.created_at ? new Date(u.created_at).toLocaleDateString() : '-'), sortValue: (u) => u.created_at || '' },
+    { key: 'last_login', label: 'Last Login', align: 'left', get: (u) => formatDate(u.last_login, '-'), sortValue: (u) => u.last_login || '' },
+    { key: 'created_at', label: 'Created', align: 'left', get: (u) => formatDate(u.created_at, '-'), sortValue: (u) => u.created_at || '' },
   ]), [roleByKey]);
 
   // Column-level Excel-style filters + AZ/ZA sorting (shared across all list tables).
@@ -751,10 +752,10 @@ export function UserManagement() {
                     )}
                   </td>
                   <td className="px-2 py-1.5 text-gray-400 dark:text-gray-500">
-                    {u.last_login ? new Date(u.last_login).toLocaleDateString() : '-'}
+                    {formatDate(u.last_login, '-')}
                   </td>
                   <td className="px-2 py-1.5 text-gray-400 dark:text-gray-500">
-                    {u.created_at ? new Date(u.created_at).toLocaleDateString() : '-'}
+                    {formatDate(u.created_at, '-')}
                   </td>
                   <td className="px-2 py-1.5">
                     {canEditUsers && (

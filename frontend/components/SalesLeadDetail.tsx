@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { SalesLead, SalesLeadMeetingMinute, LeadRanking } from './SalesLeads';
+import { formatDate } from '../utils/date';
 import { SalesLeadMeetingPanel } from './SalesLeadMeetingPanel';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -322,7 +323,7 @@ export function SalesLeadDetail({
                       Last Contacted
                     </div>
                     <div className="text-gray-900 dark:text-white">
-                      {lead.lastContactDate || 'Never'}
+                      {formatDate(lead.lastContactDate, 'Never')}
                     </div>
                   </div>
                 </CardContent>
@@ -368,7 +369,7 @@ export function SalesLeadDetail({
                             <div>
                               <div className="text-gray-900 dark:text-white">{meeting.salesAgent}</div>
                               <div className="text-sm text-gray-600 dark:text-gray-400">
-                                {meeting.meetingDate} at {meeting.meetingTime}
+                                {formatDate(meeting.meetingDate)} at {meeting.meetingTime}
                               </div>
                             </div>
                           </div>
@@ -390,7 +391,7 @@ export function SalesLeadDetail({
                               Next: {meeting.nextAction}
                             </Badge>
                             <span className="text-sm text-gray-600 dark:text-gray-400">
-                              Due: {meeting.nextActionDate}
+                              Due: {formatDate(meeting.nextActionDate)}
                             </span>
                           </div>
                         </div>

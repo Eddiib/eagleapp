@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Plus, Edit2, Eye, Trash2, Filter, Users, Loader2 } from 'lucide-react';
 import { employeesApi } from '../services/employees';
+import { formatDate } from '../utils/date';
 import { useConfirm } from '../context/ConfirmDialog';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
@@ -399,7 +400,7 @@ export function EmployeesModule({ onEmployeeSelect, onEditEmployee, onCreateNew 
                               {employee.phone}
                             </div>
                             <div className="col-span-2 text-gray-600 dark:text-gray-400 text-sm">
-                              {employee.dateOfHire}
+                              {formatDate(employee.dateOfHire)}
                             </div>
                             <div className="col-span-2">
                               {employee.isActive ? (

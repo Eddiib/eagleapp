@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight, StickyNote, MessageSquare, Paperclip, Upload, FileText, Trash2, Download, Loader2, Save } from 'lucide-react';
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { BookingAttachment, bookingAttachmentsApi, bookingsApi } from '../services/bookings';
+import { formatDate } from '../utils/date';
 import { useConfirm } from '../context/ConfirmDialog';
 
 interface SidebarProps {
@@ -239,7 +240,7 @@ export function Sidebar({
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">
                           {formatBytes(doc.sizeBytes)}
-                          {doc.uploadedAt && <> · {String(doc.uploadedAt).split('T')[0]}</>}
+                          {doc.uploadedAt && <> · {formatDate(doc.uploadedAt)}</>}
                         </div>
                       </div>
                       <span className="text-xs text-gray-600 dark:text-gray-300 bg-white dark:bg-[#262626] px-2 py-1 rounded border border-gray-200 dark:border-[#374151]">

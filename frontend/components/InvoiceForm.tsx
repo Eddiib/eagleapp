@@ -10,6 +10,7 @@ import {
 } from '../services/invoices';
 import { useAuth } from '../context/AuthContext';
 import { useCompanySettings } from '../context/CompanySettingsContext';
+import { useCurrencyOptions } from '../hooks/useCurrencies';
 import { isPartnerBuyer } from '../utils/partnerRoles';
 
 interface InvoiceFormProps {
@@ -19,7 +20,6 @@ interface InvoiceFormProps {
   onCancel: () => void;
 }
 
-const COMMON_CURRENCIES = ['EUR', 'USD', 'GBP', 'AED'];
 const STATUSES: InvoiceStatus[]  = ['Draft', 'Sent', 'Paid', 'Overdue', 'Cancelled', 'Void'];
 const TYPES: InvoiceType[]       = ['Sales', 'Purchase', 'Credit Note'];
 
@@ -44,10 +44,9 @@ export function InvoiceForm({ invoice, mode, onSaved, onCancel }: InvoiceFormPro
   const clients = partners.filter(
     (p) => p.status === 'Active' && isPartnerBuyer(p)
   );
-  const currencyOptions = useMemo(() => {
-    const set = new Set<string>([baseCurrency, ...COMMON_CURRENCIES].filter(Boolean));
-    return Array.from(set);
-  }, [baseCurrency]);
+  // Managed currency list; the invoice's stored currency stays visible even
+  // if deactivated in the master list since.
+  const currencyOptions = useCurrencyOptions([invoice?.currency]);
 
   const [form, setForm] = useState({
     invoiceNumber: invoice?.invoiceNumber || '',

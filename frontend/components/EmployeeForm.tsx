@@ -3,6 +3,7 @@ import { Loader2, Save, UserPlus, X } from 'lucide-react';
 import { Employee } from './EmployeesModule';
 import { countries } from '../data/countries';
 import { useCompanySettings } from '../context/CompanySettingsContext';
+import { useCurrencyOptions } from '../hooks/useCurrencies';
 
 interface EmployeeFormProps {
   employee?: Employee;
@@ -31,7 +32,9 @@ function createEmptyEmployeeFormData(defaultCurrency = 'EUR'): Partial<Employee>
 
 export function EmployeeForm({ employee, onSave, onCancel, mode }: EmployeeFormProps) {
   const { baseCurrency } = useCompanySettings();
-  const currencyOptions = Array.from(new Set([baseCurrency, 'EUR', 'USD', 'GBP', 'CHF'].filter(Boolean)));
+  // Managed currency list; the employee's stored currency stays visible even
+  // if deactivated in the master list since.
+  const currencyOptions = useCurrencyOptions([employee?.currency]);
   const [formData, setFormData] = useState<Partial<Employee>>(
     employee || createEmptyEmployeeFormData(baseCurrency)
   );

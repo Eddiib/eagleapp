@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Search, Filter, Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { SalesLeadMeetingMinute } from '../services/salesLeads';
+import { formatDate } from '../utils/date';
 import { useConfirm } from '../context/ConfirmDialog';
 import { PaginationBar } from './ui/PaginationBar';
 import { ColumnHeader } from './ui/ColumnHeader';
@@ -32,10 +33,8 @@ export function MeetingMinutesList({ onCreateNew, onView, onEdit, onDelete, meet
   };
 
   // Cell-display helpers shared by the column descriptors and the rendered cells.
-  const fmtDate = (d?: string | null) =>
-    d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
-  const fmtNextAction = (d?: string | null) =>
-    d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—';
+  const fmtDate = (d?: string | null) => formatDate(d);
+  const fmtNextAction = (d?: string | null) => formatDate(d);
   const fmtWeek = (d?: string | null) =>
     d ? `W${Math.ceil((new Date(d).getTime() - new Date(new Date(d).getFullYear(), 0, 1).getTime()) / 86400000 / 7) + 1}` : '—';
   const fmtDuration = (n?: number | null) => (n != null ? `${n} min` : '—');

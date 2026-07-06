@@ -12,6 +12,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { Load } from './types';
+import { formatDate } from '../../utils/date';
 import { SupplierQuotesAccordion } from './SupplierQuotesAccordion';
 
 interface LoadDetailProps {
@@ -189,7 +190,7 @@ export function LoadDetail({
                   Required Date
                 </label>
                 <p className="text-gray-900 dark:text-gray-100 mt-1">
-                  {new Date(load.requiredDate).toLocaleDateString()}
+                  {formatDate(load.requiredDate)}
                 </p>
               </div>
             </div>
@@ -245,7 +246,7 @@ export function LoadDetail({
                 <div>
                   <label className="text-xs text-gray-500 dark:text-gray-400 uppercase">Posted Date</label>
                   <p className="text-gray-900 dark:text-gray-100 mt-1">
-                    {new Date(load.postedDate).toLocaleDateString()}
+                    {formatDate(load.postedDate)}
                   </p>
                 </div>
               )}

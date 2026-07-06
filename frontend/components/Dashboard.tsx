@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { formatDate } from '../utils/date';
 import { bookingsApi, Booking } from '../services/bookings';
 import { invoicesApi } from '../services/invoices';
 import { exchangeRatesApi, ExchangeRateRow } from '../services/exchangeRates';
@@ -789,7 +790,7 @@ export function Dashboard({ onNewBooking, onViewAllBookings, onViewBooking }: Da
                     </td>
                     <td className="py-3 px-4 text-sm text-gray-900 dark:text-gray-100">{booking.serviceIdentifier}</td>
                     <td className="py-3 px-4 text-sm text-gray-900 dark:text-gray-100">
-                      {new Date(booking.etd).toLocaleDateString()} / {new Date(booking.eta).toLocaleDateString()}
+                      {formatDate(booking.etd)} / {formatDate(booking.eta)}
                     </td>
                     <td className="py-3 px-4">{getStatusBadge(booking.status)}</td>
                     <td className="py-3 px-4 text-sm text-gray-900 dark:text-gray-100">{booking.salesAgent}</td>
@@ -903,7 +904,7 @@ export function Dashboard({ onNewBooking, onViewAllBookings, onViewBooking }: Da
                     <td className="py-3 px-4 text-sm text-gray-900 dark:text-gray-100">{booking.destination}</td>
                     <td className="py-3 px-4 text-sm text-gray-900 dark:text-gray-100">{booking.vesselFlightNumber || 'TBC'}</td>
                     <td className="py-3 px-4 text-sm text-gray-900 dark:text-gray-100">
-                      {new Date(booking.eta).toLocaleDateString()}
+                      {formatDate(booking.eta)}
                     </td>
                     <td className="py-3 px-4">{getStatusBadge(booking.status)}</td>
                     <td className="py-3 px-4 text-center">

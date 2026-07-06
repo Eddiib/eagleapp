@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { SalesLead, SalesLeadMeetingMinute, ContactType, NextAction } from './SalesLeads';
+import { formatDate } from '../utils/date';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
@@ -98,7 +99,7 @@ export function SalesLeadMeetingPanel({
               <div>
                 <span className="text-gray-600 dark:text-gray-400">Last Contact:</span>
                 <span className="ml-2 text-gray-900 dark:text-white">
-                  {lead.lastContactDate || 'Never'}
+                  {formatDate(lead.lastContactDate, 'Never')}
                 </span>
               </div>
             </div>

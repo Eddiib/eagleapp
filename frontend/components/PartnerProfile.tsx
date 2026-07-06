@@ -1,4 +1,5 @@
 import { Partner } from '../types/partner';
+import { formatDate } from '../utils/date';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
@@ -504,7 +505,7 @@ export function PartnerProfile({ partner, onBack, onEdit }: PartnerProfileProps)
                     <TableCell>
                       <Badge variant="outline">{booking.status}</Badge>
                     </TableCell>
-                    <TableCell>{booking.createdDate}</TableCell>
+                    <TableCell>{formatDate(booking.createdDate)}</TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="sm">View</Button>
                     </TableCell>
@@ -581,7 +582,7 @@ export function PartnerProfile({ partner, onBack, onEdit }: PartnerProfileProps)
                     <TableCell className="text-right">
                       {record.currency} {record.amount.toLocaleString()}
                     </TableCell>
-                    <TableCell>{record.dueDate}</TableCell>
+                    <TableCell>{formatDate(record.dueDate)}</TableCell>
                     <TableCell>
                       <Badge className={
                         record.status === 'Overdue' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' :
@@ -637,8 +638,8 @@ export function PartnerProfile({ partner, onBack, onEdit }: PartnerProfileProps)
                     <TableCell>
                       <Badge variant="outline">{dispute.status}</Badge>
                     </TableCell>
-                    <TableCell>{dispute.createdDate}</TableCell>
-                    <TableCell>{dispute.resolvedDate || '-'}</TableCell>
+                    <TableCell>{formatDate(dispute.createdDate)}</TableCell>
+                    <TableCell>{formatDate(dispute.resolvedDate, '-')}</TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="sm">View</Button>
                     </TableCell>
@@ -678,7 +679,7 @@ export function PartnerProfile({ partner, onBack, onEdit }: PartnerProfileProps)
                     <TableCell>
                       <Badge variant="outline">{doc.type}</Badge>
                     </TableCell>
-                    <TableCell>{doc.uploadedDate}</TableCell>
+                    <TableCell>{formatDate(doc.uploadedDate)}</TableCell>
                     <TableCell>{doc.uploadedBy}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">

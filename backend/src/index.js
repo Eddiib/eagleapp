@@ -21,6 +21,7 @@ const auditLogRouter          = require('./routes/auditLog');
 const companySettingsRouter   = require('./routes/companySettings');
 const brandingRouter          = require('./routes/branding');
 const portsRouter             = require('./routes/ports');
+const currenciesRouter        = require('./routes/currencies');
 const bookingStatusesRouter   = require('./routes/bookingStatuses');
 
 const PORT = Number(process.env.PORT) || 3001;
@@ -58,12 +59,18 @@ function createApp() {
   app.use('/api/cost-control', verifyToken, requireModuleAccess('cost-control'),        costControlRouter);
   app.use('/api/invoices',     verifyToken, requireModuleAccess('invoicing'),           invoicesRouter);
   app.use('/api/pricing',      verifyToken, requireModuleAccess(pricingModule),         pricingRouter);
-  app.use('/api/exchange-rates', verifyToken, requireModuleAccess('forex-management'),  exchangeRatesRouter);
+  // Exchange rates: GET is open to any signed-in user (powers the fx prefill
+  // on booking service lines); mutations enforce edit:forex-management inside
+  // the router.
+  app.use('/api/exchange-rates', verifyToken, exchangeRatesRouter);
   app.use('/api/audit-log',      verifyToken, requireModuleAccess('audit-log'),         auditLogRouter);
   app.use('/api/company-settings', verifyToken, companySettingsRouter);
   // Ports: GET is open to any signed-in user (powers booking POL/POD pickers);
   // mutations enforce admin-only inside the router.
   app.use('/api/ports',            verifyToken, portsRouter);
+  // Currencies: same pattern — GET powers currency dropdowns app-wide,
+  // mutations require edit:forex-management inside the router.
+  app.use('/api/currencies',       verifyToken, currenciesRouter);
   app.use('/api/booking-statuses', verifyToken, bookingStatusesRouter);
 
   // 404 + central error handler (must be last)

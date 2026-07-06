@@ -1,4 +1,5 @@
 import { BookingEquipmentLine } from '../services/bookings';
+import { useCompanySettings } from '../context/CompanySettingsContext';
 import { tableClasses } from './ui/table';
 
 interface Props {
@@ -6,6 +7,7 @@ interface Props {
 }
 
 export function EquipmentServicesView({ equipment }: Props) {
+  const { baseCurrency } = useCompanySettings();
   // Collect all service rows with their parent equipment context
   const rows = equipment.flatMap((eq, eqIdx) =>
     (eq.equipmentServices || []).map(svc => ({ eq, eqIdx, svc }))
@@ -59,7 +61,10 @@ export function EquipmentServicesView({ equipment }: Props) {
               </td>
               <td className={`${td} text-right tabular-nums`}>
                 {svc.agreedRate != null
-                  ? svc.agreedRate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                  ? <>
+                      {svc.agreedRate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      <span className="ml-1 text-xs text-gray-400 dark:text-gray-500">{svc.rateCurrency || baseCurrency}</span>
+                    </>
                   : <span className="text-gray-400 dark:text-gray-500">—</span>
                 }
               </td>
@@ -68,7 +73,10 @@ export function EquipmentServicesView({ equipment }: Props) {
               </td>
               <td className={`${td} text-right tabular-nums`}>
                 {svc.agreedCost != null
-                  ? svc.agreedCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                  ? <>
+                      {svc.agreedCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      <span className="ml-1 text-xs text-gray-400 dark:text-gray-500">{svc.costCurrency || baseCurrency}</span>
+                    </>
                   : <span className="text-gray-400 dark:text-gray-500">—</span>
                 }
               </td>
@@ -79,11 +87,11 @@ export function EquipmentServicesView({ equipment }: Props) {
           <tfoot className="bg-gray-50 dark:bg-gray-800 border-t-2 border-gray-200 dark:border-gray-700">
             <tr>
               <td colSpan={5} className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase text-right">
-                Total Agreed Cost
+                Total Agreed Cost ({baseCurrency})
               </td>
               <td className="px-4 py-2 text-sm font-semibold text-right text-gray-900 dark:text-gray-100 tabular-nums">
                 {rows
-                  .reduce((sum, { svc }) => sum + (svc.agreedCost ?? 0), 0)
+                  .reduce((sum, { svc }) => sum + (svc.agreedCost ?? 0) * (svc.costExchangeRate ?? 1), 0)
                   .toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                 }
               </td>

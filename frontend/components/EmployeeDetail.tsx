@@ -1,6 +1,7 @@
 import { X, Edit, UserCheck, UserX, Mail, Phone, MapPin, Calendar, Briefcase, DollarSign } from 'lucide-react';
 import { Employee } from './EmployeesModule';
 import { getCountryName } from '../data/countries';
+import { formatDate } from '../utils/date';
 
 interface EmployeeDetailProps {
   employee: Employee;
@@ -116,7 +117,7 @@ export function EmployeeDetail({ employee, onClose, onEdit, onToggleActive, busy
                 {employee.dateOfBirth && (
                   <div>
                     <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Date of Birth</label>
-                    <p className="text-gray-900 dark:text-white">{employee.dateOfBirth}</p>
+                    <p className="text-gray-900 dark:text-white">{formatDate(employee.dateOfBirth)}</p>
                   </div>
                 )}
                 {employee.personalId && (
@@ -166,12 +167,12 @@ export function EmployeeDetail({ employee, onClose, onEdit, onToggleActive, busy
                     <Calendar className="w-4 h-4 inline mr-1" />
                     Date of Hire
                   </label>
-                  <p className="text-gray-900 dark:text-white">{employee.dateOfHire}</p>
+                  <p className="text-gray-900 dark:text-white">{formatDate(employee.dateOfHire)}</p>
                 </div>
                 {employee.dateOfTermination && (
                   <div>
                     <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Date of Termination</label>
-                    <p className="text-gray-900 dark:text-white">{employee.dateOfTermination}</p>
+                    <p className="text-gray-900 dark:text-white">{formatDate(employee.dateOfTermination)}</p>
                   </div>
                 )}
                 {employee.employmentType && (

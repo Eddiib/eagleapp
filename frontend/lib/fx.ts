@@ -14,12 +14,14 @@ export interface FxConversion {
   base: string;
 }
 
-function pickRate(
+export function pickRate(
   rows: ExchangeRateRow[],
   from: string,
   to: string,
   asOfDate?: string,
+  options: { fallbackToLatest?: boolean } = {},
 ): number | null {
+  const { fallbackToLatest = true } = options;
   if (from === to) return 1;
   const candidates = rows.filter(
     r => r.from_currency === from && r.to_currency === to,
@@ -33,6 +35,7 @@ function pickRate(
     .filter(r => r.effective_date <= asOfDate)
     .sort((a, b) => b.effective_date.localeCompare(a.effective_date));
   if (onOrBefore.length) return Number(onOrBefore[0].rate);
+  if (!fallbackToLatest) return null;
   // Nothing on-or-before — fall back to the most recent available rate.
   candidates.sort((a, b) => b.effective_date.localeCompare(a.effective_date));
   return Number(candidates[0].rate);
