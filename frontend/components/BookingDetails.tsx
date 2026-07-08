@@ -354,7 +354,10 @@ export function BookingDetails({ onNavigateToBooking }: BookingDetailsProps) {
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Bounded height makes this the scroll container in both axes: the
+            horizontal scrollbar stays on-screen at the card's bottom edge and
+            the sticky header actually sticks while scrolling rows. */}
+        <div className="scrollbar-visible overflow-auto max-h-[calc(100vh-340px)] min-h-[200px]">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs">
             <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
               <tr>

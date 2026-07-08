@@ -400,10 +400,38 @@ function AppShell() {
     setBookingMode('edit');
   };
 
+  // Header fields that flow down into each equipment row. A row keeps
+  // following the header while its value is empty or still equals the header
+  // value; once edited by hand it differs and is never overwritten again.
+  const HEADER_ROW_INHERIT = [
+    { headerKey: 'placeOfLoadingCity', rowKey: 'placeOfLoading' },
+    { headerKey: 'finalDestination', rowKey: 'finalDestination' },
+    { headerKey: 'commodity', rowKey: 'commodity' },
+  ] as const;
+
   const patchDraft = useCallback((patch: Partial<Booking>) => {
+    if (bookingDraft) {
+      const changed = HEADER_ROW_INHERIT.filter(({ headerKey }) =>
+        patch[headerKey] !== undefined && patch[headerKey] !== bookingDraft[headerKey]
+      );
+      if (changed.length) {
+        setEditEquipment(rows => rows.map(row => {
+          const rowPatch: Partial<BookingEquipmentLine> = {};
+          for (const { headerKey, rowKey } of changed) {
+            const oldHeader = (bookingDraft[headerKey] as string) || '';
+            const rowVal = (row[rowKey] as string) || '';
+            if (!rowVal || rowVal === oldHeader) {
+              rowPatch[rowKey] = patch[headerKey] as string;
+            }
+          }
+          return Object.keys(rowPatch).length ? { ...row, ...rowPatch } : row;
+        }));
+      }
+    }
     setBookingDraft(prev => (prev ? { ...prev, ...patch } : prev));
     setBookingDirty(true);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookingDraft]);
 
   const validateDraft = (d: Booking): string | null => {
     if (!d.consigneeId) return 'Please select a consignee';
@@ -591,6 +619,11 @@ function AppShell() {
                     value={editEquipment}
                     onChange={(next) => { setEditEquipment(next); setBookingDirty(true); }}
                     disabled={mode === 'view'}
+                    rowDefaults={{
+                      placeOfLoading: bookingDraft.placeOfLoadingCity,
+                      finalDestination: bookingDraft.finalDestination,
+                      commodity: bookingDraft.commodity,
+                    }}
                   />
                 </div>
               )}

@@ -261,3 +261,40 @@ body {
   color: #9ca3af;
   font-size: 0.75rem;
 }
+
+/* Always-visible scrollbars for wide data tables. macOS overlay scrollbars
+   are hidden until a scroll gesture starts, leaving users no way to discover
+   or grab the horizontal bar with the mouse — styling the scrollbar forces
+   Chrome/Safari/Edge to render it persistently. */
+.scrollbar-visible {
+  scrollbar-width: thin;               /* Firefox */
+  scrollbar-color: #94a3b8 #f1f5f9;    /* Firefox: thumb / track */
+}
+.scrollbar-visible::-webkit-scrollbar {
+  height: 12px;
+  width: 12px;
+}
+.scrollbar-visible::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+.scrollbar-visible::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 6px;
+  border: 3px solid #f1f5f9;
+}
+.scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+.dark .scrollbar-visible {
+  scrollbar-color: #4b5563 #1f2937;
+}
+.dark .scrollbar-visible::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+.dark .scrollbar-visible::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border: 3px solid #1f2937;
+}
+.dark .scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}

@@ -19,6 +19,9 @@ interface Props {
   value: BookingEquipmentLine[];
   onChange: (lines: BookingEquipmentLine[]) => void;
   disabled?: boolean;
+  /** Header values (POL city, final destination, commodity) that new rows
+   *  start from; rows edited by hand keep their own values. */
+  rowDefaults?: Pick<BookingEquipmentLine, 'placeOfLoading' | 'finalDestination' | 'commodity'>;
 }
 
 type ExpandTab = 'services' | 'dimensions';
@@ -316,7 +319,7 @@ function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servic
 
   return (
     <div className="p-4 bg-gray-50 dark:bg-[#1E1E1E] border-t border-gray-200 dark:border-gray-700">
-      <div className="overflow-x-auto">
+      <div className="scrollbar-visible overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-200 dark:border-gray-700">
@@ -696,7 +699,7 @@ function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servic
 }
 
 // ── Main editor ───────────────────────────────────────────────────────────────
-export function BookingEquipmentEditor({ value, onChange, disabled }: Props) {
+export function BookingEquipmentEditor({ value, onChange, disabled, rowDefaults }: Props) {
   const [catalog, setCatalog] = useState<EquipmentType[]>([]);
   const [servicesCatalog, setServicesCatalog] = useState<Service[]>([]);
   const [fxRates, setFxRates] = useState<ExchangeRateRow[]>([]);
@@ -743,7 +746,12 @@ export function BookingEquipmentEditor({ value, onChange, disabled }: Props) {
   };
 
   const addRow = () => {
-    onChange([...value, emptyLine(catalog)]);
+    onChange([...value, {
+      ...emptyLine(catalog),
+      placeOfLoading: rowDefaults?.placeOfLoading || '',
+      finalDestination: rowDefaults?.finalDestination || '',
+      commodity: rowDefaults?.commodity || '',
+    }]);
   };
 
   const duplicateRow = () => {
