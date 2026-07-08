@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Download, Filter, Search, X, RefreshCw } from 'lucide-react';
 import { bookingsApi, Booking } from '../services/bookings';
 import { formatDate } from '../utils/date';
+import { compareBookingNumbersDesc } from '../utils/bookingNumber';
 
 // One row per service line: booking → equipment line → equipment service.
 // Booking + equipment fields repeat across the rows so any single service is
@@ -40,18 +41,8 @@ interface BookingDetailsProps {
 // Flatten every booking into one row per equipment service. Equipment lines
 // with no services still produce a row (empty service columns); likewise
 // bookings with no equipment.
-// Booking numbers are ESH + a running sequence; sort on the numeric part so
-// ESH260892 > ESH260864 regardless of created_date (the API's default order).
-function bookingNumberSequence(bookingNumber: string): number {
-  const match = (bookingNumber || '').trim().match(/^ESH(\d+)$/i);
-  return match ? Number.parseInt(match[1], 10) : 0;
-}
-
 function buildRows(bookings: Booking[]): BookingDetailRow[] {
-  const sorted = [...bookings].sort((a, b) =>
-    bookingNumberSequence(b.bookingNumber) - bookingNumberSequence(a.bookingNumber)
-    || (b.bookingNumber || '').localeCompare(a.bookingNumber || '')
-  );
+  const sorted = [...bookings].sort((a, b) => compareBookingNumbersDesc(a.bookingNumber, b.bookingNumber));
   const rows: BookingDetailRow[] = [];
   for (const b of sorted) {
     const bookingBase = {

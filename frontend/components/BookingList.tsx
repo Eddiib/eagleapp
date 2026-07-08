@@ -7,6 +7,7 @@ import { useConfirm } from '../context/ConfirmDialog';
 import { PaginationBar } from './ui/PaginationBar';
 import { ColumnHeader } from './ui/ColumnHeader';
 import { useTableControls, ColumnDef } from '../hooks/useTableControls';
+import { bookingNumberSequence, compareBookingNumbersDesc } from '../utils/bookingNumber';
 import { StatusBadge } from './ui/StatusBadge';
 import { useBookingStatuses } from '../context/BookingStatusesContext';
 
@@ -47,7 +48,7 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
   // Column descriptors drive the header sort/filter dropdowns and the filtering logic.
   // Each `get` returns the same display string shown in the corresponding table cell.
   const columnDefs = useMemo<ColumnDef<Booking>[]>(() => ([
-    { key: 'bookingNumber', label: 'Booking #', align: 'left', get: (b) => b.bookingNumber || '—' },
+    { key: 'bookingNumber', label: 'Booking #', align: 'left', get: (b) => b.bookingNumber || '—', sortValue: (b) => bookingNumberSequence(b.bookingNumber) },
     { key: 'clientName', label: 'Client', align: 'left', get: (b) => b.clientName || '—' },
     { key: 'route', label: 'Route', align: 'left', get: (b) => `${b.origin || '—'} → ${b.destination || '—'}` },
     { key: 'serviceType', label: 'Service', align: 'left', get: (b) => b.serviceType || '—' },
@@ -64,7 +65,9 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
     setError(null);
     try {
       const rows = await bookingsApi.getAll();
-      setBookings(rows);
+      // Default order: newest booking number first (the API returns
+      // created_date order, which doesn't always match the sequence).
+      setBookings([...rows].sort((a, b) => compareBookingNumbersDesc(a.bookingNumber, b.bookingNumber)));
     } catch (err: any) {
       setError(err.message || 'Failed to load bookings');
     } finally {
