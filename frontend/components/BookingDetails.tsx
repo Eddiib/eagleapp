@@ -40,9 +40,20 @@ interface BookingDetailsProps {
 // Flatten every booking into one row per equipment service. Equipment lines
 // with no services still produce a row (empty service columns); likewise
 // bookings with no equipment.
+// Booking numbers are ESH + a running sequence; sort on the numeric part so
+// ESH260892 > ESH260864 regardless of created_date (the API's default order).
+function bookingNumberSequence(bookingNumber: string): number {
+  const match = (bookingNumber || '').trim().match(/^ESH(\d+)$/i);
+  return match ? Number.parseInt(match[1], 10) : 0;
+}
+
 function buildRows(bookings: Booking[]): BookingDetailRow[] {
+  const sorted = [...bookings].sort((a, b) =>
+    bookingNumberSequence(b.bookingNumber) - bookingNumberSequence(a.bookingNumber)
+    || (b.bookingNumber || '').localeCompare(a.bookingNumber || '')
+  );
   const rows: BookingDetailRow[] = [];
-  for (const b of bookings) {
+  for (const b of sorted) {
     const bookingBase = {
       bookingId: b.id,
       bookingNumber: b.bookingNumber,
