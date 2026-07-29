@@ -267,9 +267,11 @@ interface ServicesPanelProps {
   partners: any[];
   baseCurrency: string;
   fxRates: ExchangeRateRow[];
+  /** Row-level equipment (Type / Size) new service lines start from. */
+  defaultEquipment?: Pick<EquipmentServiceLine, 'equipmentId' | 'equipmentName' | 'equipmentCode'>;
 }
 
-function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servicesCatalog, partners, baseCurrency, fxRates }: ServicesPanelProps) {
+function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servicesCatalog, partners, baseCurrency, fxRates, defaultEquipment }: ServicesPanelProps) {
   const inp = (extra = '') =>
     `w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 disabled:opacity-60 focus:outline-none focus:ring-1 focus:ring-blue-500 ${extra}`;
   const activePartners = partners.filter(p => p.status === 'Active');
@@ -279,7 +281,14 @@ function ServicesPanel({ rowIndex, services, onChange, disabled, catalog, servic
     onChange(services.map((s, i) => i === idx ? { ...s, ...patch } : s));
   };
 
-  const addService = () => onChange([...services, emptyServiceLine()]);
+  const addService = () => onChange([...services, {
+    ...emptyServiceLine(),
+    ...(defaultEquipment?.equipmentId ? {
+      equipmentId: defaultEquipment.equipmentId,
+      equipmentName: defaultEquipment.equipmentName,
+      equipmentCode: defaultEquipment.equipmentCode,
+    } : {}),
+  }]);
   const removeService = (idx: number) => onChange(services.filter((_, i) => i !== idx));
 
   // Extras keep a line's stored currency visible even if an admin later
@@ -706,6 +715,8 @@ export function BookingEquipmentEditor({ value, onChange, disabled, rowDefaults 
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [expanded, setExpanded] = useState<Map<number, ExpandTab>>(new Map());
+  // Which equipment row currently has the Type / Size picker open (null = closed).
+  const [typeSizePickerForIdx, setTypeSizePickerForIdx] = useState<number | null>(null);
   const { partners } = usePartners();
   const { baseCurrency } = useCompanySettings();
 
@@ -742,6 +753,29 @@ export function BookingEquipmentEditor({ value, onChange, disabled, rowDefaults 
         merged.category = eq?.category;
       }
       return merged;
+    }));
+  };
+
+  // Selecting Type / Size sets the row's equipment and cascades it onto every
+  // service line of that row; each service keeps its own picker so the user
+  // can still override equipment per service afterwards.
+  const applyRowEquipment = (idx: number, equipment: EquipmentType) => {
+    onChange(value.map((l, i) => {
+      if (i !== idx) return l;
+      return {
+        ...l,
+        equipmentId: equipment.id,
+        equipmentName: equipment.equipmentName,
+        equipmentCode: equipment.equipmentCode,
+        category: equipment.category,
+        typeSize: equipment.equipmentCode || equipment.equipmentName,
+        equipmentServices: (l.equipmentServices || []).map(s => ({
+          ...s,
+          equipmentId: equipment.id,
+          equipmentName: equipment.equipmentName,
+          equipmentCode: equipment.equipmentCode,
+        })),
+      };
     }));
   };
 
@@ -936,13 +970,28 @@ export function BookingEquipmentEditor({ value, onChange, disabled, rowDefaults 
                       />
                     </td>
                     <td className={td}>
-                      <input type="text"
-                        value={line.typeSize ?? ''}
-                        onChange={e => setLine(idx, { typeSize: e.target.value })}
-                        disabled={disabled}
-                        placeholder="40HC"
-                        className={inp('w-20')}
-                      />
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setTypeSizePickerForIdx(idx)}
+                          disabled={disabled}
+                          className={`${inp('w-20 text-left truncate')} ${
+                            line.typeSize ? '' : 'text-gray-400 dark:text-gray-500'
+                          } disabled:cursor-not-allowed`}
+                        >
+                          {line.typeSize || 'Select…'}
+                        </button>
+                        {!disabled && line.typeSize && (
+                          <button
+                            type="button"
+                            onClick={() => setLine(idx, { typeSize: '' })}
+                            title="Clear type / size"
+                            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 flex-shrink-0"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                     <td className={td}>
                       <select
@@ -1062,6 +1111,11 @@ export function BookingEquipmentEditor({ value, onChange, disabled, rowDefaults 
                             partners={partners}
                             baseCurrency={baseCurrency}
                             fxRates={fxRates}
+                            defaultEquipment={line.typeSize ? {
+                              equipmentId: line.equipmentId,
+                              equipmentName: line.equipmentName,
+                              equipmentCode: line.equipmentCode,
+                            } : undefined}
                           />
                         ) : (
                           <DimensionPanel
@@ -1099,6 +1153,24 @@ export function BookingEquipmentEditor({ value, onChange, disabled, rowDefaults 
           )}
         </table>
       </div>
+
+      <CatalogPicker
+        open={typeSizePickerForIdx !== null}
+        title="Select Equipment"
+        searchPlaceholder="Search by name or code…"
+        items={catalog.map(c => ({ id: c.id, label: c.equipmentName, sublabel: c.equipmentCode }))}
+        currentId={
+          typeSizePickerForIdx !== null ? value[typeSizePickerForIdx]?.equipmentId || undefined : undefined
+        }
+        onClose={() => setTypeSizePickerForIdx(null)}
+        onSelect={(item) => {
+          if (typeSizePickerForIdx !== null) {
+            const eq = catalog.find(c => c.id === item.id);
+            if (eq) applyRowEquipment(typeSizePickerForIdx, eq);
+          }
+          setTypeSizePickerForIdx(null);
+        }}
+      />
     </div>
   );
 }
