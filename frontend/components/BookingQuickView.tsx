@@ -137,7 +137,7 @@ export function BookingQuickView({ booking, onEdit }: BookingQuickViewProps) {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-800">
                   <tr>
-                    <th className="px-3 py-2 text-left text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider">Equipment</th>
+                    <th className="px-3 py-2 text-left text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider">Container ID</th>
                     <th className="px-3 py-2 text-left text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider">Code</th>
                     <th className="px-3 py-2 text-left text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider">Category</th>
                     <th className="px-3 py-2 text-right text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider">Quantity</th>
@@ -152,7 +152,7 @@ export function BookingQuickView({ booking, onEdit }: BookingQuickViewProps) {
                     </tr>
                   ) : booking.equipment.map((eq, i) => (
                     <tr key={eq.id || i} className="bg-white dark:bg-gray-800">
-                      <td className="px-3 py-2 text-gray-900 dark:text-gray-100">{eq.equipmentName || '—'}</td>
+                      <td className="px-3 py-2 text-gray-900 dark:text-gray-100 font-mono">{eq.containerId || '—'}</td>
                       <td className="px-3 py-2 text-gray-600 dark:text-gray-400">{eq.equipmentCode || '—'}</td>
                       <td className="px-3 py-2 text-gray-600 dark:text-gray-400">{eq.category || '—'}</td>
                       <td className="px-3 py-2 text-right text-gray-900 dark:text-gray-100 tabular-nums">{eq.quantity}</td>
