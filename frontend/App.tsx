@@ -43,6 +43,7 @@ import {
   BookingServiceType,
   bookingsApi,
   bookingToPayload,
+  deriveScheduleFromEquipment,
   emptyBooking,
   generateBookingNumber,
 } from './services/bookings';
@@ -437,10 +438,15 @@ function AppShell() {
     if (!d.consigneeId) return 'Please select a consignee';
     if (editServices.some(s => !s.serviceId)) return 'All service lines need a service selected';
     if (editEquipment.some(e => !e.equipmentId)) return 'All equipment lines need an equipment type selected';
-    if (d.estimatedDeparture && d.estimatedArrival && new Date(d.estimatedArrival) < new Date(d.estimatedDeparture)) {
+    // The header schedule is saved from the matrix (closest container ETD), so
+    // validate the dates that will actually be persisted, not the stale draft.
+    const schedule = deriveScheduleFromEquipment(editEquipment);
+    const etd = schedule.etd || d.estimatedDeparture;
+    const eta = schedule.eta || d.estimatedArrival;
+    if (etd && eta && new Date(eta) < new Date(etd)) {
       return 'ETA cannot be earlier than ETD';
     }
-    if (d.estimatedDeparture && d.cargoReadinessDate && new Date(d.cargoReadinessDate) > new Date(d.estimatedDeparture)) {
+    if (etd && d.cargoReadinessDate && new Date(d.cargoReadinessDate) > new Date(etd)) {
       return 'Cargo readiness date must be on or before ETD';
     }
     const BL_RE = /^[A-Z0-9-]{3,30}$/i;

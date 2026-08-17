@@ -336,6 +336,33 @@ function dateOnly(v?: string): string {
   return `${year}-${month}-${day}`;
 }
 
+/**
+ * Booking-level schedule is not captured in the header any more — it lives on
+ * the Equipment Matrix rows. The booking departs when its first container
+ * departs, so the header ETD/ETA shown in lists, the dashboard and the detail
+ * grid mirror the container with the closest (earliest) ETD. Rows without an
+ * ETD are ignored; ETA falls back to the earliest ETA on file when the winning
+ * row has no ETA of its own.
+ */
+export function deriveScheduleFromEquipment(
+  equipment: Pick<BookingEquipmentLine, 'etd' | 'eta'>[]
+): { etd: string; eta: string } {
+  let etd = '';
+  let eta = '';
+  let earliestEta = '';
+  for (const row of equipment || []) {
+    const rowEtd = dateOnly(row.etd);
+    const rowEta = dateOnly(row.eta);
+    if (rowEta && (!earliestEta || rowEta < earliestEta)) earliestEta = rowEta;
+    if (!rowEtd) continue;
+    if (!etd || rowEtd < etd) {
+      etd = rowEtd;
+      eta = rowEta;
+    }
+  }
+  return { etd, eta: eta || earliestEta };
+}
+
 export function toBooking(row: BookingRow): Booking {
   const services = (row.services || []).map(mapServiceLine);
   const equipment = (row.equipment || []).map(mapEquipmentLine);
@@ -353,6 +380,9 @@ export function toBooking(row: BookingRow): Booking {
   const destinationPort = row.destination_port ?? '';
   const status = (row.status || 'Draft') as BookingStatus;
   const serviceType = (row.mode_of_transport || 'FCL') as BookingServiceType;
+  // Container schedule wins over the legacy header columns; those are only a
+  // fallback for bookings that have no per-container dates yet.
+  const schedule = deriveScheduleFromEquipment(equipment);
   return {
     id: row.id,
     bookingNumber: row.booking_number,
@@ -387,8 +417,8 @@ export function toBooking(row: BookingRow): Booking {
     origin: [originCountry, originPort].filter(Boolean).join(' / '),
     destination: [destinationCountry, destinationPort].filter(Boolean).join(' / '),
     bookingDate: dateOnly(row.booking_date) || dateOnly(row.created_date),
-    estimatedDeparture: dateOnly(row.etd),
-    estimatedArrival: dateOnly(row.eta),
+    estimatedDeparture: schedule.etd || dateOnly(row.etd),
+    estimatedArrival: schedule.eta || dateOnly(row.eta),
     cargoReadinessDate: dateOnly(row.cargo_readiness_date),
     commodity: row.commodity ?? '',
     cargoNature: row.cargo_nature ?? '',
@@ -703,6 +733,10 @@ export function bookingToPayload(
   services: BookingServiceLine[],
   equipment: BookingEquipmentLine[]
 ): BookingPayload {
+  // Save the header schedule straight off the matrix so the stored ETD/ETA
+  // always match the container leaving first, including edits made in this
+  // session that the draft header hasn't seen.
+  const schedule = deriveScheduleFromEquipment(equipment);
   return {
     // bookingNumber is carried through so edits can save a changed code.
     // App.tsx strips it from the create payload — new bookings are
@@ -733,8 +767,8 @@ export function bookingToPayload(
     finalDestination: b.finalDestination,
     finalDestinationCountry: b.finalDestinationCountry,
     bookingDate: b.bookingDate || undefined,
-    estimatedDeparture: b.estimatedDeparture || undefined,
-    estimatedArrival: b.estimatedArrival || undefined,
+    estimatedDeparture: schedule.etd || b.estimatedDeparture || undefined,
+    estimatedArrival: schedule.eta || b.estimatedArrival || undefined,
     cargoReadinessDate: b.cargoReadinessDate || undefined,
     commodity: b.commodity,
     cargoNature: b.cargoNature,
