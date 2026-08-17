@@ -290,6 +290,22 @@ async function loadAttachmentsFor(conn, bookingIds) {
   }, {});
 }
 
+// Attachment counts for the list view — a paperclip badge per row without
+// shipping every attachment record.
+async function loadAttachmentCountsFor(conn, bookingIds) {
+  if (!bookingIds.length) return {};
+  const [rows] = await conn.query(`
+    SELECT booking_id, COUNT(*) AS attachment_count
+      FROM booking_attachments
+     WHERE booking_id IN (?)
+  GROUP BY booking_id
+  `, [bookingIds]);
+  return rows.reduce((acc, r) => {
+    acc[r.booking_id] = Number(r.attachment_count) || 0;
+    return acc;
+  }, {});
+}
+
 const BOOKING_SELECT = `
   SELECT b.*,
     c.company_legal_name  AS client_name,
@@ -329,13 +345,17 @@ router.get('/', asyncHandler(async (_req, res) => {
   }, {});
 
   const shippersMap = await loadShippersFor(db, ids);
+  const attachmentCounts = await loadAttachmentCountsFor(db, ids);
 
   for (const r of rows) {
     normalizeBookingDates(r);
     r.equipment = equipmentMap[r.id] || [];
     r.services = [];
     r.shippers = shippersMap[r.id] || [];
+    // The list view only needs to know whether documents exist — the files
+    // themselves are fetched per booking when a row is expanded.
     r.attachments = [];
+    r.attachment_count = attachmentCounts[r.id] || 0;
   }
 
   res.json(rows);

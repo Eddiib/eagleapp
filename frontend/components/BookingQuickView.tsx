@@ -1,6 +1,8 @@
-import { Booking } from '../services/bookings';
+import { useEffect, useState } from 'react';
+import { Booking, BookingAttachment, bookingAttachmentsApi } from '../services/bookings';
 import { Package, MapPin, Truck, Ship, Plane, ChevronRight, Edit, DollarSign, FileText } from 'lucide-react';
 import { StatusBadge } from './ui/StatusBadge';
+import { BookingDocsModal } from './BookingDocsModal';
 import { useBookingStatuses } from '../context/BookingStatusesContext';
 
 interface BookingQuickViewProps {
@@ -10,6 +12,30 @@ interface BookingQuickViewProps {
 
 export function BookingQuickView({ booking, onEdit }: BookingQuickViewProps) {
   const { activeStatuses, colorFor } = useBookingStatuses();
+
+  // The list endpoint keeps attachments out of the payload, so pull them once
+  // when the row is expanded — the count drives the Documents button styling.
+  const [attachments, setAttachments] = useState<BookingAttachment[]>([]);
+  const [docsLoading, setDocsLoading] = useState(false);
+  const [docsError, setDocsError] = useState<string | null>(null);
+  const [docsOpen, setDocsOpen] = useState(false);
+
+  useEffect(() => {
+    if (!booking.id) return;
+    let cancelled = false;
+    setDocsLoading(true);
+    setDocsError(null);
+    bookingAttachmentsApi.list(booking.id)
+      .then(rows => { if (!cancelled) setAttachments(rows); })
+      .catch(err => { if (!cancelled) setDocsError(err.message || 'Failed to load documents'); })
+      .finally(() => { if (!cancelled) setDocsLoading(false); });
+    return () => { cancelled = true; };
+  }, [booking.id]);
+
+  // Fall back to the list's count while the fetch is in flight so the button
+  // doesn't flicker from neutral to highlighted.
+  const docCount = docsLoading ? booking.attachmentCount : attachments.length;
+  const hasDocs = docCount > 0;
 
   const getServiceIcon = (serviceType: Booking['serviceType']) => {
     switch (serviceType) {
@@ -37,7 +63,7 @@ export function BookingQuickView({ booking, onEdit }: BookingQuickViewProps) {
 
   return (
     <tr className="bg-gray-50 dark:bg-gray-800/50">
-      <td colSpan={12} className="px-4 py-4">
+      <td colSpan={13} className="px-4 py-4">
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
           {/* Header with Status and Edit */}
           <div className="flex items-center justify-between mb-4">
@@ -166,9 +192,22 @@ export function BookingQuickView({ booking, onEdit }: BookingQuickViewProps) {
           {/* Quick Actions Footer */}
           <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex gap-2">
-              <button className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded text-sm hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors">
+              <button
+                onClick={() => setDocsOpen(true)}
+                title={hasDocs ? `${docCount} document${docCount !== 1 ? 's' : ''} uploaded` : 'No documents uploaded'}
+                className={`flex items-center gap-2 px-3 py-1.5 border rounded text-sm transition-colors ${
+                  hasDocs
+                    ? 'border-green-500 dark:border-green-500 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
+                    : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
                 <FileText className="w-4 h-4" />
                 Documents
+                {hasDocs && (
+                  <span className="px-1.5 py-0.5 text-xs rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 tabular-nums">
+                    {docCount}
+                  </span>
+                )}
               </button>
               <button className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded text-sm hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors">
                 <DollarSign className="w-4 h-4" />
@@ -184,6 +223,17 @@ export function BookingQuickView({ booking, onEdit }: BookingQuickViewProps) {
             </div>
           </div>
         </div>
+
+        {docsOpen && (
+          <BookingDocsModal
+            bookingId={booking.id}
+            bookingNumber={booking.bookingNumber}
+            attachments={attachments}
+            loading={docsLoading}
+            error={docsError}
+            onClose={() => setDocsOpen(false)}
+          />
+        )}
       </td>
     </tr>
   );

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Search, Plus, Edit, Trash2, Eye, Filter, Download, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Eye, Filter, Download, ChevronDown, ChevronUp, RefreshCw, Paperclip } from 'lucide-react';
 import { BookingQuickView } from './BookingQuickView';
 import { bookingsApi, Booking } from '../services/bookings';
 import { formatDate } from '../utils/date';
@@ -57,6 +57,7 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
     { key: 'estimatedDeparture', label: 'ETD', align: 'left', get: (b) => formatDate(b.estimatedDeparture), sortValue: (b) => b.estimatedDeparture || '' },
     { key: 'estimatedArrival', label: 'ETA', align: 'left', get: (b) => formatDate(b.estimatedArrival), sortValue: (b) => b.estimatedArrival || '' },
     { key: 'totalContainers', label: 'Containers', align: 'left', get: (b) => b.totalContainers > 0 ? String(b.totalContainers) : '—', sortValue: (b) => b.totalContainers || 0 },
+    { key: 'attachmentCount', label: 'Docs', align: 'left', get: (b) => b.attachmentCount > 0 ? String(b.attachmentCount) : '—', sortValue: (b) => b.attachmentCount || 0 },
     { key: 'createdBy', label: 'Created By', align: 'left', get: (b) => b.createdBy || '—' },
   ]), []);
 
@@ -254,7 +255,7 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {loading ? (
                 <tr>
-                  <td colSpan={12} className="px-4 py-10 text-center">
+                  <td colSpan={13} className="px-4 py-10 text-center">
                     <div className="flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400">
                       <RefreshCw className="w-4 h-4 animate-spin" />
                       Loading bookings...
@@ -263,7 +264,7 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
                 </tr>
               ) : filteredBookings.length === 0 ? (
                 <tr>
-                  <td colSpan={12} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={13} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                     {bookings.length === 0 ? 'No bookings yet. Create your first booking.' : 'No bookings match your search.'}
                   </td>
                 </tr>
@@ -321,6 +322,19 @@ export function BookingList({ onViewBooking, onEditBooking, onDeleteBooking, onN
                       <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400">{formatDate(booking.estimatedArrival)}</td>
                       <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400 text-center">
                         {booking.totalContainers > 0 ? booking.totalContainers : '—'}
+                      </td>
+                      <td className="px-2 py-1.5">
+                        {booking.attachmentCount > 0 ? (
+                          <span
+                            title={`${booking.attachmentCount} document${booking.attachmentCount !== 1 ? 's' : ''} uploaded`}
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-green-500 text-green-700 dark:text-green-400 text-xs"
+                          >
+                            <Paperclip className="w-3 h-3" />
+                            {booking.attachmentCount}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 dark:text-gray-500">—</span>
+                        )}
                       </td>
                       <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400">{booking.createdBy || '—'}</td>
                       <td className="px-2 py-1.5">

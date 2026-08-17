@@ -164,6 +164,9 @@ export interface Booking {
   services: BookingServiceLine[];
   equipment: BookingEquipmentLine[];
   attachments: BookingAttachment[];
+  /** How many documents are on file. Populated by the list endpoint, which
+   *  omits the attachment records themselves. */
+  attachmentCount: number;
 }
 
 // ── Backend row shape (read-only) ─────────────────────────────────────────────
@@ -220,6 +223,7 @@ interface BookingRow {
   equipment?: any[];
   shippers?: any[];
   attachments?: any[];
+  attachment_count?: number;
 }
 
 interface NextBookingNumberRow {
@@ -438,6 +442,9 @@ export function toBooking(row: BookingRow): Booking {
     services,
     equipment,
     attachments,
+    // The list endpoint sends a count instead of the records; the detail
+    // endpoint sends the records themselves.
+    attachmentCount: row.attachment_count ?? attachments.length,
   };
 }
 
@@ -725,6 +732,7 @@ export function emptyBooking(initialBookingNumber?: string, currency = 'EUR'): B
     services: [],
     equipment: [],
     attachments: [],
+    attachmentCount: 0,
   };
 }
 
